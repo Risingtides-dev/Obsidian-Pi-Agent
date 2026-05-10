@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PI Cockpit</title>
+  <link rel="stylesheet" href="shared/styles.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: var(--bg-primary);
+      font-family: var(--font-sans);
+    }
+    .landing {
+      text-align: center;
+      max-width: 500px;
+    }
+    .landing h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .landing .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .widget-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .widget-card {
+      padding: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      text-align: left;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .widget-card:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+    .widget-card .card-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    .widget-card .card-name {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .widget-card .card-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .status-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .status-row span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="landing">
+    <h1>🧠 PI Cockpit</h1>
+    <p class="subtitle">
+      Widget-based control surface for PI coding agents.<br>
+      Designed to be embedded in Obsidian via Custom Frames.
+    </p>
+
+    <div class="widget-grid">
+      <a href="/widget/session-switcher" class="widget-card">
+        <div class="card-icon">📁</div>
+        <div class="card-name">Session Switcher</div>
+        <div class="card-desc">Switch between active PI coding sessions</div>
+      </a>
+      <a href="/widget/vault-chat" class="widget-card">
+        <div class="card-icon">💬</div>
+        <div class="card-name">Vault Chat</div>
+        <div class="card-desc">Chat with your Obsidian vault via PI</div>
+      </a>
+      <a href="/widget/skills-directory" class="widget-card">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Skills Directory</div>
+        <div class="card-desc">Browse & copy skill references</div>
+      </a>
+      <a href="/widget/model-switcher" class="widget-card">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Model Switcher</div>
+        <div class="card-desc">Switch AI models & thinking levels</div>
+      </a>
+    </div>
+
+    <div class="status-row">
+      <span>🖥️ Mac Mini</span>
+      <span id="hubStatus"><span class="status-dot disconnected"></span> Hub offline</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { connect } from "./shared/ws-client.js";
+    const hub = connect("landing");
+    hub.on("connected", () => {
+      document.getElementById("hubStatus").innerHTML =
+        '<span class="status-dot connected"></span> Hub online';
+    });
+    hub.on("disconnected", () => {
+      document.getElementById("hubStatus").innerHTML =
+        '<span class="status-dot disconnected"></span> Hub offline';
+    });
+  </script>
+</body>
+</html>

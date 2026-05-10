@@ -2,6 +2,19 @@
 
 Autonomous agent infrastructure living inside an Obsidian vault. Thoth — your digital twin — manages context, orchestrates tools, and bridges your ecosystem into a living dashboard.
 
+## PI Cockpit (NEW)
+
+Widget-based control surface for PI coding agents, designed to be embedded in Obsidian via Custom Frames.
+
+| Widget | URL | Purpose |
+|--------|-----|---------|
+| Session Switcher | `http://localhost:3099/widget/session-switcher` | Switch between active PI coding sessions |
+| Vault Chat | `http://localhost:3099/widget/vault-chat` | Chat with your Obsidian vault via PI |
+| Skills Directory | `http://localhost:3099/widget/skills-directory` | Browse & copy skill references |
+| Model Switcher | `http://localhost:3099/widget/model-switcher` | Switch AI models & thinking levels |
+
+**Architecture:** WebSocket hub (`pi-cockpit/hub/server.js`) + widget web apps + companion Obsidian plugin (`pi-cockpit/obsidian-plugin/`). Runs as a launchd daemon on port 3099.
+
 ## What's inside
 
 | Component | Description |

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skills Directory — PI Cockpit</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    .skill-description {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+    .skill-source {
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: var(--bg-hover);
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .copied-flash {
+      animation: flash 0.3s ease-out;
+    }
+    @keyframes flash {
+      0% { background: var(--accent); }
+      100% { background: transparent; }
+    }
+    .search-box {
+      width: 100%;
+      padding: 4px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 11px;
+      font-family: var(--font-sans);
+      outline: none;
+      margin: 4px 8px;
+      width: calc(100% - 16px);
+    }
+    .search-box:focus {
+      border-color: var(--accent);
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 4px 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .tab:hover {
+      color: var(--text-primary);
+    }
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="connection-bar" id="connectionBar">
+      <span class="status-dot disconnected" id="statusDot"></span>
+      <span id="connectionText">Connecting...</span>
+    </div>
+    <div class="widget-header">
+      <span class="widget-title" id="headerTitle">Skills</span>
+      <span class="badge" id="countBadge">0</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('skills')" id="tabSkills">Skills</div>
+      <div class="tab" onclick="switchTab('mcp')" id="tabMcp">MCP Servers</div>
+    </div>
+
+    <!-- Search -->
+    <input type="text" class="search-box" id="searchBox"
+           placeholder="Filter..." oninput="filterItems()">
+
+    <!-- List -->
+    <div class="widget-body" id="itemList">
+      <div class="empty-state">
+        <div class="empty-state-icon">📡</div>
+        <div>Waiting for hub...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { connect } from "../shared/ws-client.js";
+
+    const hub = connect("skills-directory");
+    let skills = [];
+    let mcpServers = [];
+    let activeTab = "skills";
+
+    // ── Connection ──────────────────────────────────
+    hub.on("connected", () => {
+      document.getElementById("statusDot").className = "status-dot connected";
+      document.getElementById("connectionText").textContent = "Connected";
+    });
+
+    hub.on("disconnected", () => {
+      document.getElementById("statusDot").className = "status-dot disconnected";
+      document.getElementById("connectionText").textContent = "Reconnecting...";
+    });
+
+    // ── State sync ─────────────────────────────────
+    hub.on("state-sync", (data) => {
+      skills = data.skills || [];
+      mcpServers = data.mcpServers || [];
+      render();
+    });
+
+    hub.on("skills-updated", (data) => {
+      skills = data.skills || [];
+      mcpServers = data.mcpServers || [];
+      render();
+    });
+
+    // ── Copy feedback ──────────────────────────────
+    hub.on("skill-copied", (data) => {
+      showToast(`Copied: ${data.skill}`);
+    });
+
+    hub.on("mcp-copied", (data) => {
+      showToast(`Copied: ${data.server}`);
+    });
+
+    // ── Render ─────────────────────────────────────
+    function render() {
+      const list = document.getElementById("itemList");
+      const items = activeTab === "skills" ? skills : mcpServers;
+      const filter = (document.getElementById("searchBox").value || "").toLowerCase();
+      const filtered = items.filter(item =>
+        item.name.toLowerCase().includes(filter) ||
+        (item.description || "").toLowerCase().includes(filter)
+      );
+
+      document.getElementById("headerTitle").textContent =
+        activeTab === "skills" ? "Skills" : "MCP Servers";
+      document.getElementById("countBadge").textContent = items.length;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">${filter ? '🔍' : '🧹'}</div>
+            <div>${filter ? 'No matches' : `No ${activeTab === "skills" ? "skills" : "MCP servers"} found`}</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(item => {
+        const sourceBadge = item.source
+          ? `<span class="skill-source">${item.source}</span>`
+          : "";
+
+        if (activeTab === "skills") {
+          return `
+            <div class="list-item skill-item" onclick="copySkill('${item.name}')"
+                 title="Click to copy reference to clipboard">
+              <span class="list-item-icon">📦</span>
+              <div class="list-item-content">
+                <div class="list-item-label">${item.name} ${sourceBadge}</div>
+                <div class="skill-description">${item.description || ""}</div>
+              </div>
+              <span class="list-item-meta" style="font-size:14px;opacity:0.5;">📋</span>
+            </div>`;
+        } else {
+          return `
+            <div class="list-item" onclick="copyMcp('${item.name}')"
+                 title="Click to copy reference to clipboard">
+              <span class="list-item-icon">🔌</span>
+              <div class="list-item-content">
+                <div class="list-item-label">${item.name} ${sourceBadge}</div>
+                ${item.command ? `<div class="skill-description">${item.command}</div>` : ""}
+              </div>
+              <span class="list-item-meta" style="font-size:14px;opacity:0.5;">📋</span>
+            </div>`;
+        }
+      }).join("");
+    }
+
+    // ── Tab switching ──────────────────────────────
+    window.switchTab = (tab) => {
+      activeTab = tab;
+      document.getElementById("tabSkills").classList.toggle("active", tab === "skills");
+      document.getElementById("tabMcp").classList.toggle("active", tab === "mcp");
+      document.getElementById("searchBox").value = "";
+      render();
+    };
+
+    // ── Filter ─────────────────────────────────────
+    window.filterItems = () => {
+      render();
+    };
+
+    // ── Copy actions ───────────────────────────────
+    window.copySkill = (name) => {
+      hub.send({ type: "copy-skill", skill: name });
+    };
+
+    window.copyMcp = (name) => {
+      hub.send({ type: "copy-mcp", server: name });
+    };
+
+    function showToast(msg) {
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+  </script>
+</body>
+</html>

@@ -53,3 +53,4 @@ tmp/
 
 # Sessions
 --session/
+pi-cockpit/hub/node_modules/

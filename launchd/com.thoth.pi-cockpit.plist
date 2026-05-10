@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.thoth.pi-cockpit</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin/node</string>
+        <string>/Users/risingtidesdev/dev/Thoth-pi-net/pi-cockpit/hub/server.js</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>NODE_ENV</key>
+        <string>production</string>
+        <key>PORT</key>
+        <string>3099</string>
+        <key>PATH</key>
+        <string>/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/risingtidesdev/dev/Thoth-pi-net/pi-cockpit/hub</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/risingtidesdev/dev/Thoth-pi-net/pi-cockpit/logs/hub-out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/risingtidesdev/dev/Thoth-pi-net/pi-cockpit/logs/hub-err.log</string>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>
