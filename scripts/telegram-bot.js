@@ -155,12 +155,12 @@ Provide:
 ## Worth Noting
 - Any stats, quotes, or actionable advice`;
 
-    const summary = await askDeepSeek(systemPrompt, userPrompt, 1500);
+    const summary = await askDeepSeek(systemPrompt, userPrompt, 3000);
     
     const fullContent = `**Source:** [${title}](${webpageUrl})\n**Channel:** ${channel} · **Duration:** ~${durationMin} min\n\n${summary}`;
     const result = saveToVault(title, fullContent, webpageUrl, ['youtube', 'video']);
 
-    return `📺 **Saved:** ${result.filename}\n\n${summary.slice(0, 400)}${summary.length > 400 ? '...' : ''}`;
+    return `📺 **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
 
   } catch (e) {
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
@@ -201,7 +201,7 @@ async function handleTwitter(url) {
   const systemPrompt = `Summarize this tweet${articleText ? ' and linked article' : ''} concisely.`;
   const userPrompt = `Author: ${author} (@${handle})\nTweet: ${content.slice(0, 500)}${articleText ? '\n\nArticle content:\n' + articleText : ''}\n\nGive me a 2-3 bullet point summary of the key message. No fluff.`;
 
-  const summary = await askDeepSeek(systemPrompt, userPrompt, 600);
+  const summary = await askDeepSeek(systemPrompt, userPrompt, 2000);
   
   const title = `Tweet by ${author}: ${content.slice(0, 50)}`;
   const noteContent = `**Author:** ${author} (@${handle})\n**Source:** ${url}\n\n> ${content.slice(0, 300)}\n\n---\n\n${summary}`;
@@ -228,11 +228,11 @@ async function handleArticle(url) {
 ## Notable Quotes
 > Any important quotes (omit if none)`;
 
-    const summary = await askDeepSeek(systemPrompt, userPrompt, 1500);
+    const summary = await askDeepSeek(systemPrompt, userPrompt, 3000);
     const fullContent = `**Source:** [${title}](${url})\n\n${summary}`;
     const result = saveToVault(title, fullContent, url, ['article']);
 
-    return `📄 **Saved:** ${result.filename}\n\n${summary.slice(0, 400)}${summary.length > 400 ? '...' : ''}`;
+    return `📄 **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
 
   } catch (e) {
     throw new Error(`Article failed: ${e.message}`);
@@ -329,7 +329,7 @@ async function handleVoice(ctx) {
     const fullContent = `**Original transcript:**\n> ${transcript.slice(0, 300)}${transcript.length > 300 ? '...' : ''}\n\n---\n\n${summary}`;
     const result = saveToVault(title, fullContent, '', ['voice', 'transcript']);
 
-    return `🎙️ **Saved:** ${result.filename}\n\n${summary.slice(0, 400)}${summary.length > 400 ? '...' : ''}`;
+    return `🎙️ **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
 
   } catch (e) {
     throw new Error(`Voice failed: ${e.message}`);
@@ -371,7 +371,7 @@ async function handleText(text) {
   const fullContent = `**Original:**\n> ${text.slice(0, 300)}${text.length > 300 ? '...' : ''}\n\n---\n\n${summary}`;
   const result = saveToVault(title, fullContent, '', ['note']);
 
-  return `📝 **Saved:** ${result.filename}\n\n${summary.slice(0, 400)}${summary.length > 400 ? '...' : ''}`;
+  return `📝 **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
 }
 
 // ── Photo handler ──────────────────────────────────────
