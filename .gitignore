@@ -24,8 +24,9 @@ Scratchpad.md
 *.kanban
 *.base
 
-# Keep the README
+# Keep the README and agent instructions
 !README.md
+!AGENTS.md
 
 # Excalidraw logs
 excalidraw.log
