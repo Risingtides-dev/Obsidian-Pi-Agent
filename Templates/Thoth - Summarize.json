@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "Thoth – Summarize to Inbox",
+  "behavior": "create",
+  "noteNameFormat": "{{date|date:\"YYYY-MM-DD\"}} {{title|safe_name|slice:0,60}}",
+  "path": "3-Resources/Inbox",
+  "context": "{{content|remove_html:(\"img,script,style,nav,footer,header,aside,noscript\")|markdown|slice:0,10000|trim}}",
+  "properties": [
+    {
+      "name": "source",
+      "value": "{{url}}",
+      "type": "text"
+    },
+    {
+      "name": "clipped",
+      "value": "{{date|date:\"YYYY-MM-DD HH:mm\"}}",
+      "type": "text"
+    },
+    {
+      "name": "author",
+      "value": "{{author}}",
+      "type": "text"
+    },
+    {
+      "name": "site",
+      "value": "{{site}}",
+      "type": "text"
+    },
+    {
+      "name": "tags",
+      "value": "clipping",
+      "type": "multitext"
+    }
+  ],
+  "triggers": [],
+  "noteContentFormat": "# {{title}}\n\n## Summary\n{{\"Write a 2-3 sentence executive summary of this page. No headings, no lists, no fluff. Just the key point.\"|replace:\"/^'|'$/g\":\"\"|strip_tags:\"p,div,span,h1,h2,h3,h4,h5,h6,ul,ol,li\"|strip_md|replace:\"/\\n{2,}/g\":\"\\n\\n\"|trim}}\n\n## Key Takeaways\n{{\"List 3-5 key takeaways as bullet points. Each line prefixed with '- '. 6-12 words each. No trailing punctuation. Be specific.\"|replace:\"/^'|'$/g\":\"\"|strip_tags:\"p,div,span\"|replace:\"/^(\\*|•|—|–|\\d+\\.|\\d+\\))\\s*/gm\":\"- \"|replace:\"/[.;:!?]+$/gm\":\"\"|trim}}\n\n---\n**Source:** [{{url}}]({{url}})\n**Clipped:** {{date|date:\"YYYY-MM-DD HH:mm\"}}"
+}

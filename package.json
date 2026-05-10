@@ -1,0 +1,16 @@
+{
+  "name": "thoth",
+  "version": "1.0.0",
+  "description": "Thoth is an agentic AI harness built on [pi](https://pi.dev) that serves as your digital twin. It runs on `risings-mac-mini-1` and is accessible from anywhere via Tailscale.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "grammy": "^1.42.0"
+  }
+}

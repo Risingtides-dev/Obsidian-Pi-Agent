@@ -1,0 +1,54 @@
+# Obsidian vault content — notes are personal, not code
+*.md
+!.github/*.md
+!README.md
+
+# Obsidian internals
+.obsidian/
+.trash/
+
+# Vault folders (PARA) — but allow Templates through
+0-Inbox/
+1-Projects/
+2-Areas/
+3-Resources/
+4-Archive/
+Attachments/
+Daily/
+!Templates/
+!Templates/*.json
+Dashboard.md
+Projects.md
+Scratchpad.md
+*.canvas
+*.kanban
+*.base
+
+# Keep the README
+!README.md
+
+# Excalidraw logs
+excalidraw.log
+logs/*.log
+
+# API keys and secrets
+*-config.json
+!*-config.example.json
+
+# Pi runtime data
+.pi/messenger/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Temp files
+*.tmp
+tmp/
+
+# Sessions
+--session/

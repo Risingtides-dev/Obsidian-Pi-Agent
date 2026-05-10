@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.thoth.scratchpad-watcher</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin/node</string>
+		<string>/Users/risingtidesdev/dev/Thoth/scripts/watch-scratchpad.js</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/risingtidesdev/dev/Thoth</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/Users/risingtidesdev/.pi/agent/scratchpad-watcher.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/risingtidesdev/.pi/agent/scratchpad-watcher-error.log</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin:/Users/risingtidesdev/.local/bin</string>
+		<key>HOME</key>
+		<string>/Users/risingtidesdev</string>
+		<key>NVM_DIR</key>
+		<string>/Users/risingtidesdev/.nvm</string>
+	</dict>
+</dict>
+</plist>

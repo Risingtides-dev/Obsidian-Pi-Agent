@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.thoth.living-dashboard</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin/node</string>
+        <string>/Users/risingtidesdev/dev/Thoth/scripts/sync-living-dashboard.js</string>
+        <string>--watch</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/risingtidesdev/dev/Thoth</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/risingtidesdev/dev/Thoth/logs/living-dashboard.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/risingtidesdev/dev/Thoth/logs/living-dashboard-err.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/risingtidesdev/.nvm/versions/node/v22.17.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/risingtidesdev</string>
+    </dict>
+</dict>
+</plist>
