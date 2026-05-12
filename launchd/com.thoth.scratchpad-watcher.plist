@@ -16,9 +16,9 @@
 	<key>KeepAlive</key>
 	<true/>
 	<key>StandardOutPath</key>
-	<string>/Users/risingtidesdev/.pi/agent/scratchpad-watcher.log</string>
+	<string>/Users/risingtidesdev/dev/Thoth/logs/watcher.log</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/risingtidesdev/.pi/agent/scratchpad-watcher-error.log</string>
+	<string>/Users/risingtidesdev/dev/Thoth/logs/watcher-err.log</string>
 	<key>EnvironmentVariables</key>
 	<dict>
 		<key>PATH</key>

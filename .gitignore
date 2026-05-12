@@ -8,6 +8,8 @@
 .trash/
 
 # Vault folders (PARA) — but allow Templates through
+# Inbox paths: 0-Inbox/ (legacy pre-PARA) and 3-Resources/Inbox/ (current inbox)
+# 0-Inbox/ contains older clips (~7 files). 3-Resources/ is broader (resources + inbox).
 0-Inbox/
 1-Projects/
 2-Areas/

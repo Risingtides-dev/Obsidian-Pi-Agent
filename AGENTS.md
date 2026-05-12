@@ -32,9 +32,11 @@ $VAULT_PATH/                    ← MAIN VAULT — Obsidian runs here
 └── AGENTS.md                   ← THIS FILE — instructions for all agents
 
 ~/.worktrees/
-└── Thoth-mac-feature/          ← WORKTREE — code only, no notes
-│   └── scripts/                ← Same scripts/, different branch
-└── Thoth-telegram-v2/          ← Another worktree, another branch
+├── Thoth-pi-cockpit/           ← PI Cockpit hub (code only)
+│   └── scripts/
+├── Thoth-pi-net/               ← Pi network services (code only)
+│   └── scripts/
+└── Thoth-vaultkeeper/          ← Vault Keeper worktree (specialized AGENTS.md)
     └── scripts/
 ```
 
@@ -53,12 +55,12 @@ $VAULT_PATH/                    ← MAIN VAULT — Obsidian runs here
 Every agent, regardless of which worktree it's in, reads and writes notes to the **main vault**. The vault path is stored in the `vault_path` context variable (set by the Pi shell wrapper).
 
 ```
-Agent in ~/.worktrees/Thoth-telegram-v2/:
+Agent in ~/.worktrees/Thoth-pi-net/:
   writes note → $VAULT_PATH/3-Resources/Inbox/article.md
   Obsidian sees it instantly (filesystem watcher)
-  Agent in ~/.worktrees/Thoth-mac-feature/:
-    reads note → $VAULT_PATH/3-Resources/Inbox/article.md
-    same file, no sync, no API, no delay
+Agent in ~/.worktrees/Thoth-pi-cockpit/:
+  reads note → $VAULT_PATH/3-Resources/Inbox/article.md
+  same file, no sync, no API, no delay
 ```
 
 This works because:
@@ -83,10 +85,14 @@ Each worktree has its own copy of `scripts/` (on its branch) but **no notes**. T
 **Creating a worktree:**
 ```bash
 cd ~/dev/Thoth
-wt telegram-v2          # creates ~/.worktrees/Thoth-telegram-v2/ + new branch
-cd ~/.worktrees/Thoth-telegram-v2
+wt my-feature           # creates ~/.worktrees/Thoth-my-feature/ + new branch
+cd ~/.worktrees/Thoth-my-feature
 pi                      # starts Pi session with vault_path context
 ```
+
+> **Note:** Worktree copies of `AGENTS.md` may be specialized.
+> For example, `Thoth-vaultkeeper/AGENTS.md` has its own role-specific content
+> tailored for vault maintenance tasks, distinct from the main vault's copy.
 
 **The `thoth` command** (fzf launcher) shows all worktrees and their Pi sessions:
 ```bash
@@ -98,13 +104,12 @@ thoth                   # browse worktrees, resume past sessions, or start new
 Use **Event Log.md** in the main vault. One file, append-only, all agents can read/write:
 
 ```markdown
-## telegram-v2 → pi-net (2026-05-10 16:30)
-Built the YouTube caption extractor in scripts/sources/youtube.js.
-Test it with age-restricted videos. Status: waiting for review
+## vaultkeeper → pi-net (2026-05-10 16:30)
+Found 2 config drift issues: pi-cockpit plist path, stale worktree refs.
+Status: fixed in task-1
 
-## pi-net → telegram-v2 (2026-05-10 16:45)
-Tested with 10 videos. Age-restricted ones fail. Added fallback
-to whisper transcription when captions unavailable. Status: done
+## pi-cockpit → pi-net (2026-05-11 09:15)
+Hub server needs port 3099 free. Is net using it? Status: waiting for review
 ```
 
 No message broker. No polling. No API. Just markdown on a shared filesystem. Obsidian renders it. Agents read it. Humans see it too.
@@ -148,9 +153,9 @@ These are set by the Pi shell wrapper and available in every session:
 
 | Variable | Example | Meaning |
 |----------|---------|---------|
-| `git_status` | `🔀telegram-v2 🐙` | Current branch, worktree indicator, GitHub connected |
+| `git_status` | `🔀vaultkeeper 🐙` | Current branch, worktree indicator, GitHub connected |
 | `vault_path` | `$VAULT_PATH` (e.g. `~/dev/Thoth`) | Main vault location — read/write notes here |
-| `current_project` | `Thoth Obsidian Integration` | Active project focus |
+| `thoth.current_project` | `Thoth-vaultkeeper / vaultkeeper` | Active project focus (dot-separated convention) |
 
 ## Available Tools
 
