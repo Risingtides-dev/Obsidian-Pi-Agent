@@ -30,6 +30,11 @@ const DAILY_DIR = path.join(VAULT, 'Daily');
 const HEARTBEAT_PATH = path.join(VAULT, 'heartbeat.md');
 const EVENT_LOG_PATH = path.join(VAULT, 'Event Log.md');
 const SCHEMA_PATH = path.join(VAULT, '1-Projects', 'Vault Keeper', 'Vault Schema.md');
+const STATE_FILE = path.join(VAULT, '.vaultkeeper-state.json');
+
+// Thresholds
+const STALE_LOG_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4 hours (raised from 1h)
+const MAX_EVENT_LOG_ENTRIES = 50; // Truncate Event Log to last 50 entries
 
 const QUIET = process.argv.includes('--quiet') || process.argv.includes('-q');
 
@@ -37,6 +42,7 @@ const QUIET = process.argv.includes('--quiet') || process.argv.includes('-q');
 const issues = [];
 const warnings = [];
 const results = {};
+const scanRun = { issues: [], warnings: [] };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 function log(msg) { if (!QUIET) console.log(msg); }
@@ -61,6 +67,42 @@ function flag(severity, check, detail) {
   const entry = { severity, check, detail, time: new Date().toISOString() };
   if (severity === 'critical') issues.push(entry);
   else warnings.push(entry);
+}
+
+// ─── State Persistence ────────────────────────────────────────────────────
+function loadState() {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    }
+  } catch (e) {
+    log(`  ⚠️  Could not load state file: ${e.message}`);
+  }
+  return { lastIssueHash: null, lastResolved: null };
+}
+
+function saveState(state) {
+  try {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  } catch (e) {
+    log(`  ⚠️  Could not save state file: ${e.message}`);
+  }
+}
+
+function computeIssueHash(issueList, warningList) {
+  // Normalize: sort by check + detail for consistent hashing
+  const sorted = [...issueList, ...warningList]
+    .map(i => `${i.severity}:${i.check}:${i.detail}`)
+    .sort();
+  // Simple string hash
+  const str = sorted.join('||');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const chr = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString(16);
 }
 
 // ─── Check 1: Daemons ──────────────────────────────────────────────────────
@@ -119,7 +161,7 @@ function checkDaemons() {
 
       if (!pid) {
         flag('critical', `Daemon ${name} is not running`, `PID is null, exit code: ${exitCode}`);
-      } else if (lastLogEntry && (Date.now() - lastLogEntry.getTime()) > 3600000) {
+      } else if (lastLogEntry && (Date.now() - lastLogEntry.getTime()) > STALE_LOG_THRESHOLD_MS) {
         flag('warning', `Daemon ${name} log is stale`, `Last entry: ${daemonResults[name].logAge}`);
       }
 
@@ -186,29 +228,76 @@ function checkContextDocs() {
 
 // ─── Check 3: Daily Note ───────────────────────────────────────────────────
 function checkDailyNote() {
-  log('\n🔍 Checking daily note...');
+  log('\n🔍 Checking daily notes...');
+
   const today = new Date();
   const dateStr = today.toISOString().split('T')[0];
   const dailyPath = path.join(DAILY_DIR, `${dateStr}.md`);
 
-  if (fileExists(dailyPath)) {
-    log(`  ✅ Daily note exists: ${dateStr}.md`);
-    results.dailyNote = { exists: true, path: dailyPath };
+  // First, scan all daily notes for empty (0-byte) files and fix them
+  let emptyFixed = 0;
+  try {
+    if (fs.existsSync(DAILY_DIR)) {
+      const allDailyFiles = fs.readdirSync(DAILY_DIR).filter(f => f.endsWith('.md'));
+      for (const df of allDailyFiles) {
+        const dfPath = path.join(DAILY_DIR, df);
+        const stat = fs.statSync(dfPath);
+        if (stat.size === 0) {
+          const noteDate = df.replace('.md', '');
+          log(`  ❌ Empty daily note found: ${df} — overwriting with template`);
+          try {
+            const template = path.join(VAULT, 'Templates', 'Daily Note.md');
+            let content = `# ${noteDate}\n\n`;
+            if (fileExists(template)) {
+              content = readFile(template).replace(/\{\{date:YYYY-MM-DD\}\}/g, noteDate);
+              content = content.replace(/\{\{date:dddd, MMMM D, YYYY\}\}/g, new Date(noteDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+              // Also handle simplified {{date}} pattern
+              content = content.replace(/\{\{date\}\}/g, noteDate);
+            }
+            fs.writeFileSync(dfPath, content);
+            log(`  🔧 Overwrote empty daily note: ${df}`);
+            emptyFixed++;
+          } catch (e) {
+            flag('warning', `Could not fix empty daily note: ${df}`, e.message);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    flag('warning', 'Could not scan daily notes directory', e.message);
+  }
+
+  if (emptyFixed > 0) {
+    log(`  🔧 Fixed ${emptyFixed} empty daily note(s)`);
+  }
+
+  // Now handle the current day's note specifically
+  const exists = fileExists(dailyPath);
+  const nonEmpty = exists && fileNonEmpty(dailyPath);
+
+  if (exists && nonEmpty) {
+    log(`  ✅ Daily note exists and has content: ${dateStr}.md`);
+    results.dailyNote = { exists: true, nonEmpty: true, path: dailyPath };
+  } else if (exists && !nonEmpty) {
+    // Already handled above, but double-check
+    log(`  ✅ Daily note now has content (was empty): ${dateStr}.md`);
+    results.dailyNote = { exists: true, nonEmpty: true, path: dailyPath, autoFixed: true };
   } else {
     log(`  ❌ Daily note missing: ${dateStr}.md`);
-    // Auto-create if safe
     try {
       const template = path.join(VAULT, 'Templates', 'Daily Note.md');
       let content = `# ${dateStr}\n\n`;
       if (fileExists(template)) {
-        content = readFile(template).replace(/\{\{date\}\}/g, dateStr);
+        content = readFile(template).replace(/\{\{date:YYYY-MM-DD\}\}/g, dateStr);
+        content = content.replace(/\{\{date:dddd, MMMM D, YYYY\}\}/g, today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+        content = content.replace(/\{\{date\}\}/g, dateStr);
       }
       fs.writeFileSync(dailyPath, content);
       log(`  🔧 Auto-created daily note: ${dateStr}.md`);
-      results.dailyNote = { exists: true, path: dailyPath, autoCreated: true };
+      results.dailyNote = { exists: true, nonEmpty: true, path: dailyPath, autoCreated: true };
     } catch (e) {
       flag('warning', `Could not create daily note: ${dateStr}.md`, e.message);
-      results.dailyNote = { exists: false };
+      results.dailyNote = { exists: false, error: e.message };
     }
   }
 }
@@ -374,13 +463,13 @@ function checkLogsFreshness() {
       const age = Date.now() - stat.mtimeMs;
       logDetails[lf] = { age: timeAgo(stat.mtime), bytes: stat.size };
 
-      if (age > 3600000 && stat.size > 0) { // Stale if > 1 hour and has content
+      if (age > STALE_LOG_THRESHOLD_MS && stat.size > 0) { // Stale if > 4h and has content
         stale++;
       }
     }
 
     const status = stale === 0 ? '✅' : '⚠️';
-    log(`  ${status} ${logFiles.length} log files: ${stale} stale (>1h)`);
+    log(`  ${status} ${logFiles.length} log files: ${stale} stale (>4h)`);
 
     if (stale > 0) {
       const staleNames = Object.entries(logDetails)
@@ -493,7 +582,6 @@ function writeHeartbeat() {
   const timestamp = now.toISOString().replace('T', ' ').slice(0, 19);
 
   const statusIcon = (ok) => ok ? '✅' : '❌';
-  const warnIcon = (ok) => ok ? '✅' : '⚠️';
 
   const d = results.daemons || {};
   const c = results.contextDocs || {};
@@ -557,7 +645,7 @@ ${daemonRows.map(([l, k]) => daemonRow(l, k)).join('\n')}
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Daily note exists | ${statusIcon(results.dailyNote?.exists)} | ${results.dailyNote?.autoCreated ? 'auto-created' : '—'} |
+| Daily note exists | ${statusIcon(results.dailyNote?.exists)} | ${results.dailyNote?.autoCreated ? 'auto-created' : results.dailyNote?.autoFixed ? 'empty→filled' : '—'} |
 | Worktrees valid | ${Object.values(results.worktrees || {}).every(w => w.hasAgentsMd) ? '✅' : '⚠️'} | ${Object.entries(results.worktrees || {}).filter(([, w]) => !w.hasAgentsMd).map(([k]) => k).join(', ') || 'all valid'} |
 | .gitignore matches | ${results.gitignore?.ok ? '✅' : '⚠️'} | ${(results.gitignore?.missing || []).join(', ') || '—'} |
 | No .md tracked in git | ${resultStatus(results.gitMdTracked?.ok)} | ${(results.gitMdTracked?.files || []).length} files |
@@ -595,11 +683,54 @@ function resultStatus(ok) {
   return ok ? '✅' : '❌';
 }
 
-// ─── Write to Event Log ────────────────────────────────────────────────────
+// ─── Write to Event Log (deduplicated) ────────────────────────────────────
 function writeEventLog() {
-  if (issues.length === 0 && warnings.length === 0) return; // Silence = health
+  const state = loadState();
+  const currentHash = computeIssueHash(issues, warnings);
+
+  // Track what we're flagging for the state file
+  scanRun.issues = issues.map(i => ({ check: i.check, detail: i.detail }));
+  scanRun.warnings = warnings.map(w => ({ check: w.check, detail: w.detail }));
+
+  // If no issues and hash matches last healthy scan, skip entirely
+  if (issues.length === 0 && warnings.length === 0) {
+    if (state.lastIssueHash === 'healthy') {
+      log('  ℹ️  Event Log unchanged (still healthy) — skipping');
+      saveState({ ...state, lastIssueHash: 'healthy', lastScanRun: scanRun });
+      return;
+    }
+    // First time healthy — write an all-clear entry
+    log('\n📝 Writing all-clear to Event Log...');
+    const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 16);
+    const entry = `\n## vaultkeeper → all (${timestamp})\n**🟢 All clear** — No issues found.\n\nStatus: done\n`;
+    fs.appendFileSync(EVENT_LOG_PATH, entry);
+    log('  ✅ Event Log updated (all clear)');
+    saveState({ lastIssueHash: 'healthy', lastScanRun: scanRun });
+    return;
+  }
+
+  // Deduplicate: skip if same hash as last scan
+  if (state.lastIssueHash === currentHash) {
+    log('  ℹ️  Issues unchanged since last scan — skipping duplicate Event Log entry');
+    saveState({ ...state, lastIssueHash: currentHash, lastScanRun: scanRun });
+    return;
+  }
 
   log('\n📝 Writing to Event Log...');
+
+  // Mark previous entries as done for issues that no longer appear
+  const previousChecks = new Set();
+  if (state.lastScanRun) {
+    for (const i of (state.lastScanRun.issues || [])) previousChecks.add(i.check + '||' + i.detail);
+    for (const w of (state.lastScanRun.warnings || [])) previousChecks.add(w.check + '||' + w.detail);
+  }
+
+  const currentChecks = new Set();
+  for (const i of issues) currentChecks.add(i.check + '||' + i.detail);
+  for (const w of warnings) currentChecks.add(w.check + '||' + w.detail);
+
+  // Resolved = were in previous scan but not in current scan
+  const resolved = [...previousChecks].filter(x => !currentChecks.has(x));
 
   const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 16);
   let entry = `\n## vaultkeeper → all (${timestamp})\n`;
@@ -614,11 +745,109 @@ function writeEventLog() {
     warnings.forEach(w => { entry += `- ${w.check}: ${w.detail}\n`; });
   }
 
+  if (resolved.length > 0) {
+    entry += `\n**✅ Resolved (${resolved.length}):**\n`;
+    resolved.forEach(r => {
+      const [check, ...detailParts] = r.split('||');
+      entry += `- ${check}: ${detailParts.join('||')}\n`;
+    });
+  }
+
   entry += `\nStatus: pending\n`;
   entry += `_Auto-detected by Vault Keeper heartbeat. Review and resolve._\n`;
 
   fs.appendFileSync(EVENT_LOG_PATH, entry);
   log(`  ✅ Event Log updated with ${issues.length} critical + ${warnings.length} warnings`);
+
+  // Mark previous pending entries as done for resolved issues
+  if (resolved.length > 0) {
+    markResolvedEntries(resolved);
+  }
+
+  // Save state for next scan
+  saveState({ lastIssueHash: currentHash, lastScanRun: scanRun });
+}
+
+// ─── Mark Resolved Issues as Done ─────────────────────────────────────────
+function markResolvedEntries(resolvedChecks) {
+  try {
+    if (!fileExists(EVENT_LOG_PATH)) return;
+    let content = readFile(EVENT_LOG_PATH);
+    if (!content) return;
+
+    const lines = content.split('\n');
+    let modified = false;
+
+    // For each resolved check, find the most recent pending entry mentioning it
+    for (const resolved of resolvedChecks) {
+      const [checkName] = resolved.split('||');
+
+      // Walk backwards through lines to find the last pending entry mentioning this check
+      let lastPendingStatusIdx = -1;
+
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        if (line.startsWith('- ') && line.includes(checkName)) {
+          // This line contains the check — now find the Status line nearby
+          for (let j = i; j < Math.min(i + 20, lines.length); j++) {
+            if (lines[j].startsWith('Status: pending')) {
+              lastPendingStatusIdx = j;
+              break;
+            }
+            if (lines[j].startsWith('Status: done') || lines[j].startsWith('Status: blocked')) break;
+          }
+          if (lastPendingStatusIdx >= 0) break;
+        }
+      }
+
+      if (lastPendingStatusIdx >= 0) {
+        lines[lastPendingStatusIdx] = `Status: done — ✅ ${checkName} resolved`;
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      fs.writeFileSync(EVENT_LOG_PATH, lines.join('\n'));
+      log(`  ✅ Marked ${resolvedChecks.length} resolved issues as done in Event Log`);
+    }
+  } catch (e) {
+    log(`  ⚠️  Could not mark resolved entries: ${e.message}`);
+  }
+}
+
+// ─── Truncate Event Log ────────────────────────────────────────────────────
+function truncateEventLog() {
+  try {
+    if (!fileExists(EVENT_LOG_PATH)) return;
+    let content = readFile(EVENT_LOG_PATH);
+    if (!content) return;
+
+    // Count entries by splitting on ## vaultkeeper headers
+    const headerPattern = /^##\s+vaultkeeper/gm;
+    const parts = content.split(headerPattern);
+
+    // parts[0] is the preamble (before first ## vaultkeeper header)
+    // Rest are individual entries
+    if (parts.length <= MAX_EVENT_LOG_ENTRIES + 1) return; // +1 for preamble
+
+    // Keep preamble + last N entries
+    const preamble = parts[0];
+    const lastEntries = parts.slice(parts.length - MAX_EVENT_LOG_ENTRIES);
+
+    // Reconstruct: prepend ## vaultkeeper back to each entry (except preamble)
+    let truncated = preamble;
+    for (const entry of lastEntries) {
+      truncated += '\n## vaultkeeper' + entry;
+    }
+
+    // Also clean up leading/trailing blank lines
+    truncated = truncated.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+
+    fs.writeFileSync(EVENT_LOG_PATH, truncated);
+    log(`  ✂️  Truncated Event Log to last ${MAX_EVENT_LOG_ENTRIES} entries`);
+  } catch (e) {
+    log(`  ⚠️  Could not truncate Event Log: ${e.message}`);
+  }
 }
 
 // ─── Try Auto-Fixes ────────────────────────────────────────────────────────
@@ -706,6 +935,7 @@ async function main() {
     applyAutoFixes();
     writeHeartbeat();
     writeEventLog();
+    truncateEventLog();
 
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
     log(`\n✨ Scan complete in ${elapsed}s`);

@@ -6,109 +6,137 @@
   <title>Cron Dashboard — PI Cockpit</title>
   <link rel="stylesheet" href="../shared/styles.css">
   <style>
-    .heartbeat-summary {
-      padding: 6px 10px;
+    .daemon-item {
+      padding: 8px 10px;
+      border-left: 3px solid transparent;
+      transition: background 0.1s;
+      cursor: default;
+    }
+    .daemon-item:hover { background: var(--bg-hover); }
+    .daemon-item.running { border-left-color: var(--success); }
+    .daemon-item.down { border-left-color: var(--danger); }
+
+    .daemon-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .daemon-status-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .daemon-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .daemon-name {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .daemon-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .daemon-meta span {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .daemon-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .heartbeat-bar {
+      padding: 8px 10px;
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
+    }
+    .heartbeat-status {
       font-size: 11px;
-      flex-shrink: 0;
-    }
-    .heartbeat-summary .hb-status {
       font-weight: 600;
     }
-    .heartbeat-summary .hb-detail {
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-    .hb-badge {
+    .heartbeat-meta {
       font-size: 9px;
-      padding: 0 5px;
-      border-radius: 8px;
-      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: auto;
     }
-    .hb-badge.crit { background: rgba(243,139,168,0.2); color: var(--danger); }
-    .hb-badge.warn { background: rgba(249,226,175,0.2); color: var(--warning); }
-    .hb-badge.ok { background: rgba(166,227,161,0.2); color: var(--success); }
-
-    .daemon-item {
-      display: flex;
+    .heartbeat-badge {
+      display: inline-flex;
       align-items: center;
-      padding: 6px 10px;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-color);
-      transition: background 0.1s;
-    }
-    .daemon-item:hover { background: var(--bg-hover); }
-    .daemon-item .daemon-status {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .daemon-item .daemon-status.running { background: var(--success); }
-    .daemon-item .daemon-status.down { background: var(--danger); }
-    .daemon-item .daemon-status.stale { background: var(--warning); }
-
-    .daemon-info { flex: 1; min-width: 0; }
-    .daemon-name {
-      font-size: 12px;
-      font-weight: 500;
-      font-family: var(--font-mono);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .daemon-meta {
-      font-size: 10px;
-      color: var(--text-muted);
-      display: flex;
-      gap: 8px;
-    }
-    .daemon-actions {
-      display: flex;
       gap: 3px;
-      flex-shrink: 0;
-    }
-    .daemon-actions .btn {
-      font-size: 9px;
       padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 600;
     }
+    .heartbeat-badge.critical { background: rgba(243, 139, 168, 0.2); color: var(--danger); }
+    .heartbeat-badge.warning { background: rgba(249, 226, 175, 0.2); color: var(--warning); }
+    .heartbeat-badge.ok { background: rgba(166, 227, 161, 0.15); color: var(--success); }
 
-    .log-viewer {
+    .log-modal {
       display: none;
-      margin: 0 10px 6px;
-      padding: 6px 8px;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .log-modal.open { display: flex; }
+    .log-modal-content {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      font-family: var(--font-mono);
-      font-size: 9px;
-      line-height: 1.3;
-      color: var(--text-secondary);
-      max-height: 200px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-    .log-viewer.open { display: block; }
-
-    .actions-row {
+      border-radius: var(--radius);
+      width: 90%;
+      max-height: 80%;
       display: flex;
-      gap: 4px;
-      padding: 4px 8px;
-      flex-shrink: 0;
-      border-top: 1px solid var(--border-color);
+      flex-direction: column;
+    }
+    .log-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+    .log-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      white-space: pre-wrap;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      line-height: 1.4;
     }
 
-    .error-count {
-      font-size: 9px;
-      padding: 0 4px;
-      border-radius: 6px;
-      background: rgba(243,139,168,0.15);
-      color: var(--danger);
+    .restart-toast {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      z-index: 999;
+      animation: toastIn 0.2s ease-out, toastOut 0.2s ease-in 2s forwards;
     }
+    .restart-toast.success { background: var(--bg-active); border: 1px solid var(--success); color: var(--success); }
+    .restart-toast.error { background: var(--bg-active); border: 1px solid var(--danger); color: var(--danger); }
   </style>
 </head>
 <body>
@@ -116,47 +144,59 @@
     <div class="connection-bar" id="connectionBar">
       <span class="status-dot disconnected" id="statusDot"></span>
       <span id="connectionText">Connecting...</span>
+      <span style="margin-left:auto;font-size:9px" id="refreshHint"></span>
     </div>
-
     <div class="widget-header">
-      <span class="widget-title">Crons</span>
+      <span class="widget-title">🫀 Daemons</span>
       <span class="badge" id="daemonCount">0/6</span>
     </div>
 
     <!-- Heartbeat summary -->
-    <div class="heartbeat-summary" id="heartbeatSummary">
-      <span id="hbIcon">⬜</span>
-      <span class="hb-status" id="hbStatus">Loading...</span>
-      <span class="hb-detail" id="hbDetail"></span>
+    <div class="heartbeat-bar" id="heartbeatBar">
+      <span class="heartbeat-status" id="hbStatus">Loading...</span>
+      <span class="heartbeat-meta" id="hbMeta"></span>
     </div>
 
     <!-- Daemon list -->
     <div class="widget-body" id="daemonList">
       <div class="empty-state">
-        <div class="empty-state-icon">📡</div>
-        <div>Waiting for hub...</div>
+        <div class="empty-state-icon">🔄</div>
+        <div>Loading daemons...</div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="actions-row">
+    <!-- Actions row -->
+    <div style="display:flex;gap:4px;padding:4px 8px;border-top:1px solid var(--border-color);flex-shrink:0;">
       <button class="btn btn-sm" onclick="refreshAll()">🔄 Refresh</button>
-      <button class="btn btn-sm" onclick="refreshAll()">📋 Rescan</button>
+      <button class="btn btn-sm" onclick="hub.send({type:'open-widget',widget:'cron-dashboard'})" style="margin-left:auto;">📌 Pin</button>
+    </div>
+  </div>
+
+  <!-- Log viewer modal -->
+  <div class="log-modal" id="logModal" onclick="if(event.target===this)closeLog()">
+    <div class="log-modal-content">
+      <div class="log-modal-header">
+        <span id="logTitle">Log viewer</span>
+        <button class="btn btn-sm" onclick="closeLog()">✕</button>
+      </div>
+      <div class="log-modal-body" id="logBody"></div>
     </div>
   </div>
 
   <script type="module">
     import { connect } from "../shared/ws-client.js";
 
-    const hub = connect("cron-dashboard");
+    window.hub = connect("cron-dashboard");
+    const hub = window.hub;
+
     let daemons = [];
     let heartbeat = null;
-    let openLog = null;
 
     // ── Connection ──────────────────────────────────
     hub.on("connected", () => {
       document.getElementById("statusDot").className = "status-dot connected";
       document.getElementById("connectionText").textContent = "Connected";
+      // Request initial daemon data
       hub.send({ type: "refresh-daemons" });
     });
 
@@ -165,178 +205,148 @@
       document.getElementById("connectionText").textContent = "Reconnecting...";
     });
 
-    // ── Data ────────────────────────────────────────
+    // ── Daemon updates ─────────────────────────────
     hub.on("daemons-updated", (data) => {
-      daemons = data.daemons || [];
-      heartbeat = data.heartbeat || null;
-
-      if (heartbeat) {
-        state._lastHeartbeatUpdate = Date.now();
-      }
-
+      if (data.daemons) daemons = data.daemons;
+      if (data.heartbeat) heartbeat = data.heartbeat;
       render();
     });
 
     hub.on("daemon-restarted", (data) => {
-      showToast(data.success
-        ? `✅ ${data.label} restarted`
-        : `❌ ${data.label} failed: ${data.message}`);
-      if (data.success) {
-        setTimeout(() => hub.send({ type: "refresh-daemons" }), 2000);
-      }
+      showToast(data.success ? "success" : "error",
+        data.success ? `✅ ${data.label} restarted` : `❌ ${data.message}`);
     });
 
-    hub.on("daemon-log", (data) => {
-      if (data.success) {
-        showLog(data.label, data.content);
-      } else {
-        showToast(`❌ ${data.content}`);
-      }
+    // Also update from state-sync (on initial connect)
+    hub.on("state-sync", () => {
+      hub.send({ type: "refresh-daemons" });
     });
+
+    // ── Auto-refresh on heartbeat changes ──────────
+    setInterval(() => {
+      if (hub.connected) hub.send({ type: "refresh-daemons" });
+    }, 30000); // fallback: poll every 30s
 
     // ── Render ─────────────────────────────────────
     function render() {
-      renderHeartbeat();
-      renderDaemonList();
-    }
-
-    function renderHeartbeat() {
-      const hbIcon = document.getElementById("hbIcon");
+      // Heartbeat bar
+      const hbBar = document.getElementById("heartbeatBar");
       const hbStatus = document.getElementById("hbStatus");
-      const hbDetail = document.getElementById("hbDetail");
+      const hbMeta = document.getElementById("hbMeta");
 
-      if (!heartbeat) {
-        hbIcon.textContent = "⬜";
-        hbStatus.textContent = "No heartbeat data";
-        hbDetail.textContent = "";
-        return;
+      if (heartbeat) {
+        const icon = heartbeat.overallStatus?.startsWith("🟢") ? "🟢" :
+                     heartbeat.overallStatus?.startsWith("🟡") ? "🟡" : "🔴";
+        hbStatus.innerHTML = `${icon} ${heartbeat.overallStatus || "unknown"}`;
+
+        let badges = [];
+        if (heartbeat.criticalCount > 0) badges.push(`<span class="heartbeat-badge critical">🔴 ${heartbeat.criticalCount}</span>`);
+        if (heartbeat.warningCount > 0) badges.push(`<span class="heartbeat-badge warning">🟡 ${heartbeat.warningCount}</span>`);
+        if (heartbeat.criticalCount === 0 && heartbeat.warningCount === 0) {
+          badges.push(`<span class="heartbeat-badge ok">✅ clean</span>`);
+        }
+        hbMeta.innerHTML = `Scanned: ${heartbeat.lastScan || "?"} ${badges.join(" ")}`;
+      } else {
+        hbStatus.textContent = "⚠️ No heartbeat data";
+        hbMeta.textContent = "";
       }
 
-      const s = heartbeat.overallStatus || "";
-      if (s.includes("🟢")) hbIcon.textContent = "🟢";
-      else if (s.includes("🔴")) hbIcon.textContent = "🔴";
-      else hbIcon.textContent = "🟡";
-
-      hbStatus.textContent = s || "Unknown";
-
-      const age = heartbeat.lastScan ? timeAgoStr(heartbeat.lastScan) : "?";
-      const parts = [`Scanned: ${age}`];
-      if (heartbeat.criticalCount > 0) {
-        parts.push(`<span class="hb-badge crit">${heartbeat.criticalCount} crit</span>`);
-      }
-      if (heartbeat.warningCount > 0) {
-        parts.push(`<span class="hb-badge warn">${heartbeat.warningCount} warn</span>`);
-      }
-      if (heartbeat.criticalCount === 0 && heartbeat.warningCount === 0) {
-        parts.push(`<span class="hb-badge ok">all clear</span>`);
-      }
-      hbDetail.innerHTML = parts.join(" · ");
-    }
-
-    function renderDaemonList() {
-      const list = document.getElementById("daemonList");
+      // Daemon count
       const running = daemons.filter(d => d.running).length;
       document.getElementById("daemonCount").textContent = `${running}/${daemons.length}`;
 
+      // Daemon list
+      const list = document.getElementById("daemonList");
       if (daemons.length === 0) {
-        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🧹</div><div>No daemons found</div></div>`;
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔄</div><div>No daemon data yet</div></div>`;
         return;
       }
 
       list.innerHTML = daemons.map(d => {
-        let statusClass = "down";
-        if (d.running) {
-          statusClass = (d.errorCount > 0) ? "stale" : "running";
-        }
-
-        const meta = [];
-        if (d.pid) meta.push(`PID ${d.pid}`);
-        if (d.lastLogEntry) meta.push(logAge(d.lastLogEntry));
-        if (d.errorCount > 0) meta.push(`<span class="error-count">${d.errorCount} err</span>`);
+        const statusClass = d.running ? "running" : "down";
+        const statusIcon = d.running ? "🟢" : "🔴";
+        const statusText = d.running ? "Running" : (d.loaded ? "Loaded (not running)" : "Not loaded");
+        const pidText = d.pid ? `PID ${d.pid}` : "—";
+        const logAge = timeAgo(d.lastLogEntry);
 
         return `
-          <div class="daemon-item">
-            <span class="daemon-status ${statusClass}"></span>
-            <div class="daemon-info">
-              <div class="daemon-name">${d.name}</div>
-              <div class="daemon-meta">${meta.join(" · ")}</div>
+          <div class="daemon-item ${statusClass}">
+            <div class="daemon-row">
+              <span class="daemon-status-icon">${statusIcon}</span>
+              <div class="daemon-info">
+                <div class="daemon-name">${d.name}</div>
+                <div class="daemon-meta">
+                  <span>${statusText}</span>
+                  <span>${pidText}</span>
+                  <span>📄 ${logAge}</span>
+                  ${d.errorCount > 0 ? `<span>⚠️ ${d.errorCount} err</span>` : ""}
+                </div>
+              </div>
+              <div class="daemon-actions">
+                <button class="btn btn-sm" onclick="restartDaemon('${d.label}')" title="Restart">↻</button>
+                <button class="btn btn-sm" onclick="viewLog('${d.label}','${d.name}')" title="View log">📋</button>
+              </div>
             </div>
-            <div class="daemon-actions">
-              <button class="btn btn-sm" onclick="restartDaemon('${d.label}')" title="Restart">↻</button>
-              <button class="btn btn-sm" onclick="viewLog('${d.label}')" title="View log">📄</button>
-            </div>
-          </div>
-          <div class="log-viewer" id="log-${d.label}"></div>
-        `;
+          </div>`;
       }).join("");
+
+      // Update refresh hint
+      document.getElementById("refreshHint").textContent = `auto: 30s`;
     }
 
-    // ── Helpers ─────────────────────────────────────
-    function logAge(iso) {
-      if (!iso) return "never";
+    function timeAgo(iso) {
+      if (!iso) return "no log";
       const diff = Date.now() - new Date(iso).getTime();
       const mins = Math.floor(diff / 60000);
-      if (mins < 1) return "just now";
-      if (mins < 60) return `${mins}m ago`;
+      if (mins < 1) return "now";
+      if (mins < 60) return `${mins}m`;
       const hours = Math.floor(mins / 60);
-      if (hours < 24) return `${hours}h ago`;
-      return `${Math.floor(hours / 24)}d ago`;
-    }
-
-    function timeAgoStr(str) {
-      if (!str) return "?";
-      try {
-        const d = new Date(str);
-        return logAge(d.toISOString());
-      } catch {
-        return str;
-      }
+      if (hours < 24) return `${hours}h`;
+      return `${Math.floor(hours / 24)}d`;
     }
 
     // ── Actions ─────────────────────────────────────
-    window.restartDaemon = (label) => {
-      showToast(`Restarting ${label.replace("com.thoth.", "")}...`);
-      hub.send({ type: "restart-daemon", label });
-    };
-
-    window.viewLog = (label) => {
-      const logEl = document.getElementById(`log-${label}`);
-      if (logEl.classList.contains("open")) {
-        logEl.classList.remove("open");
-        logEl.textContent = "";
-        return;
-      }
-
-      // Close any other open logs
-      document.querySelectorAll(".log-viewer.open").forEach(el => {
-        el.classList.remove("open");
-        el.textContent = "";
-      });
-
-      logEl.classList.add("open");
-      logEl.textContent = "Loading...";
-      hub.send({ type: "view-daemon-log", label, lines: 50 });
-    };
-
     window.refreshAll = () => {
       hub.send({ type: "refresh-daemons" });
-      showToast("Refreshing...");
+      showToast("success", "Refreshing...");
     };
 
-    function showLog(label, content) {
-      const logEl = document.getElementById(`log-${label}`);
-      if (logEl) {
-        logEl.textContent = content || "(empty)";
-      }
-    }
+    window.restartDaemon = (label) => {
+      const name = label.replace("com.thoth.", "");
+      if (!confirm(`Restart ${name}?`)) return;
+      hub.send({ type: "restart-daemon", label });
+      showToast("success", `Restarting ${name}...`);
+    };
 
-    function showToast(msg) {
+    window.viewLog = (label, name) => {
+      hub.send({ type: "view-daemon-log", label, lines: 100 });
+      document.getElementById("logTitle").textContent = `📄 ${name} log`;
+      document.getElementById("logBody").textContent = "Loading...";
+      document.getElementById("logModal").classList.add("open");
+    };
+
+    window.closeLog = () => {
+      document.getElementById("logModal").classList.remove("open");
+    };
+
+    hub.on("daemon-log", (data) => {
+      if (document.getElementById("logModal").classList.contains("open")) {
+        document.getElementById("logBody").textContent = data.content || "No log content";
+      }
+    });
+
+    function showToast(type, msg) {
       const toast = document.createElement("div");
-      toast.className = "toast";
+      toast.className = `restart-toast ${type}`;
       toast.textContent = msg;
       document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2500);
+      setTimeout(() => toast.remove(), 2300);
     }
+
+    // ── Keyboard shortcut: Esc to close log ────────
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeLog();
+    });
   </script>
 </body>
 </html>

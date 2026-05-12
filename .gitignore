@@ -41,6 +41,9 @@ logs/*.log
 # Pi runtime data
 .pi/messenger/
 
+# Vault Keeper runtime state
+.vaultkeeper-state.json
+
 # OS junk
 .DS_Store
 Thumbs.db

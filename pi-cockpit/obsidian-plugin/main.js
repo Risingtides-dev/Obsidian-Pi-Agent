@@ -98,12 +98,14 @@ const VIEW_SESSIONS = "pi-cockpit-sessions";
 const VIEW_CHAT     = "pi-cockpit-chat";
 const VIEW_SKILLS   = "pi-cockpit-skills";
 const VIEW_MODEL    = "pi-cockpit-model";
+const VIEW_CRON     = "pi-cockpit-cron";
 
 const WIDGET_TO_VIEW = {
   "session-switcher":  VIEW_SESSIONS,
   "vault-chat":        VIEW_CHAT,
   "skills-directory":  VIEW_SKILLS,
   "model-switcher":    VIEW_MODEL,
+  "cron-dashboard":    VIEW_CRON,
 };
 
 // ───────────────────────── HubClient (shared, single connection) ─────────────────────────
@@ -1076,6 +1078,33 @@ class ModelView extends BasePiView {
   }
 }
 
+// ───────────────────────── Cron Dashboard View (iframe-wrapped HTML widget) ─────────────────────────
+
+class CronView extends BasePiView {
+  getViewType() { return VIEW_CRON; }
+  getDisplayText() { return "Cron Dashboard"; }
+  getIcon() { return "activity"; }
+
+  async onOpen() {
+    const root = this.contentEl;
+    root.empty();
+    root.style.padding = "0";
+    root.style.overflow = "hidden";
+
+    const iframe = root.createEl("iframe", {
+      attr: {
+        src: "http://localhost:3099/widget/cron-dashboard",
+        sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+      },
+    });
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+  }
+
+  async onClose() {}
+}
+
 // ───────────────────────── Vault Chat View ─────────────────────────
 
 class ChatView extends BasePiView {
@@ -1102,6 +1131,7 @@ class ChatView extends BasePiView {
       { name: "Sessions", widget: "session-switcher", icon: "folder" },
       { name: "Skills",   widget: "skills-directory", icon: "package" },
       { name: "Model",    widget: "model-switcher",   icon: "sliders" },
+      { name: "Crons",    widget: "cron-dashboard",   icon: "activity" },
     ];
     for (const l of launches) {
       const btn = launchRow.createEl("button", { cls: "pi-cockpit-launch-btn" });
@@ -1568,6 +1598,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     this.registerView(VIEW_CHAT,     (leaf) => { const v = new ChatView(leaf, self.hub);     v.plugin = self; return v; });
     this.registerView(VIEW_SKILLS,   (leaf) => { const v = new SkillsView(leaf, self.hub);   v.plugin = self; return v; });
     this.registerView(VIEW_MODEL,    (leaf) => { const v = new ModelView(leaf, self.hub);    v.plugin = self; return v; });
+    this.registerView(VIEW_CRON,     (leaf) => { const v = new CronView(leaf, self.hub);     v.plugin = self; return v; });
 
     this.addRibbonIcon("folder",         "PI Sessions",  () => this.openWidget("session-switcher"));
     this.addRibbonIcon("message-square", "Vault Chat",   () => this.openWidget("vault-chat"));
@@ -1576,6 +1607,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     this.addCommand({ id: "open-chat",     name: "Open Vault Chat",    callback: () => this.openWidget("vault-chat") });
     this.addCommand({ id: "open-skills",   name: "Open Skills",        callback: () => this.openWidget("skills-directory") });
     this.addCommand({ id: "open-model",    name: "Open Model Switcher",callback: () => this.openWidget("model-switcher") });
+    this.addCommand({ id: "open-cron",     name: "Open Cron Dashboard",callback: () => this.openWidget("cron-dashboard") });
 
     // Plugin also responds to hub-relayed open-widget messages (from web widgets)
     this.unsubOpenWidget = this.hub.on("open-widget", (msg) => {
@@ -1589,7 +1621,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     if (this.unsubOpenWidget) try { this.unsubOpenWidget(); } catch {}
     this.hub.disconnect();
     // Detach any open PI Cockpit leaves so they don't dangle
-    for (const t of [VIEW_SESSIONS, VIEW_CHAT, VIEW_SKILLS, VIEW_MODEL]) {
+    for (const t of [VIEW_SESSIONS, VIEW_CHAT, VIEW_SKILLS, VIEW_MODEL, VIEW_CRON]) {
       this.app.workspace.detachLeavesOfType(t);
     }
     console.log("[PI Cockpit] Unloaded");

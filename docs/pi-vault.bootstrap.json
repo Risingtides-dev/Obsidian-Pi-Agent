@@ -1,0 +1,123 @@
+{
+  "name": "pi-vault",
+  "description": "Path-agnostic bootstrap manifest for an Obsidian + PI Cockpit vault.",
+  "vault": {
+    "requiredMarkers": [
+      ".obsidian",
+      "pi-cockpit",
+      "launchd",
+      "README.md",
+      "AGENTS.md"
+    ]
+  },
+  "piCockpit": {
+    "port": 3099,
+    "launchAgentLabel": "com.thoth.pi-cockpit.local",
+    "healthEndpoint": "http://localhost:3099/health",
+    "pluginId": "pi-cockpit"
+  },
+  "obsidian": {
+    "communityPlugins": [
+      "terminal",
+      "dataview",
+      "obsidian-git",
+      "obsidian-kanban",
+      "obsidian-shellcommands",
+      "obsidian-style-settings",
+      "surfing",
+      "obsidian-tasks-plugin",
+      "obsidian-custom-frames",
+      "obsidian42-brat",
+      "obsidian-local-rest-api",
+      "pi-cockpit"
+    ],
+    "portableSettings": [
+      "appearance",
+      "themes",
+      "snippets",
+      "community plugin enablement",
+      "hotkeys",
+      "safe plugin config"
+    ],
+    "nonPortableSettings": [
+      "workspace state",
+      "open file history",
+      "terminal cwd history",
+      "machine-local API keys",
+      "machine-local TLS certificates"
+    ]
+  },
+  "mcp": {
+    "mergeInto": "~/.claude.json",
+    "definitions": {
+      "notion": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@notionhq/notion-mcp-server"
+        ],
+        "envKeys": [
+          "NOTION_TOKEN"
+        ]
+      },
+      "neovim": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "mcp-neovim-server"
+        ],
+        "envKeys": [
+          "NVIM_SOCKET_PATH"
+        ]
+      },
+      "excalidraw": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "excalidraw-mcp"
+        ],
+        "envKeys": [
+          "EXPRESS_SERVER_URL",
+          "ENABLE_CANVAS_SYNC"
+        ]
+      },
+      "obsidian": {
+        "command": "npx",
+        "argsTemplate": [
+          "-y",
+          "@mauricio.wolff/mcp-obsidian@latest",
+          "${VAULT_PARENT_DIR}"
+        ]
+      },
+      "pencil": {
+        "enableOnlyIfExecutableExists": true,
+        "args": [
+          "--app",
+          "cursor"
+        ]
+      }
+    }
+  },
+  "piSettings": {
+    "mergeInto": "~/.pi/agent/settings.json",
+    "defaultProvider": "deepseek",
+    "defaultModel": "deepseek-v4-pro",
+    "defaultThinkingLevel": "xhigh",
+    "packages": [
+      "npm:pi-mcp-adapter",
+      "npm:pi-subagents",
+      "npm:pi-messenger",
+      "git:github.com/badlogic/pi-telegram"
+    ]
+  },
+  "safety": {
+    "neverImport": [
+      "~/.pi/agent/sessions",
+      "*.jsonl",
+      "~/.pi/agent/auth.json from another machine",
+      "TLS certs/private keys from another machine",
+      "logs",
+      ".DS_Store"
+    ]
+  }
+}
