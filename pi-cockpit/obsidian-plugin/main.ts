@@ -1,32 +1,78 @@
 /**
  * PI Cockpit — Obsidian Companion Plugin
  *
- * Connects to the PI Cockpit WebSocket hub (localhost:3099) and
- * executes layout commands using Obsidian's Workspace API.
- *
- * When the hub sends an "apply-layout" message, this plugin:
- *   1. Closes existing Custom Frame views
- *   2. Creates new splits with the specified widgets
- *   3. Opens each widget's URL in a Custom Frame pane
- *
- * Depends on: Custom Frames community plugin (ellpeck/ObsidianCustomFrames)
+ * Connects to the PI Cockpit WebSocket hub (localhost:3099).
+ * Opens widget panes in Obsidian using a custom iframe view.
  */
 
-import { Plugin, WorkspaceLeaf, Notice } from "obsidian";
+import { Plugin, ItemView, WorkspaceLeaf, Notice } from "obsidian";
 
 const HUB_URL = "ws://localhost:3099";
-const RECONNECT_DELAY = 3000;
+const VIEW_TYPE_PREFIX = "pi-cockpit-widget";
 
-interface LayoutPanel {
-  widget: string;
-  position: string;  // 'split-vertical' | 'split-horizontal' | 'right-sidebar' | 'left-sidebar'
-  size?: number;
-}
+const WIDGETS: Record<string, { url: string; mode: string; displayName: string }> = {
+  "session-switcher": {
+    url: "http://localhost:3099/widget/session-switcher",
+    mode: "sidebar",
+    displayName: "PI Sessions",
+  },
+  "vault-chat": {
+    url: "http://localhost:3099/widget/vault-chat",
+    mode: "tab",
+    displayName: "Vault Chat",
+  },
+  "skills-directory": {
+    url: "http://localhost:3099/widget/skills-directory",
+    mode: "tab",
+    displayName: "Skills",
+  },
+  "model-switcher": {
+    url: "http://localhost:3099/widget/model-switcher",
+    mode: "tab",
+    displayName: "Model",
+  },
+};
 
-interface LayoutCommand {
-  type: "apply-layout";
-  layout: string;
-  panels: LayoutPanel[];
+class WidgetView extends ItemView {
+  url: string;
+  _displayName: string;
+
+  constructor(leaf: WorkspaceLeaf, url: string, displayName: string) {
+    super(leaf);
+    this.url = url;
+    this._displayName = displayName;
+  }
+
+  getViewType(): string {
+    return VIEW_TYPE_PREFIX;
+  }
+
+  getDisplayText(): string {
+    return this._displayName || "PI Cockpit";
+  }
+
+  getIcon(): string {
+    return "layout-dashboard";
+  }
+
+  async onOpen() {
+    const container = this.containerEl.children[1] as HTMLElement;
+    container.empty();
+    container.style.padding = "0";
+    container.style.overflow = "hidden";
+
+    const iframe = container.createEl("iframe", {
+      attr: {
+        src: this.url,
+        sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+      },
+    });
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+  }
+
+  async onClose() {}
 }
 
 export default class PiCockpitPlugin extends Plugin {
@@ -35,137 +81,85 @@ export default class PiCockpitPlugin extends Plugin {
 
   async onload() {
     console.log("[PI Cockpit] Plugin loaded");
+
+    this.registerView(
+      VIEW_TYPE_PREFIX,
+      (leaf) => new WidgetView(leaf, "", "PI Cockpit")
+    );
+
     this.connect();
   }
 
   onunload() {
     this.disconnect();
-    console.log("[PI Cockpit] Plugin unloaded");
   }
 
-  // ── WebSocket ──────────────────────────────────────
   connect() {
-    try {
-      this.ws = new WebSocket(HUB_URL);
-    } catch (err) {
-      console.error("[PI Cockpit] Failed to create WebSocket:", err);
-      this.scheduleReconnect();
-      return;
-    }
+    try { this.ws = new WebSocket(HUB_URL); } catch { this.scheduleReconnect(); return; }
 
     this.ws.onopen = () => {
       console.log("[PI Cockpit] Connected to hub");
-      this.ws!.send(JSON.stringify({
-        type: "identify",
-        clientType: "plugin",
-        widgetName: "obsidian-companion",
-      }));
+      this.ws!.send(JSON.stringify({ type: "identify", clientType: "plugin", widgetName: "obsidian-companion" }));
     };
 
     this.ws.onmessage = (event) => {
       let msg;
-      try {
-        msg = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      if (msg.type === "apply-layout") {
-        this.applyLayout(msg);
+      try { msg = JSON.parse(event.data); } catch { return; }
+      if (msg.type === "open-widget") {
+        this.openWidget(msg.widget);
       }
     };
 
-    this.ws.onclose = () => {
-      console.log("[PI Cockpit] Disconnected from hub");
-      this.scheduleReconnect();
-    };
-
-    this.ws.onerror = (err) => {
-      console.error("[PI Cockpit] WebSocket error:", err);
-    };
+    this.ws.onclose = () => { this.scheduleReconnect(); };
   }
 
   disconnect() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
+    if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+    if (this.ws) { this.ws.close(); this.ws = null; }
   }
 
   scheduleReconnect() {
     if (this.reconnectTimer) return;
-    console.log(`[PI Cockpit] Reconnecting in ${RECONNECT_DELAY}ms...`);
-    this.reconnectTimer = window.setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect();
-    }, RECONNECT_DELAY);
+    this.reconnectTimer = window.setTimeout(() => { this.reconnectTimer = null; this.connect(); }, 3000);
   }
 
-  // ── Layout Application ─────────────────────────────
-  async applyLayout(cmd: LayoutCommand) {
-    console.log(`[PI Cockpit] Applying layout: ${cmd.layout}`, cmd.panels);
-    new Notice(`PI Cockpit: ${cmd.layout} layout`);
+  async openWidget(widgetName: string) {
+    const cfg = WIDGETS[widgetName];
+    if (!cfg) {
+      new Notice(`Unknown widget: ${widgetName}`);
+      return;
+    }
 
     const { workspace } = this.app;
+    let leaf: WorkspaceLeaf;
 
-    // Close existing PI Cockpit Custom Frame views first
-    workspace.getLeavesOfType("custom-frames").forEach(leaf => {
-      const view = leaf.view as any;
-      const displayText = view?.getDisplayText?.() || "";
-      // Only close views that look like PI Cockpit widgets
-      if (displayText.includes("PI Cockpit") ||
-          displayText.includes("Session") ||
-          displayText.includes("Vault Chat") ||
-          displayText.includes("Skills") ||
-          displayText.includes("Model")) {
-        leaf.detach();
-      }
-    });
-
-    // Open each panel
-    for (let i = 0; i < cmd.panels.length; i++) {
-      const panel = cmd.panels[i];
-      const url = `http://localhost:3099/widget/${panel.widget}`;
-      const title = this.getWidgetTitle(panel.widget);
-
-      try {
-        let leaf: WorkspaceLeaf;
-
-        if (panel.position === "split-vertical") {
-          leaf = workspace.getLeaf("split", "vertical");
-        } else if (panel.position === "split-horizontal") {
-          leaf = workspace.getLeaf("split", "horizontal");
-        } else if (panel.position === "right-sidebar") {
-          leaf = workspace.getRightLeaf(false)!;
-        } else if (panel.position === "left-sidebar") {
-          leaf = workspace.getLeftLeaf(false)!;
-        } else {
+    try {
+      if (cfg.mode === "sidebar") {
+        leaf = workspace.getRightLeaf(false) as WorkspaceLeaf;
+        if (!leaf) {
           leaf = workspace.getLeaf("split", "vertical");
         }
-
-        // Try to open as a Custom Frames view
-        // This requires the Custom Frames plugin to be installed
-        await leaf.openFile(url as any, { active: i === 0 });
-
-      } catch (err) {
-        console.error(`[PI Cockpit] Failed to open ${panel.widget}:`, err);
-        // Fallback: try opening as a markdown file with an iframe embed
-        new Notice(`Failed to open ${panel.widget}. Is Custom Frames installed?`);
+      } else {
+        leaf = workspace.getLeaf("tab");
       }
-    }
-  }
 
-  getWidgetTitle(widget: string): string {
-    const titles: Record<string, string> = {
-      "session-switcher": "PI Sessions",
-      "vault-chat": "Vault Chat",
-      "skills-directory": "Skills",
-      "model-switcher": "Model",
-    };
-    return titles[widget] || widget;
+      await leaf.setViewState({
+        type: VIEW_TYPE_PREFIX,
+        active: true,
+        state: { url: cfg.url, displayName: cfg.displayName },
+      });
+
+      const view = leaf.view as WidgetView;
+      if (view) {
+        view.url = cfg.url;
+        view._displayName = cfg.displayName;
+        await view.onOpen();
+      }
+
+      new Notice(`Opened ${cfg.displayName}`);
+    } catch (err) {
+      console.error(`[PI Cockpit] Failed to open ${widgetName}:`, err);
+      new Notice(`Failed to open ${cfg.displayName}`);
+    }
   }
 }

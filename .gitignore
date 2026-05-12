@@ -54,3 +54,10 @@ tmp/
 # Sessions
 --session/
 pi-cockpit/hub/node_modules/
+
+# Claude Code worktrees & local state
+.claude/
+
+# Hub logs
+pi-cockpit/logs/
+logs/

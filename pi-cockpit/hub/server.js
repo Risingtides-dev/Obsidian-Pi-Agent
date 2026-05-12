@@ -5,8 +5,8 @@
  *   - Serves widget HTML/JS/CSS as static files
  *   - Manages WebSocket connections from widgets and companion plugin
  *   - Broadcasts state changes
- *   - Monitors PI sessions on disk
- *   - Bridges clipboard operations
+ *   - Monitors PI sessions, skills, and daemons on disk
+ *   - Bridges chat messages through PI SDK
  *
  * Runs on the Mac Mini, reachable via localhost or Tailscale.
  */
@@ -19,13 +19,31 @@ import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import chokidar from "chokidar";
 import { state, getSnapshot } from "./state.js";
-import { scanSessions, readSessionHistory } from "./session-monitor.js";
+import { scanSessions, readSessionHistory, getSessionPath } from "./session-monitor.js";
 import { scanSkills, scanMcpServers, getSkillClipboardText, getMcpClipboardText } from "./skills-monitor.js";
+import { scanDaemons, readHeartbeat, restartDaemon, readDaemonLog } from "./daemon-monitor.js";
 import { getLayout, listLayouts, LAYOUTS } from "./layouts.js";
+import { PiBridge } from "./pi-bridge.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3099;
 const WIDGETS_DIR = join(__dirname, "..", "widgets");
+
+// ── PI Bridge (SDK integration) ────────────────────────────
+const piBridge = new PiBridge();
+
+piBridge.setEventCallback((event) => {
+  broadcast({ type: "agent-event", event });
+
+  if (event.type === "agent_start") {
+    broadcast({ type: "agent-status", streaming: true });
+  } else if (event.type === "agent_end") {
+    broadcast({ type: "agent-status", streaming: false });
+  } else if (event.type === "thinking_level_changed") {
+    state.currentThinkingLevel = event.level;
+    broadcast({ type: "model-changed", model: state.currentModel, thinkingLevel: event.level });
+  }
+});
 
 // ── MIME types for static serving ──────────────────────────
 const MIME = {
@@ -39,16 +57,17 @@ const MIME = {
 };
 
 // ── Static file server ─────────────────────────────────────
+// Serves the landing page and any widget HTML that still exists on disk
+// (e.g. cron-dashboard). Native Obsidian widgets (sessions/chat/skills/model)
+// are rendered directly by the companion plugin and don't need HTML files.
 function serveStatic(req, res) {
   let filePath = join(WIDGETS_DIR, req.url === "/" ? "index.html" : req.url);
 
-  // Route /widget/<name> to /widgets/<name>/index.html
   if (req.url.startsWith("/widget/")) {
     const widgetName = req.url.split("/")[2];
     filePath = join(WIDGETS_DIR, widgetName, "index.html");
   }
 
-  // Security: prevent directory traversal
   if (!filePath.startsWith(WIDGETS_DIR)) {
     res.writeHead(403);
     res.end("Forbidden");
@@ -76,11 +95,21 @@ function serveStatic(req, res) {
 
 // ── REST API endpoints ─────────────────────────────────────
 const REST_HANDLERS = {
-  "/api/state": () => ({ ok: true, ...getSnapshot() }),
+  "/api/state": () => ({
+    ok: true,
+    ...getSnapshot(),
+    currentModel: piBridge.getCurrentModel()?.id || state.currentModel,
+  }),
   "/api/sessions": () => ({ ok: true, sessions: state.sessions }),
   "/api/layouts": () => ({ ok: true, layouts: listLayouts() }),
   "/api/skills": () => ({ ok: true, skills: state.skills }),
   "/api/mcp": () => ({ ok: true, mcpServers: state.mcpServers }),
+  "/api/models": () => ({ ok: true, models: piBridge.getAvailableModels() }),
+  "/api/daemons": () => ({
+    ok: true,
+    daemons: scanDaemons(),
+    heartbeat: readHeartbeat(),
+  }),
 };
 
 async function handleRest(req, res) {
@@ -126,7 +155,6 @@ async function handleMessage(ws, raw) {
   const { type } = msg;
 
   switch (type) {
-    // ── Client identification ──────────────────────────
     case "identify":
       ws._clientType = msg.clientType || "widget";
       ws._widgetName = msg.widgetName || "unknown";
@@ -139,14 +167,17 @@ async function handleMessage(ws, raw) {
         state.connectedWidgets.add(ws._widgetName);
       }
 
-      // Send full state snapshot to the newly connected client
       ws.send(JSON.stringify({
         type: "state-sync",
         ...getSnapshot(),
+        models: piBridge.getAvailableModels(),
+        currentModel: piBridge.getCurrentModel()?.id || state.currentModel,
+        currentThinkingLevel: piBridge.getCurrentThinking() || state.currentThinkingLevel,
+        isStreaming: piBridge.isStreaming,
+        theme: state.theme || null,
       }));
       break;
 
-    // ── Session switching ──────────────────────────────
     case "switch-session":
       {
         const sessionName = msg.session;
@@ -155,37 +186,73 @@ async function handleMessage(ws, raw) {
           ws.send(JSON.stringify({ type: "error", message: `Session "${sessionName}" not found` }));
           return;
         }
-        state.currentSession = sessionName;
-        // Update active flag on all sessions
-        state.sessions.forEach(s => { s.active = s.name === sessionName; });
-        console.log(`[ws] Session switched to: ${sessionName}`);
-        broadcast({ type: "session-changed", session: sessionName, sessions: state.sessions });
+
+        const chosenFile = msg.file || exists.lastFile;
+        const jsonlFile = chosenFile
+          ? join(homedir(), ".pi", "agent", "sessions", sessionName, chosenFile)
+          : null;
+        const projectCwd = exists.cwd || homedir();
+
+        console.log(`[ws] Switching session: ${sessionName} → ${chosenFile || "(new)"}  cwd=${projectCwd}`);
+
+        try {
+          if (jsonlFile) {
+            await piBridge.switchSession(jsonlFile, projectCwd);
+          } else {
+            await piBridge.startSession(undefined, projectCwd);
+          }
+          state.currentSession = sessionName;
+          state.currentSessionFile = chosenFile || null;
+          state.sessions.forEach(s => { s.active = s.name === sessionName; });
+          broadcast({
+            type: "session-changed",
+            session: sessionName,
+            file: chosenFile || null,
+            cwd: projectCwd,
+            sessions: state.sessions,
+          });
+        } catch (err) {
+          ws.send(JSON.stringify({ type: "error", message: `Session switch failed: ${err.message}` }));
+        }
       }
       break;
 
-    // ── Model switching ────────────────────────────────
     case "switch-model":
-      state.currentModel = msg.model || state.currentModel;
-      if (msg.thinkingLevel) state.currentThinkingLevel = msg.thinkingLevel;
-      console.log(`[ws] Model: ${state.currentModel}, thinking: ${state.currentThinkingLevel}`);
-      broadcast({
-        type: "model-changed",
-        model: state.currentModel,
-        thinkingLevel: state.currentThinkingLevel,
-      });
+      {
+        const modelId = msg.model;
+        const thinkingLevel = msg.thinkingLevel;
+
+        if (modelId) {
+          const [provider, ...rest] = modelId.split("/");
+          const bareId = rest.join("/");
+          try {
+            await piBridge.setModel(provider, bareId);
+            state.currentModel = modelId;
+          } catch (err) {
+            ws.send(JSON.stringify({ type: "error", message: `Model switch failed: ${err.message}` }));
+            break;
+          }
+        }
+
+        if (thinkingLevel) {
+          piBridge.setThinking(thinkingLevel);
+          state.currentThinkingLevel = thinkingLevel;
+        }
+
+        console.log(`[ws] Model: ${state.currentModel}, thinking: ${state.currentThinkingLevel}`);
+        broadcast({
+          type: "model-changed",
+          model: state.currentModel,
+          thinkingLevel: state.currentThinkingLevel,
+        });
+      }
       break;
 
-    // ── Open a single widget in a new pane ──────────
     case "open-widget":
       {
         const widgetName = msg.widget;
         console.log(`[ws] Opening widget: ${widgetName}`);
-        // Send to companion plugin to open in a new pane
-        broadcast({
-          type: "open-widget",
-          widget: widgetName,
-        });
-        // Also echo back to widgets so chat can show feedback
+        broadcast({ type: "open-widget", widget: widgetName });
         broadcast({
           type: "widget-opened",
           widget: widgetName,
@@ -194,7 +261,6 @@ async function handleMessage(ws, raw) {
       }
       break;
 
-    // ── Skill / MCP copy-to-clipboard ──────────────────
     case "copy-skill":
       {
         const text = getSkillClipboardText(msg.skill);
@@ -221,48 +287,197 @@ async function handleMessage(ws, raw) {
       }
       break;
 
-    // ── Chat messages (relayed to PI bridge) ───────────
-    case "chat-message":
+    case "new-session":
       {
-        const sessionName = state.currentSession;
-        console.log(`[chat] Message in ${sessionName}: ${msg.message?.slice(0, 80)}...`);
-        broadcastToWidgets({
-          type: "chat-echo",
-          message: msg.message,
-          session: sessionName,
-          timestamp: new Date().toISOString(),
-        });
+        const sessionName = msg.session || state.currentSession;
+        const sessionRecord = sessionName
+          ? state.sessions.find(s => s.name === sessionName)
+          : null;
+        const projectCwd = sessionRecord?.cwd || homedir();
 
-        // TODO: Full PI SDK integration for actual agent responses
-        // For now, acknowledge receipt
-        ws.send(JSON.stringify({
-          type: "chat-status",
-          status: "received",
-          message: "Message queued. PI SDK integration coming soon.",
-        }));
+        console.log(`[ws] New session in: ${projectCwd}`);
+        try {
+          await piBridge.startSession(undefined, projectCwd);
+          scanSessions();
+          const updated = state.sessions.find(s => s.name === sessionName);
+          if (sessionName) {
+            state.currentSession = sessionName;
+            state.currentSessionFile = updated?.lastFile || null;
+            state.sessions.forEach(s => { s.active = s.name === sessionName; });
+          }
+          broadcast({
+            type: "session-changed",
+            session: state.currentSession,
+            file: state.currentSessionFile,
+            cwd: projectCwd,
+            sessions: state.sessions,
+            isNew: true,
+          });
+        } catch (err) {
+          ws.send(JSON.stringify({ type: "error", message: `New session failed: ${err.message}` }));
+        }
       }
       break;
 
-    // ── Request session history ────────────────────────
+    case "telegram-connect":
+      {
+        const sessionName = msg.session || state.currentSession;
+        state.telegramSession = sessionName;
+        console.log(`[ws] Telegram connected to session: ${sessionName}`);
+        broadcast({ type: "telegram-changed", telegramSession: sessionName });
+      }
+      break;
+
+    case "telegram-disconnect":
+      state.telegramSession = null;
+      console.log("[ws] Telegram disconnected");
+      broadcast({ type: "telegram-changed", telegramSession: null });
+      break;
+
+    case "abort":
+      try {
+        await piBridge.abort();
+        ws.send(JSON.stringify({ type: "abort-ack", success: true }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: err.message }));
+      }
+      break;
+
+    case "chat-message":
+      {
+        const text = msg.message;
+        if (!text) break;
+
+        let origin = "unknown";
+        let taggedText = text;
+        if (ws._clientType === "plugin") {
+          origin = "vault chat";
+          taggedText = `[vault chat] ${text}`;
+        } else if (ws._clientType === "telegram") {
+          origin = "telegram";
+          taggedText = `[telegram] ${text}`;
+        }
+
+        console.log(`[chat] ${origin}: ${text.slice(0, 80)}...`);
+
+        broadcast({
+          type: "user-message",
+          message: text,
+          origin: origin,
+          timestamp: new Date().toISOString(),
+        }, ws);
+
+        if (!piBridge.session) {
+          const selected = state.currentSession
+            ? state.sessions.find(s => s.name === state.currentSession)
+            : null;
+          const autoCwd = selected?.cwd || homedir();
+          ws.send(JSON.stringify({
+            type: "chat-status",
+            status: "starting",
+            message: `Starting session in ${autoCwd}...`,
+          }));
+          try {
+            await piBridge.startSession(undefined, autoCwd);
+          } catch (err) {
+            ws.send(JSON.stringify({
+              type: "chat-status",
+              status: "error",
+              message: `Failed to start session: ${err.message}`,
+            }));
+            break;
+          }
+        }
+
+        try {
+          ws.send(JSON.stringify({
+            type: "chat-status",
+            status: "received",
+            message: "Processing...",
+          }));
+          await piBridge.sendMessage(taggedText);
+        } catch (err) {
+          ws.send(JSON.stringify({
+            type: "chat-status",
+            status: "error",
+            message: err.message,
+          }));
+        }
+      }
+      break;
+
     case "get-history":
       {
-        const history = readSessionHistory(msg.session || state.currentSession, msg.limit || 50);
+        const sessionName = msg.session || state.currentSession;
+        const file = msg.file
+          || (sessionName === state.currentSession ? state.currentSessionFile : null)
+          || null;
+        const history = readSessionHistory(sessionName, msg.limit || 200, file);
         ws.send(JSON.stringify({
           type: "session-history",
-          session: msg.session || state.currentSession,
+          session: sessionName,
+          file,
           entries: history,
         }));
       }
       break;
 
-    // ── Request skills/MCP refresh ─────────────────────
     case "refresh-skills":
       scanSkills();
       scanMcpServers();
       broadcast({ type: "skills-updated", skills: state.skills, mcpServers: state.mcpServers });
       break;
 
-    // ── Unknown ────────────────────────────────────────
+    case "theme-update":
+      state.theme = { vars: msg.vars, isDark: msg.isDark, ts: Date.now() };
+      broadcastToWidgets({
+        type: "theme-update",
+        vars: msg.vars,
+        isDark: msg.isDark,
+      });
+      break;
+
+    case "refresh-daemons":
+    case "daemons-refresh":
+      {
+        const daemons = scanDaemons();
+        const heartbeat = readHeartbeat();
+        ws.send(JSON.stringify({ type: "daemons-updated", daemons, heartbeat }));
+        broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+      }
+      break;
+
+    case "restart-daemon":
+      {
+        const label = msg.label || msg.daemon;
+        if (!label) {
+          ws.send(JSON.stringify({ type: "error", message: "Missing daemon label" }));
+          return;
+        }
+        console.log(`[ws] Restarting daemon: ${label}`);
+        const result = restartDaemon(label);
+        ws.send(JSON.stringify({ type: "daemon-restarted", label, ...result }));
+        setTimeout(() => {
+          const daemons = scanDaemons();
+          const heartbeat = readHeartbeat();
+          broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+        }, 1500);
+      }
+      break;
+
+    case "view-daemon-log":
+      {
+        const label = msg.label || msg.daemon;
+        const lines = msg.lines || 50;
+        if (!label) {
+          ws.send(JSON.stringify({ type: "error", message: "Missing daemon label" }));
+          return;
+        }
+        const result = readDaemonLog(label, lines);
+        ws.send(JSON.stringify({ type: "daemon-log", label, ...result }));
+      }
+      break;
+
     default:
       ws.send(JSON.stringify({ type: "error", message: `Unknown message type: ${type}` }));
   }
@@ -307,7 +522,7 @@ wss.on("connection", (ws) => {
 const watcher = chokidar.watch(
   [homedir() + "/.pi/agent/sessions"],
   {
-    ignored: /(^|[/\\])\../, // ignore dotfiles
+    ignored: /(^|[/\\])\../,
     persistent: true,
     depth: 2,
     ignoreInitial: true,
@@ -325,19 +540,38 @@ watcher.on("all", (event, filePath) => {
   }
 });
 
+// ── Heartbeat file watcher ─────────────────────────────────
+const HEARTBEAT_PATH = "/Users/risingtidesdev/dev/Thoth/heartbeat.md";
+const heartbeatWatcher = chokidar.watch(HEARTBEAT_PATH, {
+  persistent: true,
+  ignoreInitial: true,
+});
+
+heartbeatWatcher.on("change", () => {
+  const daemons = scanDaemons();
+  const heartbeat = readHeartbeat();
+  broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+});
+
 // ── Startup ─────────────────────────────────────────────────
 console.log("┌─────────────────────────────────────┐");
 console.log("│        PI Cockpit Hub               │");
 console.log("├─────────────────────────────────────┤");
 
-// Initial scans
 scanSessions();
 scanSkills();
 scanMcpServers();
 
-console.log(`│ Sessions: ${state.sessions.length} found`);
-console.log(`│ Skills:   ${state.skills.length} found`);
-console.log(`│ MCP:      ${state.mcpServers.length} found`);
+const availableModels = piBridge.getAvailableModels();
+const daemons = scanDaemons();
+const heartbeat = readHeartbeat();
+
+console.log(`│ Sessions:  ${state.sessions.length} found`);
+console.log(`│ Skills:    ${state.skills.length} found`);
+console.log(`│ MCP:       ${state.mcpServers.length} found`);
+console.log(`│ Models:    ${availableModels.length} available`);
+console.log(`│ Daemons:   ${daemons.filter(d => d.running).length}/${daemons.length} running`);
+console.log(`│ Heartbeat: ${heartbeat?.overallStatus || "no data"}`);
 console.log(`│ Default session: ${state.currentSession || "none"}`);
 console.log("├─────────────────────────────────────┤");
 
@@ -345,18 +579,18 @@ server.listen(PORT, () => {
   console.log(`│ HTTP:  http://localhost:${PORT}`);
   console.log(`│ WS:    ws://localhost:${PORT}`);
   console.log("├─────────────────────────────────────┤");
-  console.log("│ Widgets:");
-  console.log(`│   http://localhost:${PORT}/widget/session-switcher`);
-  console.log(`│   http://localhost:${PORT}/widget/vault-chat`);
-  console.log(`│   http://localhost:${PORT}/widget/skills-directory`);
-  console.log(`│   http://localhost:${PORT}/widget/model-switcher`);
+  console.log("│ Native widgets render in Obsidian");
+  console.log("│ via the companion plugin.");
+  console.log("│ Cron Dashboard widget at:");
+  console.log(`│   http://localhost:${PORT}/widget/cron-dashboard`);
   console.log("└─────────────────────────────────────┘");
 });
 
-// Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("\nShutting down...");
   await watcher.close();
+  await heartbeatWatcher.close();
+  await piBridge.dispose();
   wss.close();
   server.close();
   process.exit(0);

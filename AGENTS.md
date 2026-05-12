@@ -14,7 +14,7 @@ Obsidian watches the filesystem. Write a file → it appears in the UI instantly
 ## Architecture: Vault + Worktrees
 
 ```
-~/dev/Thoth/                    ← MAIN VAULT — Obsidian runs here
+$VAULT_PATH/                    ← MAIN VAULT — Obsidian runs here
 │                                  Git-tracked: scripts/, AGENTS.md, README.md
 │                                  NOT tracked: all your notes, inbox, projects
 │
@@ -50,14 +50,14 @@ Obsidian watches the filesystem. Write a file → it appears in the UI instantly
 
 ### How Notes Are Shared
 
-Every agent, regardless of which worktree it's in, reads and writes notes to the **main vault** at `/Users/risingtidesdev/dev/Thoth/`. This is stored in the `vault_path` context variable.
+Every agent, regardless of which worktree it's in, reads and writes notes to the **main vault**. The vault path is stored in the `vault_path` context variable (set by the Pi shell wrapper).
 
 ```
 Agent in ~/.worktrees/Thoth-telegram-v2/:
-  writes note → /Users/risingtidesdev/dev/Thoth/3-Resources/Inbox/article.md
+  writes note → $VAULT_PATH/3-Resources/Inbox/article.md
   Obsidian sees it instantly (filesystem watcher)
   Agent in ~/.worktrees/Thoth-mac-feature/:
-    reads note → /Users/risingtidesdev/dev/Thoth/3-Resources/Inbox/article.md
+    reads note → $VAULT_PATH/3-Resources/Inbox/article.md
     same file, no sync, no API, no delay
 ```
 
@@ -71,15 +71,7 @@ This works because:
 
 Git worktrees let you have **multiple working directories** from the same repository, each on a different branch. In Thoth, this means:
 
-```bash
-# Main vault — Obsidian runs here, on 'main' branch
-~/dev/Thoth/
 
-# Worktree — Pi session, on 'telegram-v2' branch
-~/.worktrees/Thoth-telegram-v2/
-
-# Worktree — another Pi session, on 'pi-net' branch
-~/.worktrees/Thoth-pi-net/
 ```
 
 Each worktree has its own copy of `scripts/` (on its branch) but **no notes**. The notes only exist in the main vault. This means:
@@ -157,7 +149,7 @@ These are set by the Pi shell wrapper and available in every session:
 | Variable | Example | Meaning |
 |----------|---------|---------|
 | `git_status` | `🔀telegram-v2 🐙` | Current branch, worktree indicator, GitHub connected |
-| `vault_path` | `/Users/risingtidesdev/dev/Thoth` | Main vault location — read/write notes here |
+| `vault_path` | `$VAULT_PATH` (e.g. `~/dev/Thoth`) | Main vault location — read/write notes here |
 | `current_project` | `Thoth Obsidian Integration` | Active project focus |
 
 ## Available Tools

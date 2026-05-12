@@ -58,6 +58,21 @@ Widget-based control surface for PI coding agents, designed to be embedded in Ob
 4. `npm install`
 5. Load launchd jobs: `launchctl load ~/Library/LaunchAgents/com.thoth.*.plist`
 
+## pi-vault Bootstrap
+
+This repo can act as a handoff source for a fresh local setup.
+
+- Human-readable agent handoff prompt: `.github/PI_VAULT_BOOTSTRAP.md`
+- Machine-readable bootstrap manifest: `docs/pi-vault.bootstrap.json`
+- Path-agnostic local launchd generator: `scripts/bootstrap-pi-vault.js`
+
+The intended flow is:
+1. Clone the repo
+2. Point an agent at the repo
+3. Have the agent read the bootstrap prompt + manifest
+4. Generate machine-local paths and launchd config
+5. Configure local plugins, MCP definitions, and PI settings without importing sessions or secrets from another machine
+
 ## Requires
 
 - Node.js 22+

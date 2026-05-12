@@ -139,10 +139,8 @@ async function processInbox() {
   let message = currentText
     .replace(/^#\s*🗣️\s*Inbox\s*/i, '')   // remove heading
     .replace(/- \[x\]\s*Send\s*/gi, '')      // remove checkbox
-    .replace(/\*Type your next.*?\*
-?/gi, '') // remove instruction line
-    .replace(/✅\s*\d{4}-\d{2}-\d{2}
-?/g, '') // remove datestamps
+    .replace(/\*Type your next.*?\*\n?/gi, '') // remove instruction line
+    .replace(/✅\s*\d{4}-\d{2}-\d{2}\n?/g, '') // remove datestamps
     .replace(/\n{3,}/g, '\n\n')               // collapse triple+ newlines
     .trim();
 

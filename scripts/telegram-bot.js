@@ -444,7 +444,7 @@ bot.command('start', async (ctx) => {
     `• **Voice** — transcribed + summarized\n` +
     `• **Photos** — saved with captions\n` +
     `• **Documents** — filed with notes\n\n` +
-    `Everything lands in \`3-Resources/Inbox/\``,
+    `Everything lands in \`0-Inbox/\``,
     { parse_mode: 'Markdown' }
   );
 });

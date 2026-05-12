@@ -6,8 +6,10 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = path.join(__dirname, 'living-config.json');
-const OUTPUT_PATH = path.join(__dirname, '..', 'Living.md');
-const LOG_PATH = path.join(__dirname, '..', 'logs', 'living-sync.log');
+const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+const VAULT = config.vaultPath;
+const OUTPUT_PATH = path.join(VAULT, 'Living.md');
+const LOG_PATH = path.join(VAULT, 'logs', 'living-sync.log');
 
 function log(msg) {
   const ts = new Date().toISOString();
@@ -106,8 +108,6 @@ async function watch(config) {
 
 // Main
 (async () => {
-  const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-
   const args = process.argv.slice(2);
   if (args.includes('--watch') || args.includes('-w')) {
     await watch(config);
