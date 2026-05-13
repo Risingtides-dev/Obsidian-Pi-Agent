@@ -22,6 +22,7 @@ import { state, getSnapshot } from "./state.js";
 import { scanSessions, readSessionHistory, getSessionPath } from "./session-monitor.js";
 import { scanSkills, scanMcpServers, getSkillClipboardText, getMcpClipboardText } from "./skills-monitor.js";
 import { scanDaemons, readHeartbeat, restartDaemon, readDaemonLog } from "./daemon-monitor.js";
+import { listRoutines, getRoutine, saveRoutine, deleteRoutine, toggleRoutine, runRoutineNow, readRoutineLog } from "./routines-monitor.js";
 import { getLayout, listLayouts, LAYOUTS } from "./layouts.js";
 import { PiBridge } from "./pi-bridge.js";
 
@@ -110,6 +111,7 @@ const REST_HANDLERS = {
     daemons: scanDaemons(),
     heartbeat: readHeartbeat(),
   }),
+  "/api/routines": () => ({ ok: true, routines: listRoutines() }),
 };
 
 async function handleRest(req, res) {
@@ -475,6 +477,63 @@ async function handleMessage(ws, raw) {
         }
         const result = readDaemonLog(label, lines);
         ws.send(JSON.stringify({ type: "daemon-log", label, ...result }));
+      }
+      break;
+
+    // ── Routines (user-defined recurring tasks) ─────
+    case "refresh-routines":
+      ws.send(JSON.stringify({ type: "routines-updated", routines: listRoutines() }));
+      break;
+
+    case "get-routine":
+      {
+        const r = getRoutine(msg.slug);
+        ws.send(JSON.stringify({ type: "routine-detail", slug: msg.slug, routine: r }));
+      }
+      break;
+
+    case "save-routine":
+      try {
+        const saved = saveRoutine(msg.routine || {});
+        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        ws.send(JSON.stringify({ type: "routine-saved", routine: saved }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `save-routine: ${err.message}` }));
+      }
+      break;
+
+    case "delete-routine":
+      try {
+        deleteRoutine(msg.slug);
+        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        ws.send(JSON.stringify({ type: "routine-deleted", slug: msg.slug }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `delete-routine: ${err.message}` }));
+      }
+      break;
+
+    case "toggle-routine":
+      try {
+        const r = toggleRoutine(msg.slug, msg.enabled);
+        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        ws.send(JSON.stringify({ type: "routine-toggled", slug: msg.slug, ...r }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `toggle-routine: ${err.message}` }));
+      }
+      break;
+
+    case "run-routine":
+      {
+        const result = runRoutineNow(msg.slug);
+        ws.send(JSON.stringify({ type: "routine-ran", slug: msg.slug, ...result }));
+      }
+      break;
+
+    case "view-routine-log":
+      {
+        const lines = msg.lines || 50;
+        const result = readRoutineLog(msg.slug, lines);
+        ws.send(JSON.stringify({ type: "routine-log", slug: msg.slug, ...result }));
       }
       break;
 
