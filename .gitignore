@@ -66,3 +66,4 @@ pi-cockpit/hub/node_modules/
 # Hub logs
 pi-cockpit/logs/
 logs/
+pi-cockpit.backup-*/
