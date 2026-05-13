@@ -52,6 +52,13 @@ const ICON_PATHS = {
   "file-text":     "M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z",
   "clock":         "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z",
   "info":          "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z",
+  "heart-pulse":   "M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,20.65,8.42,42.71,25,65.59l4.61,6.21A8,8,0,0,0,52,177h41.74L116,210.4a8,8,0,0,0,13.86-.74L154.47,159l13,19.55a8,8,0,0,0,6.66,3.57h32.07a8,8,0,0,0,6.4-3.2C233.61,154.05,240,134.85,240,118A62.07,62.07,0,0,0,178,40ZM202.4,166.11H178.45l-17.79-26.71a8,8,0,0,0-14-.84l-23.81,48.6L106.66,160.6A8,8,0,0,0,100,157H56.06l-2.39-3.22C39,134.07,32,116,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,121,217.84,142.58,202.4,166.11Z",
+  "play":          "M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z",
+  "pause":         "M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z",
+  "pencil":        "M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z",
+  "trash":         "M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z",
+  "plus":          "M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z",
+  "list":          "M40,128a8,8,0,0,1,8-8H208a8,8,0,0,1,0,16H48A8,8,0,0,1,40,128ZM48,72H208a8,8,0,0,0,0-16H48a8,8,0,0,0,0,16ZM208,184H48a8,8,0,0,0,0,16H208a8,8,0,0,0,0-16Z",
 };
 
 /**
@@ -675,10 +682,253 @@ const STYLES = `
   color: var(--interactive-accent); font-weight: 600;
   font-family: var(--font-monospace);
 }
+
+/* ── Shared header right-side action button (e.g. + on Sessions) ── */
+.pi-cockpit-header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.pi-cockpit-header-btn {
+  background: transparent; border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted); cursor: pointer;
+  width: 24px; height: 24px; padding: 0; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pi-cockpit-header-btn:hover {
+  color: var(--text-normal); border-color: var(--text-muted);
+  background: var(--background-modifier-hover);
+}
+
+/* ── New-session sheet: recent projects + row-field hint ── */
+.pi-cron-recent-list {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.pi-cron-recent-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; cursor: pointer;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pi-cron-recent-row:last-child { border-bottom: 0; }
+.pi-cron-recent-row:hover { background: var(--background-modifier-hover); }
+.pi-cron-recent-icon { color: var(--text-muted); flex-shrink: 0; }
+.pi-cron-recent-main { flex: 1; min-width: 0; }
+.pi-cron-recent-title {
+  font-size: var(--font-ui-small); color: var(--text-normal);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pi-cron-recent-sub {
+  font-size: var(--font-ui-smaller); color: var(--text-muted);
+  font-family: var(--font-monospace); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pi-cron-row-field {
+  flex-direction: row; align-items: center; gap: 10px;
+}
+.pi-cron-row-field > label { min-width: 110px; }
+.pi-cron-field-hint {
+  color: var(--text-muted); font-size: var(--font-ui-smaller);
+}
+
+/* ── Telegram badge in Vault Chat header ── */
+.pi-cockpit-telegram-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: 999px;
+  font-size: var(--font-ui-smaller);
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted); cursor: pointer;
+}
+.pi-cockpit-telegram-badge:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.pi-cockpit-telegram-badge.connected {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+.pi-cockpit-telegram-badge .pi-cockpit-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
+.pi-cockpit-telegram-badge.connected .pi-cockpit-dot { background: var(--interactive-accent); }
+
+/* ── Chat token/cost footer ── */
+.pi-cockpit-stats-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 4px 12px;
+  font-size: 10px; color: var(--text-muted);
+  font-family: var(--font-monospace);
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+.pi-cockpit-stats-bar .pi-cockpit-stat { white-space: nowrap; }
+.pi-cockpit-stats-bar .pi-cockpit-stat-label { opacity: 0.7; margin-right: 4px; }
+.pi-cockpit-stats-bar .pi-cockpit-stat-val { color: var(--text-normal); }
+
+/* ── Cron view: looser row spacing ── */
+.pi-cron-list .pi-cockpit-item {
+  padding: 14px 14px;
+  gap: 14px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pi-cron-list .pi-cockpit-item:last-child { border-bottom: 0; }
+.pi-cron-list .pi-cockpit-item-icon { font-size: 18px; }
+.pi-cron-list .pi-cockpit-item-title {
+  font-size: var(--font-ui-medium);
+  margin-bottom: 4px;
+}
+.pi-cron-list .pi-cockpit-item-sub {
+  font-size: var(--font-ui-smaller);
+  line-height: 1.5;
+  white-space: normal;
+  font-family: var(--font-interface);
+}
+.pi-cron-list .pi-cockpit-item-meta { gap: 4px; }
+
+/* Tabs strip inside cron gets a little more breathing room */
+.pi-cron-list-wrapper .pi-cockpit-tabs {
+  padding: 4px 0;
+}
+
+/* ── Cron view: sheet & form fields ── */
+.pi-cron-sheet {
+  position: absolute; inset: 0;
+  background: var(--background-primary);
+  display: flex; flex-direction: column;
+  z-index: 10;
+}
+.pi-cron-sheet-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.pi-cron-sheet-title {
+  font-weight: 600;
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+.pi-cron-sheet-close {
+  background: transparent; border: 0; color: var(--text-muted);
+  cursor: pointer; font-size: 22px; line-height: 1;
+  width: 28px; height: 28px; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pi-cron-sheet-close:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.pi-cron-sheet-body {
+  flex: 1; overflow-y: auto;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.pi-cron-sheet-foot {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 20px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+.pi-cron-sheet-foot .pi-cron-spacer { flex: 1; }
+.pi-cron-sheet-foot button {
+  padding: 6px 14px; font-size: var(--font-ui-small);
+  background: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal); cursor: pointer;
+  transition: background-color 80ms ease;
+}
+.pi-cron-sheet-foot button:hover { background: var(--interactive-hover); }
+.pi-cron-sheet-foot button.pi-cron-primary {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.pi-cron-sheet-foot button.pi-cron-primary:hover { background: var(--interactive-accent-hover); }
+.pi-cron-sheet-foot button.pi-cron-danger {
+  color: var(--text-error, var(--color-red));
+  border-color: var(--background-modifier-border);
+}
+.pi-cron-sheet-foot button.pi-cron-danger:hover {
+  background: var(--background-modifier-error, rgba(255,80,80,0.1));
+}
+
+.pi-cron-field { display: flex; flex-direction: column; gap: 6px; }
+.pi-cron-field label {
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pi-cron-field input, .pi-cron-field textarea, .pi-cron-field select {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  font-family: var(--font-interface);
+}
+.pi-cron-field input:focus, .pi-cron-field textarea:focus, .pi-cron-field select:focus {
+  border-color: var(--interactive-accent); outline: none;
+}
+.pi-cron-field textarea {
+  font-family: var(--font-monospace);
+  resize: vertical; min-height: 140px;
+  line-height: 1.5;
+}
+
+/* Read-only metadata grid (daemon detail) */
+.pi-cron-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 14px;
+  align-items: baseline;
+  padding: 14px 16px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  font-size: var(--font-ui-small);
+}
+.pi-cron-meta-key {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: var(--font-ui-smaller);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.pi-cron-meta-val {
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+  word-break: break-all;
+}
+
+/* Log section */
+.pi-cron-log-section {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pi-cron-log-label {
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pi-cron-log {
+  background: var(--background-secondary);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  padding: 14px;
+  border-radius: 6px;
+  white-space: pre-wrap; word-break: break-all;
+  max-height: 360px; overflow-y: auto;
+  color: var(--text-normal); margin: 0;
+  line-height: 1.5;
+}
 `;
 
 function injectStyles() {
-  if (document.getElementById(STYLE_ID)) return;
+  // Always replace — Obsidian doesn't unload the <style> on plugin reload,
+  // so without this, CSS changes never take effect until full app restart.
+  const existing = document.getElementById(STYLE_ID);
+  if (existing) existing.remove();
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = STYLES;
@@ -745,7 +995,14 @@ class SessionsView extends BasePiView {
 
     const header = root.createDiv({ cls: "pi-cockpit-header" });
     header.createSpan({ cls: "pi-cockpit-title", text: "PI Sessions" });
-    this.countEl = header.createSpan({ cls: "pi-cockpit-subtitle", text: "0" });
+    const headerRight = header.createDiv({ cls: "pi-cockpit-header-right" });
+    this.countEl = headerRight.createSpan({ cls: "pi-cockpit-subtitle", text: "0" });
+    const newBtn = headerRight.createEl("button", {
+      cls: "pi-cockpit-header-btn",
+      attr: { title: "New session" }
+    });
+    phosphorIcon(newBtn, "plus", 14);
+    newBtn.addEventListener("click", () => this.openNewSessionModal());
 
     this.bodyEl = root.createDiv({ cls: "pi-cockpit-body" });
     this.renderConnectionFooter(root);
@@ -862,6 +1119,72 @@ class SessionsView extends BasePiView {
         }
       }
     }
+  }
+
+  // Open a sheet to start a fresh session in a project.
+  // Pick an existing tracked project, type a folder path, or browse via Obsidian's vault root.
+  openNewSessionModal() {
+    const sheet = this.contentEl.createDiv({ cls: "pi-cron-sheet" });
+    const head  = sheet.createDiv({ cls: "pi-cron-sheet-head" });
+    head.createSpan({ cls: "pi-cron-sheet-title", text: "New session" });
+    const close = head.createEl("button", { cls: "pi-cron-sheet-close", text: "×" });
+    const closeIt = () => sheet.remove();
+    close.addEventListener("click", closeIt);
+
+    const body = sheet.createDiv({ cls: "pi-cron-sheet-body" });
+
+    // Field: folder (custom path)
+    const folderField = body.createDiv({ cls: "pi-cron-field" });
+    folderField.createEl("label", { text: "Working folder" });
+    const folderInput = folderField.createEl("input", {
+      attr: { type: "text", placeholder: "/Users/.../my-project" }
+    });
+    const seed = this.sessions[0]?.cwd || "/Users/risingtidesdev/dev/Thoth";
+    folderInput.value = seed;
+
+    // Known projects (clickable list)
+    const known = this.sessions.filter(s => s.cwd).slice(0, 8);
+    if (known.length) {
+      const recentLabel = body.createDiv({ cls: "pi-cron-log-label", text: "Recent projects" });
+      recentLabel.style.marginTop = "4px";
+      const list = body.createDiv({ cls: "pi-cron-recent-list" });
+      for (const s of known) {
+        const row = list.createDiv({ cls: "pi-cron-recent-row" });
+        phosphorIcon(row.createSpan({ cls: "pi-cron-recent-icon" }), s.isWorktree ? "git-branch" : "folder", 14);
+        const main = row.createDiv({ cls: "pi-cron-recent-main" });
+        main.createDiv({ cls: "pi-cron-recent-title", text: s.shortName || s.name });
+        main.createDiv({ cls: "pi-cron-recent-sub", text: s.cwd });
+        row.addEventListener("click", () => { folderInput.value = s.cwd; });
+      }
+    }
+
+    // Worktree toggle (informational — backend resolves worktree from path automatically)
+    const wtField = body.createDiv({ cls: "pi-cron-field pi-cron-row-field" });
+    wtField.createEl("label", { text: "Use worktree" });
+    const wtToggle = wtField.createEl("input", { attr: { type: "checkbox" } });
+    const wtNote = wtField.createEl("span", { cls: "pi-cron-field-hint", text: "create a fresh git worktree for this run" });
+
+    const foot = sheet.createDiv({ cls: "pi-cron-sheet-foot" });
+    const cancel = foot.createEl("button", { text: "Cancel" });
+    cancel.addEventListener("click", closeIt);
+    foot.createDiv({ cls: "pi-cron-spacer" });
+    const startBtn = foot.createEl("button", { cls: "pi-cron-primary", text: "Start session" });
+    startBtn.addEventListener("click", () => {
+      const folder = folderInput.value.trim();
+      if (!folder) { folderInput.focus(); return; }
+      // Match server.js: a "new-session" message picks the cwd from the named session record.
+      // If user typed a path matching a known project, route through that name; else fall through
+      // to a generic new-session that uses currentSession's cwd as a fallback.
+      const match = this.sessions.find(s => s.cwd === folder);
+      const msg = match
+        ? { type: "new-session", session: match.name }
+        : { type: "new-session", cwd: folder, useWorktree: wtToggle.checked };
+      this.hub.send(msg);
+      closeIt();
+    });
+
+    folderInput.focus();
+    folderInput.select();
   }
 }
 
@@ -1078,31 +1401,359 @@ class ModelView extends BasePiView {
   }
 }
 
-// ───────────────────────── Cron Dashboard View (iframe-wrapped HTML widget) ─────────────────────────
+// ───────────────────────── Cron Dashboard View (native) ─────────────────────────
+
+const SCHEDULE_PRESETS = [
+  { id: "manual",         label: "Manual" },
+  { id: "hourly",         label: "Hourly" },
+  { id: "every@15",       label: "Every 15 min" },
+  { id: "every@30",       label: "Every 30 min" },
+  { id: "daily@09:00",    label: "Daily 9:00" },
+  { id: "daily@17:00",    label: "Daily 17:00" },
+  { id: "weekdays@09:00", label: "Weekdays 9:00" },
+];
 
 class CronView extends BasePiView {
   getViewType() { return VIEW_CRON; }
-  getDisplayText() { return "Cron Dashboard"; }
-  getIcon() { return "activity"; }
+  getDisplayText() { return "Crons"; }
+  getIcon() { return "heart-pulse"; }
 
   async onOpen() {
+    injectStyles();
     const root = this.contentEl;
     root.empty();
-    root.style.padding = "0";
-    root.style.overflow = "hidden";
+    root.addClass("pi-cockpit-root");
+    root.style.position = "relative";
 
-    const iframe = root.createEl("iframe", {
-      attr: {
-        src: "http://localhost:3099/widget/cron-dashboard",
-        sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
-      },
+    const header = root.createDiv({ cls: "pi-cockpit-header" });
+    this.titleEl = header.createSpan({ cls: "pi-cockpit-title", text: "Daemons" });
+    this.countEl = header.createSpan({ cls: "pi-cockpit-subtitle", text: "0" });
+
+    const tabs = root.createDiv({ cls: "pi-cockpit-tabs" });
+    this.tabDaemons  = tabs.createDiv({ cls: "pi-cockpit-tab active", text: "Daemons" });
+    this.tabRoutines = tabs.createDiv({ cls: "pi-cockpit-tab", text: "Routines" });
+    this.tabDaemons.addEventListener("click",  () => this.switchTab("daemons"));
+    this.tabRoutines.addEventListener("click", () => this.switchTab("routines"));
+
+    this.searchEl = root.createEl("input", {
+      cls: "pi-cockpit-search",
+      attr: { type: "text", placeholder: "Filter..." }
     });
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    iframe.style.border = "none";
+    this.searchEl.addEventListener("input", () => this.render());
+
+    this.bodyEl = root.createDiv({ cls: "pi-cockpit-body pi-cron-list" });
+    this.renderConnectionFooter(root);
+
+    this.activeTab = "daemons";
+    this.daemons = [];
+    this.heartbeat = null;
+    this.routines = [];
+
+    this.render();
+
+    if (this.hub.connected) {
+      this.hub.send({ type: "refresh-daemons" });
+      this.hub.send({ type: "refresh-routines" });
+    }
+    this.sub("connected", () => {
+      this.hub.send({ type: "refresh-daemons" });
+      this.hub.send({ type: "refresh-routines" });
+    });
+    this.sub("daemons-updated", (d) => {
+      if (Array.isArray(d.daemons)) this.daemons = d.daemons;
+      if (d.heartbeat) this.heartbeat = d.heartbeat;
+      this.render();
+    });
+    this.sub("routines-updated", (d) => {
+      if (Array.isArray(d.routines)) this.routines = d.routines;
+      this.render();
+    });
+    this.sub("daemon-restarted", (d) => new obsidian.Notice(d.success ? `Restarted ${d.label || ""}` : (d.message || "Restart failed")));
+    this.sub("routine-saved",    () => new obsidian.Notice("Routine saved"));
+    this.sub("routine-deleted",  () => new obsidian.Notice("Routine deleted"));
+    this.sub("routine-ran",      (d) => new obsidian.Notice(d.ok ? "Triggered" : (d.message || "Run failed")));
+
+    this.refreshTimer = window.setInterval(() => {
+      if (this.hub.connected) {
+        this.hub.send({ type: this.activeTab === "daemons" ? "refresh-daemons" : "refresh-routines" });
+      }
+    }, 30000);
   }
 
-  async onClose() {}
+  async onClose() {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    await super.onClose();
+  }
+
+  switchTab(tab) {
+    this.activeTab = tab;
+    this.tabDaemons.toggleClass("active",  tab === "daemons");
+    this.tabRoutines.toggleClass("active", tab === "routines");
+    this.searchEl.value = "";
+    this.render();
+  }
+
+  render() {
+    const items = this.activeTab === "daemons" ? this.daemons : this.routines;
+    const filter = (this.searchEl.value || "").toLowerCase();
+    const filtered = items.filter(i => {
+      const hay = `${i.name || ""} ${i.description || ""} ${i.schedule || ""}`.toLowerCase();
+      return hay.includes(filter);
+    });
+
+    this.titleEl.setText(this.activeTab === "daemons" ? "Daemons" : "Routines");
+    this.countEl.setText(String(items.length));
+
+    this.bodyEl.empty();
+
+    // Routines tab: + New row at the top
+    if (this.activeTab === "routines") {
+      const newRow = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
+      newRow.style.color = "var(--interactive-accent)";
+      phosphorIcon(newRow.createSpan({ cls: "pi-cockpit-item-icon" }), "plus", 16);
+      const main = newRow.createDiv({ cls: "pi-cockpit-item-main" });
+      main.createDiv({ cls: "pi-cockpit-item-title", text: "New routine" });
+      main.createDiv({ cls: "pi-cockpit-item-sub", text: "Create a scheduled task" });
+      newRow.addEventListener("click", () => this.openRoutineEditor(null));
+    }
+
+    if (filtered.length === 0) {
+      const empty = this.bodyEl.createDiv({ cls: "pi-cockpit-empty" });
+      phosphorIcon(empty.createDiv({ cls: "pi-cockpit-empty-icon" }), filter ? "magnifying-glass" : "clock", 28);
+      empty.createDiv({
+        text: filter
+          ? "No matches"
+          : (this.activeTab === "daemons" ? "No daemons detected" : "No routines yet")
+      });
+      return;
+    }
+
+    if (this.activeTab === "daemons") {
+      for (const d of filtered) this.renderDaemonRow(d);
+    } else {
+      for (const r of filtered) this.renderRoutineRow(r);
+    }
+  }
+
+  renderDaemonRow(d) {
+    const row = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
+    row.title = d.label;
+
+    phosphorIcon(row.createSpan({ cls: "pi-cockpit-item-icon" }), d.running ? "check-circle" : (d.loaded ? "circle" : "x-circle"), 16);
+
+    const main = row.createDiv({ cls: "pi-cockpit-item-main" });
+    main.createDiv({ cls: "pi-cockpit-item-title", text: d.name });
+    const subBits = [];
+    if (d.pid) subBits.push(`pid ${d.pid}`);
+    subBits.push(timeAgo(d.lastLogEntry) || "no log");
+    if (d.errorCount > 0) subBits.push(`${d.errorCount} err`);
+    main.createDiv({ cls: "pi-cockpit-item-sub", text: subBits.join(" · ") });
+
+    const meta = row.createDiv({ cls: "pi-cockpit-item-meta" });
+    const state = d.running ? "running" : (d.loaded ? "loaded" : "down");
+    meta.createSpan({ cls: "pi-cockpit-chip", text: state });
+
+    row.addEventListener("click", () => this.openDaemonDetail(d));
+  }
+
+  renderRoutineRow(r) {
+    const row = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
+    row.title = r.slug;
+
+    phosphorIcon(row.createSpan({ cls: "pi-cockpit-item-icon" }), "clock", 16);
+
+    const main = row.createDiv({ cls: "pi-cockpit-item-main" });
+    main.createDiv({ cls: "pi-cockpit-item-title", text: r.name });
+    const subBits = [];
+    subBits.push(r.schedule || "manual");
+    if (r.description) subBits.push(r.description);
+    main.createDiv({ cls: "pi-cockpit-item-sub", text: subBits.join(" · ") });
+
+    const meta = row.createDiv({ cls: "pi-cockpit-item-meta" });
+    meta.createSpan({ cls: "pi-cockpit-chip", text: r.enabled ? "active" : "paused" });
+
+    row.addEventListener("click", () => this.openRoutineDetail(r));
+  }
+
+  // ── Inline modal (daemon detail) ──
+  openDaemonDetail(d) {
+    this.openSheet(d.name, (body, foot) => {
+      const meta = body.createDiv({ cls: "pi-cron-meta" });
+      const addRow = (k, v) => {
+        meta.createDiv({ cls: "pi-cron-meta-key", text: k });
+        meta.createDiv({ cls: "pi-cron-meta-val", text: v });
+      };
+      addRow("Label",  d.label);
+      addRow("Status", d.running ? "running" : (d.loaded ? "loaded (not running)" : "not loaded"));
+      if (d.pid)            addRow("PID",      String(d.pid));
+      if (d.lastLogEntry)   addRow("Last log", `${timeAgo(d.lastLogEntry)} ago`);
+      if (d.errorCount)     addRow("Errors",   `${d.errorCount} in stderr`);
+
+      const logSection = body.createDiv({ cls: "pi-cron-log-section" });
+      logSection.createDiv({ cls: "pi-cron-log-label", text: "Recent log" });
+      const logBox = logSection.createEl("pre", { cls: "pi-cron-log" });
+      logBox.textContent = "Loading log…";
+
+      this.hub.send({ type: "view-daemon-log", label: d.label, lines: 60 });
+      const off = this.hub.on("daemon-log", (msg) => {
+        if (msg.label === d.label) logBox.textContent = msg.content || msg.message || "(empty)";
+      });
+      this.sheetCleanup = off;
+
+      foot.createDiv({ cls: "pi-cron-spacer" });
+      const restart = foot.createEl("button", { cls: "pi-cron-primary", text: "Restart" });
+      restart.addEventListener("click", () => {
+        if (!confirm(`Restart ${d.name}?`)) return;
+        this.hub.send({ type: "restart-daemon", label: d.label });
+      });
+    });
+  }
+
+  // ── Inline modal (routine detail/edit) ──
+  openRoutineDetail(r) {
+    this.openSheet(r.name, (body, foot) => {
+      // Hydrate full routine (prompt body)
+      const off = this.hub.on("routine-detail", (msg) => {
+        if (msg.slug !== r.slug) return;
+        if (msg.routine) Object.assign(r, msg.routine);
+        promptInput.value = (r.prompt || "").replace(/^---[\s\S]*?---\s*\n?/, "");
+        try { off(); } catch {}
+      });
+      this.sheetCleanup = off;
+      this.hub.send({ type: "get-routine", slug: r.slug });
+
+      const nameField = body.createDiv({ cls: "pi-cron-field" });
+      nameField.createEl("label", { text: "Name" });
+      const nameInput = nameField.createEl("input", { attr: { type: "text", value: r.name } });
+      nameInput.disabled = true;
+
+      const descField = body.createDiv({ cls: "pi-cron-field" });
+      descField.createEl("label", { text: "Description" });
+      const descInput = descField.createEl("input", { attr: { type: "text", value: r.description || "" } });
+
+      const schedField = body.createDiv({ cls: "pi-cron-field" });
+      schedField.createEl("label", { text: "Schedule" });
+      const schedSelect = schedField.createEl("select");
+      for (const p of SCHEDULE_PRESETS) {
+        const opt = schedSelect.createEl("option", { text: p.label, attr: { value: p.id } });
+        if ((r.schedule || "manual") === p.id) opt.selected = true;
+      }
+
+      const folderField = body.createDiv({ cls: "pi-cron-field" });
+      folderField.createEl("label", { text: "Folder" });
+      const folderInput = folderField.createEl("input", { attr: { type: "text", value: r.folder || "" } });
+
+      const promptField = body.createDiv({ cls: "pi-cron-field" });
+      promptField.createEl("label", { text: "Prompt" });
+      const promptInput = promptField.createEl("textarea");
+      promptInput.value = (r.prompt || "").replace(/^---[\s\S]*?---\s*\n?/, "");
+
+      const delBtn = foot.createEl("button", { cls: "pi-cron-danger", text: "Delete" });
+      delBtn.addEventListener("click", () => {
+        if (!confirm(`Delete routine "${r.name}"?`)) return;
+        this.hub.send({ type: "delete-routine", slug: r.slug });
+        this.closeSheet();
+      });
+
+      foot.createDiv({ cls: "pi-cron-spacer" });
+
+      const pauseBtn = foot.createEl("button", { text: r.enabled ? "Pause" : "Resume" });
+      pauseBtn.addEventListener("click", () => this.hub.send({ type: "toggle-routine", slug: r.slug, enabled: !r.enabled }));
+
+      const runBtn = foot.createEl("button", { text: "Run now" });
+      runBtn.addEventListener("click", () => this.hub.send({ type: "run-routine", slug: r.slug }));
+
+      const saveBtn = foot.createEl("button", { cls: "pi-cron-primary", text: "Save" });
+      saveBtn.addEventListener("click", () => {
+        this.hub.send({
+          type: "save-routine",
+          routine: {
+            name: r.name,
+            description: descInput.value.trim(),
+            schedule: schedSelect.value,
+            folder: folderInput.value.trim(),
+            prompt: promptInput.value,
+            enabled: r.enabled,
+          }
+        });
+        this.closeSheet();
+      });
+    });
+  }
+
+  openRoutineEditor(_unused) {
+    this.openSheet("New routine", (body, foot) => {
+      const nameField = body.createDiv({ cls: "pi-cron-field" });
+      nameField.createEl("label", { text: "Name" });
+      const nameInput = nameField.createEl("input", { attr: { type: "text", placeholder: "morning-standup" } });
+
+      const descField = body.createDiv({ cls: "pi-cron-field" });
+      descField.createEl("label", { text: "Description" });
+      const descInput = descField.createEl("input", { attr: { type: "text", placeholder: "Short summary" } });
+
+      const schedField = body.createDiv({ cls: "pi-cron-field" });
+      schedField.createEl("label", { text: "Schedule" });
+      const schedSelect = schedField.createEl("select");
+      for (const p of SCHEDULE_PRESETS) {
+        schedSelect.createEl("option", { text: p.label, attr: { value: p.id } });
+      }
+
+      const folderField = body.createDiv({ cls: "pi-cron-field" });
+      folderField.createEl("label", { text: "Folder" });
+      const folderInput = folderField.createEl("input", { attr: { type: "text", value: "/Users/risingtidesdev/dev/Thoth" } });
+
+      const promptField = body.createDiv({ cls: "pi-cron-field" });
+      promptField.createEl("label", { text: "Prompt" });
+      const promptInput = promptField.createEl("textarea");
+      promptInput.placeholder = "What should the agent do when this fires?";
+
+      const cancel = foot.createEl("button", { text: "Cancel" });
+      cancel.addEventListener("click", () => this.closeSheet());
+
+      foot.createDiv({ cls: "pi-cron-spacer" });
+
+      const create = foot.createEl("button", { cls: "pi-cron-primary", text: "Create" });
+      create.addEventListener("click", () => {
+        if (!nameInput.value.trim()) { nameInput.focus(); return; }
+        if (!folderInput.value.trim()) { folderInput.focus(); return; }
+        this.hub.send({
+          type: "save-routine",
+          routine: {
+            name: nameInput.value.trim(),
+            description: descInput.value.trim(),
+            schedule: schedSelect.value,
+            folder: folderInput.value.trim(),
+            prompt: promptInput.value,
+            enabled: true,
+          }
+        });
+        this.closeSheet();
+      });
+
+      nameInput.focus();
+    });
+  }
+
+  // ── Reusable bottom sheet ──
+  openSheet(title, buildBody) {
+    this.closeSheet();
+    const sheet = this.contentEl.createDiv({ cls: "pi-cron-sheet" });
+    const head = sheet.createDiv({ cls: "pi-cron-sheet-head" });
+    head.createSpan({ cls: "pi-cron-sheet-title", text: title });
+    const close = head.createEl("button", { cls: "pi-cron-sheet-close", text: "×" });
+    close.addEventListener("click", () => this.closeSheet());
+
+    const body = sheet.createDiv({ cls: "pi-cron-sheet-body" });
+    const foot = sheet.createDiv({ cls: "pi-cron-sheet-foot" });
+
+    this.activeSheet = sheet;
+    buildBody(body, foot);
+  }
+
+  closeSheet() {
+    if (this.activeSheet) { this.activeSheet.remove(); this.activeSheet = null; }
+    if (this.sheetCleanup) { try { this.sheetCleanup(); } catch {} this.sheetCleanup = null; }
+  }
 }
 
 // ───────────────────────── Vault Chat View ─────────────────────────
@@ -1120,7 +1771,23 @@ class ChatView extends BasePiView {
 
     const header = root.createDiv({ cls: "pi-cockpit-header" });
     header.createSpan({ cls: "pi-cockpit-title", text: "Vault Chat" });
-    this.statusEl = header.createSpan({ cls: "pi-cockpit-subtitle", text: "" });
+    const headerRight = header.createDiv({ cls: "pi-cockpit-header-right" });
+    this.statusEl = headerRight.createSpan({ cls: "pi-cockpit-subtitle", text: "" });
+
+    // Telegram connect/disconnect badge — toggles which session Telegram routes into.
+    this.telegramBadge = headerRight.createEl("button", {
+      cls: "pi-cockpit-telegram-badge",
+      attr: { title: "Connect this session to Telegram" }
+    });
+    this.telegramBadge.createSpan({ cls: "pi-cockpit-dot" });
+    this.telegramLabel = this.telegramBadge.createSpan({ text: "Telegram" });
+    this.telegramBadge.addEventListener("click", () => {
+      if (this.telegramSession && this.telegramSession === this.currentSession) {
+        this.hub.send({ type: "telegram-disconnect" });
+      } else {
+        this.hub.send({ type: "telegram-connect", session: this.currentSession });
+      }
+    });
 
     const sessionBar = root.createDiv({ cls: "pi-cockpit-session-bar" });
     phosphorIcon(sessionBar.createSpan(), "folder", 14);
@@ -1131,7 +1798,7 @@ class ChatView extends BasePiView {
       { name: "Sessions", widget: "session-switcher", icon: "folder" },
       { name: "Skills",   widget: "skills-directory", icon: "package" },
       { name: "Model",    widget: "model-switcher",   icon: "sliders" },
-      { name: "Crons",    widget: "cron-dashboard",   icon: "activity" },
+      { name: "Crons",    widget: "cron-dashboard",   icon: "heart-pulse" },
     ];
     for (const l of launches) {
       const btn = launchRow.createEl("button", { cls: "pi-cockpit-launch-btn" });
@@ -1155,6 +1822,16 @@ class ChatView extends BasePiView {
     phosphorIcon(this.sendBtn, "paper-plane", 16);
     this.sendBtn.addEventListener("click", () => this.send());
 
+    // Tokens / cost footer (shown when stats are available)
+    this.statsBar = root.createDiv({ cls: "pi-cockpit-stats-bar" });
+    this.statsBar.style.display = "none";
+    this.statsBar.innerHTML = `
+      <span class="pi-cockpit-stat"><span class="pi-cockpit-stat-label">ctx</span><span class="pi-cockpit-stat-val" data-stat="ctx">—</span></span>
+      <span class="pi-cockpit-stat"><span class="pi-cockpit-stat-label">in</span><span class="pi-cockpit-stat-val" data-stat="in">—</span></span>
+      <span class="pi-cockpit-stat"><span class="pi-cockpit-stat-label">out</span><span class="pi-cockpit-stat-val" data-stat="out">—</span></span>
+      <span class="pi-cockpit-stat"><span class="pi-cockpit-stat-label">$</span><span class="pi-cockpit-stat-val" data-stat="cost">—</span></span>
+    `;
+
     // Streaming state
     this.isStreaming = false;
     this.currentAssistantMsg = null;    // DOM element for current streaming message
@@ -1163,19 +1840,25 @@ class ChatView extends BasePiView {
     this.currentSession  = this.hub.state.currentSession || null;
     this.currentModel    = this.hub.state.currentModel || "deepseek-v4-pro";
     this.currentThinking = this.hub.state.currentThinkingLevel || "high";
+    this.telegramSession = this.hub.state.telegramSession || null;
     this.updateBadges();
+    this.updateTelegramBadge();
 
     this.sub("state-sync", (d) => {
       const prevSession = this.currentSession;
       this.currentSession  = d.currentSession;
       this.currentModel    = d.currentModel || this.currentModel;
       this.currentThinking = d.currentThinkingLevel || this.currentThinking;
+      this.telegramSession = d.telegramSession || null;
       if (d.isStreaming !== undefined) {
         this.isStreaming = d.isStreaming;
         this.sendBtn.disabled = d.isStreaming;
       }
       this.currentSessionFile = d.currentSessionFile || this.currentSessionFile || null;
       this.updateBadges();
+      this.updateTelegramBadge();
+      // Request fresh stats so the footer fills in on view open
+      this.hub.send({ type: "get-session-stats" });
       // First-time open: if hub already has an active session, pull history.
       if (!this._historyLoaded && this.currentSession && this.currentSession !== prevSession) {
         this._historyLoaded = true;
@@ -1186,6 +1869,7 @@ class ChatView extends BasePiView {
       this.currentSession = d.session;
       this.currentSessionFile = d.file || null;
       this.updateBadges();
+      this.updateTelegramBadge();
       // Reset chat surface + request prior history for the new session/file.
       this.messagesEl.empty();
       this.currentAssistantMsg = null;
@@ -1244,6 +1928,15 @@ class ChatView extends BasePiView {
         this.addMessage("user", d.message, d.origin);
       }
     });
+
+    // Telegram bridge status
+    this.sub("telegram-changed", (d) => {
+      this.telegramSession = d.telegramSession || null;
+      this.updateTelegramBadge();
+    });
+
+    // Session stats footer (tokens + cost) — broadcast by hub on every agent_end.
+    this.sub("session-stats", (d) => this.updateStats(d.stats));
 
     if (!this.hub.connected) this.hub.connect();
   }
@@ -1446,6 +2139,58 @@ class ChatView extends BasePiView {
     this.statusEl.setText(`${this.currentModel} · ${this.currentThinking}`);
   }
 
+  updateTelegramBadge() {
+    if (!this.telegramBadge) return;
+    const connectedHere = !!this.telegramSession && this.telegramSession === this.currentSession;
+    const connectedElsewhere = !!this.telegramSession && this.telegramSession !== this.currentSession;
+    this.telegramBadge.toggleClass("connected", connectedHere);
+    if (connectedHere) {
+      this.telegramLabel.setText("Telegram · live");
+      this.telegramBadge.setAttribute("title", "Disconnect Telegram from this session");
+    } else if (connectedElsewhere) {
+      this.telegramLabel.setText(`Telegram · ${shortSessionName(this.telegramSession)}`);
+      this.telegramBadge.setAttribute("title", `Telegram is routed to ${this.telegramSession}. Click to redirect to this session.`);
+    } else {
+      this.telegramLabel.setText("Telegram");
+      this.telegramBadge.setAttribute("title", "Connect this session to Telegram");
+    }
+  }
+
+  // Format token / cost stats coming from the PI SDK.
+  // The SDK shape can vary by provider; we look up common keys defensively.
+  updateStats(stats) {
+    if (!this.statsBar) return;
+    if (!stats) { this.statsBar.style.display = "none"; return; }
+    const pick = (...keys) => {
+      for (const k of keys) {
+        const v = k.split(".").reduce((acc, part) => (acc == null ? acc : acc[part]), stats);
+        if (typeof v === "number") return v;
+      }
+      return null;
+    };
+    const ctx  = pick("contextTokens", "context.total", "totalContextTokens", "context_tokens");
+    const inT  = pick("inputTokens", "totalInputTokens", "input_tokens", "tokens.input");
+    const outT = pick("outputTokens", "totalOutputTokens", "output_tokens", "tokens.output");
+    const cost = pick("costUsd", "totalCostUsd", "cost", "totalCost");
+
+    const fmt = (n) => {
+      if (n == null) return "—";
+      if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+      if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`;
+      return String(n);
+    };
+    const fmtCost = (n) => (n == null ? "—" : `$${n < 1 ? n.toFixed(3) : n.toFixed(2)}`);
+
+    this.statsBar.querySelector('[data-stat="ctx"]').textContent  = fmt(ctx);
+    this.statsBar.querySelector('[data-stat="in"]').textContent   = fmt(inT);
+    this.statsBar.querySelector('[data-stat="out"]').textContent  = fmt(outT);
+    this.statsBar.querySelector('[data-stat="cost"]').textContent = fmtCost(cost);
+
+    // Only show the bar if we actually got at least one number
+    const hasAny = [ctx, inT, outT, cost].some(v => v != null);
+    this.statsBar.style.display = hasAny ? "" : "none";
+  }
+
   // ── Public message API used by status events / send ─────
 
   addMessage(role, text, origin) {
@@ -1624,6 +2369,9 @@ class PiCockpitPlugin extends obsidian.Plugin {
     for (const t of [VIEW_SESSIONS, VIEW_CHAT, VIEW_SKILLS, VIEW_MODEL, VIEW_CRON]) {
       this.app.workspace.detachLeavesOfType(t);
     }
+    // Drop the injected style tag so a fresh load re-applies updated CSS
+    const styleEl = document.getElementById(STYLE_ID);
+    if (styleEl) styleEl.remove();
     console.log("[PI Cockpit] Unloaded");
   }
 

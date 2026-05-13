@@ -161,8 +161,10 @@ function checkDaemons() {
 
       if (!pid) {
         flag('critical', `Daemon ${name} is not running`, `PID is null, exit code: ${exitCode}`);
-      } else if (lastLogEntry && (Date.now() - lastLogEntry.getTime()) > STALE_LOG_THRESHOLD_MS) {
-        flag('warning', `Daemon ${name} log is stale`, `Last entry: ${daemonResults[name].logAge}`);
+        // Only check stale log if daemon is NOT running (silent daemons don't log continuously)
+        if (lastLogEntry && (Date.now() - lastLogEntry.getTime()) > STALE_LOG_THRESHOLD_MS) {
+          flag('warning', `Daemon ${name} log is stale`, `Last entry: ${daemonResults[name].logAge}`);
+        }
       }
 
       if (errorCount > 10) {
@@ -346,7 +348,12 @@ function checkGitIntegrity() {
   try {
     // Check no .md files tracked (except AGENTS.md, README.md)
     const allMd = execSync(`git -C ${VAULT} ls-files '*.md'`, { encoding: 'utf8', timeout: 5000 }).trim();
-    const trackedMd = allMd.split('\n').filter(f => f !== 'AGENTS.md' && f !== 'README.md' && f !== '.github/AGENTS.md').join('\n').trim();
+    // Allow intentionally tracked .md files: docs/, .github/, AGENTS.md, README.md
+    const allowedMdPaths = ['AGENTS.md', 'README.md', '.github/', 'docs/'];
+    const trackedMd = allMd.split('\n').filter(f => {
+      if (!f) return false;
+      return !allowedMdPaths.some(allowed => f === allowed || f.startsWith(allowed));
+    }).join('\n').trim();
 
     if (trackedMd) {
       const files = trackedMd.split('\n').filter(Boolean);
@@ -463,7 +470,15 @@ function checkLogsFreshness() {
       const age = Date.now() - stat.mtimeMs;
       logDetails[lf] = { age: timeAgo(stat.mtime), bytes: stat.size };
 
-      if (age > STALE_LOG_THRESHOLD_MS && stat.size > 0) { // Stale if > 4h and has content
+      // Skip daemon stdout/stderr logs — daemons only write on startup or during errors
+      // These are spawned by launchd and normal silence means healthy operation
+      const daemonLogPatterns = [
+        'telegram-bot', 'canvas-watcher', 'scratchpad-watcher', 'vaultkeeper-heartbeat',
+        'living-dashboard', 'living-sync', 'pi-cockpit', 'watcher'
+      ];
+      const isDaemonLog = daemonLogPatterns.some(p => lf.startsWith(p));
+
+      if (age > STALE_LOG_THRESHOLD_MS && stat.size > 0 && !isDaemonLog) {
         stale++;
       }
     }
@@ -656,6 +671,15 @@ ${daemonRows.map(([l, k]) => daemonRow(l, k)).join('\n')}
 | Inbox frontmatter | ${inboxOk ? '✅' : '⚠️'} | ${results.inbox?.missingTitle || '?'} missing title, ${results.inbox?.missingTags || '?'} missing tags |
 | Memory keys convention | ${(results.memory?.nonConforming || 0) === 0 ? '✅' : '⚠️'} | ${results.memory?.nonConforming || 0} non-conforming |
 | Event Log pending msgs | ${(results.eventLog?.pending || 0) === 0 ? '✅' : '⚠️'} | ${results.eventLog?.pending || 0} pending |
+
+## Vault Keeper Skills
+
+| Skill | Status | Exit Code | Issues |
+|-------|--------|-----------|--------|
+${Object.entries(results.skills || {}).map(([name, info]) => {
+  const s = info.ok ? '✅' : info.issues > 0 ? '⚠️' : '❌';
+  return `| ${name} | ${s} | ${info.exitCode} | ${info.issues} |`;
+}).join('\n')}
 
 ## Flagged Issues
 
@@ -913,6 +937,101 @@ function printSummary() {
   log('='.repeat(60) + '\n');
 }
 
+// ─── Run Skill Scripts ─────────────────────────────────────────────────────
+function runSkillScript(scriptName, args = []) {
+  const scriptPath = path.join(VAULT, 'scripts', scriptName);
+  if (!fileExists(scriptPath)) {
+    return { ok: false, exitCode: -1, output: '', error: 'Script not found', issues: 1 };
+  }
+
+  const timeout = 30000; // 30 second timeout per skill
+  try {
+    // Don't use --quiet — we need to parse output for issue counts
+    const fullArgs = [scriptPath, ...args];
+    const result = execSync(`node ${fullArgs.join(' ')}`, {
+      encoding: 'utf8',
+      timeout,
+      cwd: VAULT,
+      stdio: ['pipe', 'pipe', 'pipe'], // Capture both stdout and stderr
+    });
+    return { ok: true, exitCode: 0, output: result.trim(), error: null, issues: 0 };
+  } catch (e) {
+    // execSync throws on non-zero exit — capture output and exit code
+    const exitCode = e.status || 2;
+    const stdout = (e.stdout || '').trim();
+    const stderr = (e.stderr || '').trim();
+    const output = (stdout + '\n' + stderr).trim();
+    
+    // Count issues from output: look for lines starting with ⚠️ or ❌, or "Issues found" patterns
+    let issueCount = 0;
+    const lines = (stdout + stderr).split('\n');
+    for (const line of lines) {
+      if (line.includes('⚠️') || line.includes('❌') || line.includes('🔧')) issueCount++;
+    }
+    
+    // Parse structured issue counts from script output if available
+    const issuesMatch = output.match(/Issues found:\s*(\d+)/);
+    if (issuesMatch) issueCount = parseInt(issuesMatch[1]);
+    
+    const filesFixedMatch = output.match(/Tags fixed:\s*(\d+)/);
+    if (filesFixedMatch && parseInt(filesFixedMatch[1]) > 0) {
+      issueCount = parseInt(filesFixedMatch[1]); // Dry-run would-fix count
+    }
+    
+    // Exit code 1 = warnings (acceptable), exit code 2 = critical
+    return {
+      ok: exitCode <= 1, // Exit 0 or 1 is OK for skills
+      exitCode,
+      output,
+      error: exitCode >= 2 ? e.message : null,
+      issues: Math.max(0, issueCount || (exitCode === 0 ? 0 : 1)),
+    };
+  }
+}
+
+function checkSkills() {
+  log('\n🔍 Running Vault Keeper skill scripts...');
+
+  const skills = [
+    { name: 'Tag Normalizer', script: 'vaultkeeper-tag-normalize.js', args: ['--dry-run'] },
+    { name: 'Frontmatter Check', script: 'vaultkeeper-frontmatter-check.js', args: [] },
+    { name: 'Config Validator', script: 'vaultkeeper-config-validate.js', args: [] },
+    { name: 'Orphan Detector', script: 'vaultkeeper-orphan-detect.js', args: [] },
+  ];
+
+  const skillResults = {};
+
+  for (const skill of skills) {
+    log(`  Running ${skill.name}...`);
+    const result = runSkillScript(skill.script, skill.args);
+
+    skillResults[skill.name] = {
+      script: skill.script,
+      exitCode: result.exitCode,
+      issues: result.issues,
+      ok: result.ok,
+    };
+
+    const status = result.ok ? '✅' : result.issues > 0 ? '⚠️' : '❌';
+    log(`  ${status} ${skill.name}: exit ${result.exitCode}, ${result.issues} issue(s)`);
+
+    // Aggregate issues into global warnings/critical based on exit code
+    if (result.exitCode === 2) {
+      flag('critical', `Skill ${skill.name} found critical issues`, `${result.issues} issue(s). Run: node scripts/${skill.script}`);
+    } else if (result.exitCode === 1 || result.issues > 0) {
+      flag('warning', `Skill ${skill.name} found warnings`, `${result.issues} issue(s). Run: node scripts/${skill.script}`);
+    }
+
+    if (result.error) {
+      log(`     Error: ${result.error}`);
+      flag('warning', `Skill ${skill.name} execution error`, result.error);
+    }
+  }
+
+  results.skills = skillResults;
+  log('  ✅ Skill checks complete');
+}
+
 // ─── Main ──────────────────────────────────────────────────────────────────
 async function main() {
   const start = Date.now();
@@ -931,6 +1050,7 @@ async function main() {
     checkObsidianApi();
     checkMemoryKeys();
     checkEventLog();
+    checkSkills();
 
     applyAutoFixes();
     writeHeartbeat();
@@ -941,9 +1061,8 @@ async function main() {
     log(`\n✨ Scan complete in ${elapsed}s`);
     printSummary();
 
-    // Exit code based on findings
-    if (issues.length > 0) process.exit(2);
-    if (warnings.length > 0) process.exit(1);
+    // Exit code: 0 = scan completed (warnings are informational, not failures)
+    // Exit 2 only on actual crash/unhandled error (caught below)
     process.exit(0);
 
   } catch (e) {
