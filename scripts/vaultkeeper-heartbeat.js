@@ -19,9 +19,12 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync, spawn } = require('child_process');
+const { timeAgo } = require('./lib/utils');
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const VAULT = '/Users/risingtidesdev/dev/Thoth';
+// Resolve vault path: use explicit env var, or fall back to ~/dev/Thoth
+const VAULT = process.env.VAULT_PATH
+  || path.join(require('os').homedir(), 'dev', 'Thoth');
 const WORKTREES_DIR = path.join(require('os').homedir(), '.worktrees');
 const LOGS_DIR = path.join(VAULT, 'logs');
 const CONTEXT_DIR = path.join(VAULT, '3-Resources');
@@ -51,17 +54,6 @@ function warn(msg) { if (!QUIET) console.warn(`⚠️  ${msg}`); }
 function fileExists(p) { try { return fs.existsSync(p); } catch { return false; } }
 function fileNonEmpty(p) { try { return fs.statSync(p).size > 0; } catch { return false; } }
 function readFile(p) { try { return fs.readFileSync(p, 'utf8'); } catch { return null; } }
-
-function timeAgo(ts) {
-  if (!ts) return 'never';
-  const diff = Date.now() - ts.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 function flag(severity, check, detail) {
   const entry = { severity, check, detail, time: new Date().toISOString() };
@@ -108,6 +100,9 @@ function computeIssueHash(issueList, warningList) {
 // ─── Check 1: Daemons ──────────────────────────────────────────────────────
 function checkDaemons() {
   log('\n🔍 Checking daemons...');
+  // Note: com.thoth.vaultkeeper-heartbeat intentionally omitted from self-check.
+  // This script IS the heartbeat daemon — it cannot check its own liveness.
+  // The daemon-monitor.js in PI Cockpit tracks this process independently.
   const daemons = [
     'com.thoth.telegram-bot',
     'com.thoth.living-dashboard',
