@@ -1,8 +1,8 @@
 /**
  * TMA Bridge — dead simple static file server for Telegram Mini Apps.
  *
- * Agent writes files to 6-Agent/tma/ in the vault.
- * They're served live at https://tma.agentsworld.org/<path>
+ * Agent writes files to 6-Agent/tma-mini/ in the vault.
+ * They're served live at https://thoth.agentsworld.org/<path>
  *
  * .html → served directly
  * .md   → auto-rendered to HTML with full styling
@@ -17,8 +17,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Artifacts live in the vault at 6-Agent/tma/
-// From hub/ dir: go up 2 to vault root, then 6-Agent/tma/
+// Artifacts live in the vault at 6-Agent/tma-mini/
+// From hub/ dir: go up 2 to vault root, then 6-Agent/tma-mini/
 const ARTIFACTS_DIR = join(__dirname, "..", "..", "6-Agent", "tma-mini");
 
 const MIME = {

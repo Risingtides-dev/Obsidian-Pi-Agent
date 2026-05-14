@@ -23,6 +23,22 @@ import { scanSessions, readSessionHistory, getSessionPath } from "./session-moni
 import { scanSkills, scanMcpServers, getSkillClipboardText, getMcpClipboardText } from "./skills-monitor.js";
 import { scanDaemons, readHeartbeat, restartDaemon, readDaemonLog } from "./daemon-monitor.js";
 import { listRoutines, getRoutine, saveRoutine, deleteRoutine, toggleRoutine, runRoutineNow, readRoutineLog } from "./routines-monitor.js";
+import {
+  bootstrap as bootstrapTickets,
+  listTickets,
+  getTicket,
+  saveTicket,
+  deleteTicket,
+  transitionTicket,
+  listComments,
+  addComment,
+  deleteComment,
+  getHistory,
+  getMeta as getTicketsMeta,
+  saveMeta as saveTicketsMeta,
+  getSnapshot as getTicketsSnapshot,
+  TICKETS_PATH,
+} from "./tickets-monitor.js";
 import { getLayout, listLayouts, LAYOUTS } from "./layouts.js";
 import { PiBridge } from "./pi-bridge.js";
 import { handleTmaRoutes } from "./tma-bridge.js";
@@ -113,6 +129,8 @@ const REST_HANDLERS = {
     heartbeat: readHeartbeat(),
   }),
   "/api/routines": () => ({ ok: true, routines: listRoutines() }),
+  "/api/tickets": () => ({ ok: true, ...getTicketsSnapshot() }),
+  "/api/tickets/meta": () => ({ ok: true, meta: getTicketsMeta() }),
 };
 
 async function handleRest(req, res) {
@@ -538,6 +556,81 @@ async function handleMessage(ws, raw) {
       }
       break;
 
+    // ── Tickets ─────────────────────────────────────────────
+    case "tickets-refresh":
+      ws.send(JSON.stringify({ type: "tickets-snapshot", ...getTicketsSnapshot() }));
+      break;
+
+    case "ticket-get":
+      {
+        const t = getTicket(msg.identifier);
+        const comments = t ? listComments(msg.identifier) : [];
+        const history = t ? getHistory(msg.identifier) : [];
+        ws.send(JSON.stringify({ type: "ticket-detail", identifier: msg.identifier, ticket: t, comments, history }));
+      }
+      break;
+
+    case "ticket-save":
+      try {
+        const saved = saveTicket(msg.ticket || {});
+        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        ws.send(JSON.stringify({ type: "ticket-saved", ticket: saved }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `ticket-save: ${err.message}` }));
+      }
+      break;
+
+    case "ticket-delete":
+      try {
+        deleteTicket(msg.identifier);
+        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        ws.send(JSON.stringify({ type: "ticket-deleted", identifier: msg.identifier }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `ticket-delete: ${err.message}` }));
+      }
+      break;
+
+    case "ticket-transition":
+      try {
+        const updated = transitionTicket(msg.identifier, msg.state, msg.actor || "user");
+        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        ws.send(JSON.stringify({ type: "ticket-saved", ticket: updated }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `ticket-transition: ${err.message}` }));
+      }
+      break;
+
+    case "ticket-comment-add":
+      try {
+        const c = addComment(msg.identifier, { body: msg.body, author: msg.author, parent: msg.parent });
+        const comments = listComments(msg.identifier);
+        ws.send(JSON.stringify({ type: "ticket-comments", identifier: msg.identifier, comments, added: c }));
+        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `ticket-comment-add: ${err.message}` }));
+      }
+      break;
+
+    case "ticket-comment-delete":
+      try {
+        deleteComment(msg.identifier, msg.commentId);
+        const comments = listComments(msg.identifier);
+        ws.send(JSON.stringify({ type: "ticket-comments", identifier: msg.identifier, comments }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `ticket-comment-delete: ${err.message}` }));
+      }
+      break;
+
+    case "tickets-meta-save":
+      try {
+        const meta = saveTicketsMeta(msg.meta || {});
+        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        ws.send(JSON.stringify({ type: "tickets-meta-saved", meta }));
+      } catch (err) {
+        ws.send(JSON.stringify({ type: "error", message: `tickets-meta-save: ${err.message}` }));
+      }
+      break;
+
     default:
       ws.send(JSON.stringify({ type: "error", message: `Unknown message type: ${type}` }));
   }
@@ -545,11 +638,13 @@ async function handleMessage(ws, raw) {
 
 // ── Create HTTP + WS server ────────────────────────────────
 const server = createServer((req, res) => {
-  // Route TMA hostname → artifact server
-  if ((req.headers.host || "").includes("tma") || (req.headers.host || "").includes("thoth") || req.url?.startsWith("/tma/")) {
+  const host = (req.headers.host || "").toLowerCase();
+
+  if (host.startsWith("thoth.agentsworld.org")) {
     handleTmaRoutes(req, res);
     return;
   }
+
   if (req.url?.startsWith("/api/")) {
     handleRest(req, res);
   } else if (req.url === "/health") {
@@ -618,6 +713,25 @@ heartbeatWatcher.on("change", () => {
   broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
 });
 
+// ── Tickets file watcher ───────────────────────────────────
+bootstrapTickets();
+const ticketsWatcher = chokidar.watch(TICKETS_PATH, {
+  ignored: /(^|[/\\])\.meta($|[/\\])|history\.jsonl$/,
+  persistent: true,
+  depth: 3,
+  ignoreInitial: true,
+  awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 },
+});
+
+let ticketsBroadcastTimer = null;
+ticketsWatcher.on("all", (event) => {
+  if (event !== "add" && event !== "change" && event !== "unlink") return;
+  clearTimeout(ticketsBroadcastTimer);
+  ticketsBroadcastTimer = setTimeout(() => {
+    broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+  }, 150);
+});
+
 // ── Startup ─────────────────────────────────────────────────
 console.log("┌─────────────────────────────────────┐");
 console.log("│        PI Cockpit Hub               │");
@@ -637,6 +751,8 @@ console.log(`│ MCP:       ${state.mcpServers.length} found`);
 console.log(`│ Models:    ${availableModels.length} available`);
 console.log(`│ Daemons:   ${daemons.filter(d => d.running).length}/${daemons.length} running`);
 console.log(`│ Heartbeat: ${heartbeat?.overallStatus || "no data"}`);
+const ticketsCount = listTickets().length;
+console.log(`│ Tickets:   ${ticketsCount} in ${TICKETS_PATH.replace(homedir(), "~")}`);
 console.log(`│ Default session: ${state.currentSession || "none"}`);
 console.log("├─────────────────────────────────────┤");
 
