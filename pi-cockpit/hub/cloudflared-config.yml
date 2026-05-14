@@ -1,0 +1,8 @@
+# Cloudflare Tunnel config for Thoth Telegram Mini Apps
+tunnel: 2a98f12c-5a2f-467f-bc41-d5422e913b24
+credentials-file: /Users/risingtidesdev/.cloudflared/2a98f12c-5a2f-467f-bc41-d5422e913b24.json
+
+ingress:
+  - hostname: tma.agentsworld.org
+    service: http://localhost:3099
+  - service: http_status:404
