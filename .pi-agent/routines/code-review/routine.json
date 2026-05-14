@@ -1,0 +1,10 @@
+{
+  "name": "code review",
+  "description": "Daily scan: recent commits, uncommitted changes, Event Log warnings, log errors",
+  "schedule": "daily@09:00",
+  "folder": "/Users/risingtidesdev/dev/Thoth",
+  "model": null,
+  "enabled": true,
+  "createdAt": "2026-05-13T20:54:43.774Z",
+  "updatedAt": "2026-05-13T20:55:10.699Z"
+}

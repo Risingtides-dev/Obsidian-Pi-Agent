@@ -1,0 +1,10 @@
+{
+  "name": "Vault Keeper",
+  "description": "Autonomous vault health scan — daemons, schema, context, logs, frontmatter. Runs SOP-01 every 4 hours.",
+  "schedule": "every@240",
+  "folder": "/Users/risingtidesdev/dev/Thoth",
+  "model": null,
+  "enabled": true,
+  "createdAt": "2026-05-13T17:38:35.671Z",
+  "updatedAt": "2026-05-13T17:38:35.671Z"
+}

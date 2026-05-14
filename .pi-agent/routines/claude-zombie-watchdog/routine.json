@@ -1,0 +1,10 @@
+{
+  "name": "Claude Zombie Watchdog",
+  "description": "Kill Claude daemon/sessions idle for more than 6 hours",
+  "schedule": "every@360",
+  "folder": "/Users/risingtidesdev/dev/Thoth",
+  "model": null,
+  "enabled": false,
+  "createdAt": "2026-05-13T17:23:08.246Z",
+  "updatedAt": "2026-05-13T17:26:19.740Z"
+}

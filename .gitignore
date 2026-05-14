@@ -30,6 +30,11 @@ Scratchpad.md
 !README.md
 !AGENTS.md
 
+# Keep all pi-agent config (overrides *.md exclusion above)
+!.pi-agent/
+!.pi-agent/**
+!.pi-agent/**/*.md
+
 # Excalidraw logs
 excalidraw.log
 logs/*.log
@@ -70,3 +75,13 @@ logs/
 # Local agent/tool state
 .opencode/
 .sisyphus/
+
+# pi-agent runtime state (don't commit these subdirs even if they appear)
+.pi-agent/**/context/
+.pi-agent/**/memory/
+.pi-agent/**/run.log
+.pi-agent/**/auth.json
+.pi-agent/**/telegram.json
+.pi-agent/**/sessions/
+.pi-agent/**/tmp/
+.pi-agent/**/run-history.jsonl
