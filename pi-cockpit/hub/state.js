@@ -7,6 +7,9 @@ export const state = {
   /** Currently active PI session (directory name under ~/.pi/agent/sessions/) */
   currentSession: null,
 
+  /** Specific JSONL file within the active session (null = most recent / new) */
+  currentSessionFile: null,
+
   /** Active model config */
   currentModel: "deepseek-v4-pro",
   currentThinkingLevel: "high",
@@ -28,6 +31,13 @@ export const state = {
 
   /** All known MCP servers */
   mcpServers: [],
+
+  /** Latest Obsidian theme (set by companion plugin via theme-update message).
+   *  { vars: Record<string,string>, isDark: boolean, ts: number } */
+  theme: null,
+
+  /** Which session (directory name) has Telegram bridged to it. null = none. */
+  telegramSession: null,
 };
 
 /**
@@ -36,6 +46,7 @@ export const state = {
 export function getSnapshot() {
   return {
     currentSession: state.currentSession,
+    currentSessionFile: state.currentSessionFile,
     currentModel: state.currentModel,
     currentThinkingLevel: state.currentThinkingLevel,
     currentLayout: state.currentLayout,
@@ -44,6 +55,7 @@ export function getSnapshot() {
     skills: state.skills,
     mcpServers: state.mcpServers,
     widgetCount: state.connectedWidgets.size,
+    telegramSession: state.telegramSession,
   };
 }
 

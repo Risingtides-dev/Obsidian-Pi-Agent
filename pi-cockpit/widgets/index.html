@@ -3,126 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PI Cockpit</title>
+  <title>PI Cockpit Hub</title>
   <link rel="stylesheet" href="shared/styles.css">
   <style>
     body {
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       background: var(--bg-primary);
       font-family: var(--font-sans);
+      padding: 24px;
     }
     .landing {
-      text-align: center;
-      max-width: 500px;
+      max-width: 560px;
+      width: 100%;
     }
     .landing h1 {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: var(--text-primary);
     }
     .landing .subtitle {
       font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       line-height: 1.6;
     }
-    .widget-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-    .widget-card {
-      padding: 14px;
+    .panel {
       border: 1px solid var(--border-color);
       border-radius: var(--radius);
-      text-align: left;
-      text-decoration: none;
-      color: var(--text-primary);
-      transition: background 0.1s, border-color 0.1s;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: var(--bg-secondary);
     }
-    .widget-card:hover {
-      background: var(--bg-hover);
-      border-color: var(--accent);
-    }
-    .widget-card .card-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-    .widget-card .card-name {
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-    .widget-card .card-desc {
-      font-size: 10px;
+    .panel h2 {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       color: var(--text-muted);
+      margin-bottom: 8px;
     }
+    .panel p {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .panel p:last-child { margin-bottom: 0; }
+    .endpoint {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .endpoint a { color: var(--accent); text-decoration: none; }
+    .endpoint a:hover { text-decoration: underline; }
     .status-row {
       display: flex;
-      justify-content: center;
-      gap: 16px;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .status-row span {
-      display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
   </style>
 </head>
 <body>
   <div class="landing">
-    <h1>🧠 PI Cockpit</h1>
+    <h1>🧠 PI Cockpit Hub</h1>
     <p class="subtitle">
-      Widget-based control surface for PI coding agents.<br>
-      Designed to be embedded in Obsidian via Custom Frames.
+      WebSocket hub for the PI Cockpit Obsidian plugin.
+      Widgets now run as native Obsidian views — open them from the ribbon or command palette inside Obsidian, not from this page.
     </p>
 
-    <div class="widget-grid">
-      <a href="/widget/session-switcher" class="widget-card">
-        <div class="card-icon">📁</div>
-        <div class="card-name">Session Switcher</div>
-        <div class="card-desc">Switch between active PI coding sessions</div>
-      </a>
-      <a href="/widget/vault-chat" class="widget-card">
-        <div class="card-icon">💬</div>
-        <div class="card-name">Vault Chat</div>
-        <div class="card-desc">Chat with your Obsidian vault via PI</div>
-      </a>
-      <a href="/widget/skills-directory" class="widget-card">
-        <div class="card-icon">📦</div>
-        <div class="card-name">Skills Directory</div>
-        <div class="card-desc">Browse & copy skill references</div>
-      </a>
-      <a href="/widget/model-switcher" class="widget-card">
-        <div class="card-icon">⚙️</div>
-        <div class="card-name">Model Switcher</div>
-        <div class="card-desc">Switch AI models & thinking levels</div>
-      </a>
+    <div class="panel">
+      <h2>Status</h2>
+      <div class="status-row" id="hubStatus">
+        <span class="status-dot disconnected"></span>
+        <span>Hub offline</span>
+      </div>
+      <div class="status-row" id="pluginStatus">
+        <span class="status-dot disconnected"></span>
+        <span>Obsidian plugin: disconnected</span>
+      </div>
+      <div class="status-row" id="countsRow">
+        <span>—</span>
+      </div>
     </div>
 
-    <div class="status-row">
-      <span>🖥️ Mac Mini</span>
-      <span id="hubStatus"><span class="status-dot disconnected"></span> Hub offline</span>
+    <div class="panel">
+      <h2>Endpoints</h2>
+      <p class="endpoint">
+        <a href="/health" target="_blank">/health</a> — liveness check<br>
+        <a href="/api/state" target="_blank">/api/state</a> — full state snapshot<br>
+        <a href="/api/sessions" target="_blank">/api/sessions</a> — PI session list (nested files)<br>
+        <a href="/api/models" target="_blank">/api/models</a> — available models<br>
+        <a href="/api/skills" target="_blank">/api/skills</a> — discovered skills<br>
+        <a href="/api/mcp" target="_blank">/api/mcp</a> — discovered MCP servers
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>Want the widgets?</h2>
+      <p>
+        Open Obsidian. The plugin <code>PI Cockpit</code> registers four native views:
+        <strong>PI Sessions</strong>, <strong>Vault Chat</strong>, <strong>Skills</strong>, <strong>Model</strong>.
+        Use the ribbon icons or the command palette (<code>Cmd+P</code> → "Open PI Sessions" etc.).
+      </p>
     </div>
   </div>
 
   <script type="module">
     import { connect } from "./shared/ws-client.js";
     const hub = connect("landing");
+
+    const hubStatus = document.getElementById("hubStatus");
+    const pluginStatus = document.getElementById("pluginStatus");
+    const countsRow = document.getElementById("countsRow");
+
     hub.on("connected", () => {
-      document.getElementById("hubStatus").innerHTML =
-        '<span class="status-dot connected"></span> Hub online';
+      hubStatus.innerHTML = '<span class="status-dot connected"></span><span>Hub online</span>';
     });
     hub.on("disconnected", () => {
-      document.getElementById("hubStatus").innerHTML =
-        '<span class="status-dot disconnected"></span> Hub offline';
+      hubStatus.innerHTML = '<span class="status-dot disconnected"></span><span>Hub offline</span>';
+    });
+
+    function renderState(s) {
+      pluginStatus.innerHTML = s.obsidianPluginConnected
+        ? '<span class="status-dot connected"></span><span>Obsidian plugin: connected</span>'
+        : '<span class="status-dot disconnected"></span><span>Obsidian plugin: disconnected</span>';
+      const sessions = (s.sessions || []).length;
+      const skills = (s.skills || []).length;
+      const mcp = (s.mcpServers || []).length;
+      countsRow.innerHTML = `<span>${sessions} sessions · ${skills} skills · ${mcp} MCP servers</span>`;
+    }
+
+    hub.on("state-sync", renderState);
+    hub.on("sessions-updated", (d) => renderState({ ...hub.state, sessions: d.sessions }));
+    hub.on("plugin-status", (d) => {
+      pluginStatus.innerHTML = d.connected
+        ? '<span class="status-dot connected"></span><span>Obsidian plugin: connected</span>'
+        : '<span class="status-dot disconnected"></span><span>Obsidian plugin: disconnected</span>';
     });
   </script>
 </body>

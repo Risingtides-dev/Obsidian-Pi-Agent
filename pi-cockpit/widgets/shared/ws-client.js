@@ -59,6 +59,15 @@ class HubClient {
       // Handle state sync specially
       if (msg.type === "state-sync") {
         this.state = msg;
+        // Apply theme from state sync if available
+        if (msg.theme?.vars) {
+          this.applyTheme(msg.theme.vars, msg.theme.isDark);
+        }
+      }
+
+      // Auto-apply theme updates
+      if (msg.type === "theme-update" && msg.vars) {
+        this.applyTheme(msg.vars, msg.isDark);
       }
 
       // Emit to any listener for this message type
@@ -119,6 +128,45 @@ class HubClient {
       list.forEach(cb => {
         try { cb(data); } catch (err) { console.error(`[${this.widgetName}] Listener error:`, err); }
       });
+    }
+  }
+
+  /**
+   * Apply Obsidian theme CSS variables to this widget's :root.
+   * Maps Obsidian variable names → cockpit variable names so widget CSS
+   * doesn't need to change.
+   */
+  applyTheme(vars, isDark) {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", isDark ? "dark" : "light");
+
+    const map = {
+      "--background-primary": "--bg-primary",
+      "--background-secondary": "--bg-secondary",
+      "--background-modifier-hover": "--bg-hover",
+      "--background-modifier-active": "--bg-active",
+      "--background-modifier-border": "--border-color",
+      "--text-normal": "--text-primary",
+      "--text-muted": "--text-secondary",
+      "--text-faint": "--text-muted",
+      "--text-accent": "--accent",
+      "--text-accent-hover": "--accent-hover",
+      "--interactive-accent": "--accent",
+      "--interactive-accent-hover": "--accent-hover",
+      "--font-text": "--font-sans",
+      "--font-monospace": "--font-mono",
+      "--color-red": "--danger",
+      "--color-orange": "--warning",
+      "--color-green": "--success",
+      "--color-blue": "--accent",
+      "--radius-s": "--radius-sm",
+      "--radius-m": "--radius",
+    };
+
+    for (const [obsVar, cockpitVar] of Object.entries(map)) {
+      if (vars[obsVar]) {
+        root.style.setProperty(cockpitVar, vars[obsVar]);
+      }
     }
   }
 }
