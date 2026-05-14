@@ -1,0 +1,7 @@
+{
+  "name": "pi-tma",
+  "version": "1.0.0",
+  "description": "Pi extension for Telegram Mini App artifact sharing",
+  "type": "module",
+  "main": "index.ts"
+}
