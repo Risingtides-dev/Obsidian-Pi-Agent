@@ -1,0 +1,131 @@
+{
+  "workspace": {
+    "id": "thoth",
+    "name": "Thoth",
+    "key": "THO"
+  },
+  "teams": [
+    {
+      "id": "tho",
+      "key": "THO",
+      "name": "Thoth"
+    }
+  ],
+  "states": [
+    {
+      "id": "triage",
+      "name": "Triage",
+      "color": "#94a3b8",
+      "type": "triage",
+      "position": 0
+    },
+    {
+      "id": "backlog",
+      "name": "Backlog",
+      "color": "#6c7086",
+      "type": "backlog",
+      "position": 1
+    },
+    {
+      "id": "todo",
+      "name": "Todo",
+      "color": "#a6adc8",
+      "type": "unstarted",
+      "position": 2
+    },
+    {
+      "id": "in_progress",
+      "name": "In Progress",
+      "color": "#89b4fa",
+      "type": "started",
+      "position": 3
+    },
+    {
+      "id": "review",
+      "name": "In Review",
+      "color": "#f9e2af",
+      "type": "started",
+      "position": 4
+    },
+    {
+      "id": "done",
+      "name": "Done",
+      "color": "#a6e3a1",
+      "type": "completed",
+      "position": 5
+    },
+    {
+      "id": "canceled",
+      "name": "Canceled",
+      "color": "#f38ba8",
+      "type": "canceled",
+      "position": 6
+    }
+  ],
+  "labels": [
+    {
+      "id": "security",
+      "name": "security",
+      "color": "#f38ba8"
+    },
+    {
+      "id": "bug",
+      "name": "bug",
+      "color": "#fab387"
+    },
+    {
+      "id": "feature",
+      "name": "feature",
+      "color": "#89b4fa"
+    },
+    {
+      "id": "refactor",
+      "name": "refactor",
+      "color": "#cba6f7"
+    },
+    {
+      "id": "infra",
+      "name": "infra",
+      "color": "#94e2d5"
+    },
+    {
+      "id": "docs",
+      "name": "docs",
+      "color": "#a6e3a1"
+    }
+  ],
+  "users": [
+    {
+      "id": "john",
+      "name": "john",
+      "type": "human",
+      "avatar": "👤"
+    },
+    {
+      "id": "agent:sage",
+      "name": "Sage",
+      "type": "agent",
+      "avatar": "🧙"
+    },
+    {
+      "id": "agent:flux",
+      "name": "Flux",
+      "type": "agent",
+      "avatar": "⚡"
+    },
+    {
+      "id": "agent:knox",
+      "name": "Knox",
+      "type": "agent",
+      "avatar": "🛡"
+    },
+    {
+      "id": "agent:scout",
+      "name": "Scout",
+      "type": "agent",
+      "avatar": "🔭"
+    }
+  ],
+  "projects": [],
+  "cycles": []
+}

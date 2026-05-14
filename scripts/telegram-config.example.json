@@ -4,7 +4,11 @@
   "deepseekModel": "deepseek-v4-flash",
   "vaultPath": "/Users/risingtidesdev/dev/Thoth",
   "inboxFolder": "3-Resources/Inbox",
+  "voiceSummariesFolder": "4-Archive/Voice Summaries",
+  "obsidianVaultName": "Thoth",
+  "ffmpegBin": "/opt/homebrew/bin/ffmpeg",
   "whisperBin": "/opt/homebrew/bin/whisper",
   "whisperModel": "tiny",
-  "whisperLanguage": "en"
+  "whisperLanguage": "en",
+  "whisperTimeoutMs": 300000
 }

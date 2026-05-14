@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tickets — PI Cockpit</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+  <link rel="stylesheet" href="./tickets.css">
+</head>
+<body>
+  <div class="widget-container">
+    <!-- Connection bar -->
+    <div class="connection-bar">
+      <span class="status-dot disconnected" id="statusDot"></span>
+      <span id="connectionText">Connecting...</span>
+      <span style="margin-left:auto" id="countLabel">0 tickets</span>
+    </div>
+
+    <!-- Header -->
+    <div class="widget-header">
+      <span class="widget-title">🎫 Tickets</span>
+      <div style="display:flex;gap:4px;">
+        <button class="btn btn-sm" id="btnCreate" title="Create issue (C)">+ New</button>
+      </div>
+    </div>
+
+    <!-- View tabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="list">List</button>
+      <button class="view-tab" data-view="board">Board</button>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input type="text" id="searchInput" class="filter-input" placeholder="Search… (Cmd-K for palette)">
+      <select id="groupBySelect" class="filter-select" title="Group by">
+        <option value="state">Group: Status</option>
+        <option value="assignee">Group: Assignee</option>
+        <option value="priority">Group: Priority</option>
+        <option value="label">Group: Label</option>
+        <option value="none">Group: None</option>
+      </select>
+      <select id="sortBySelect" class="filter-select" title="Sort by">
+        <option value="priority">Sort: Priority</option>
+        <option value="updated">Sort: Updated</option>
+        <option value="created">Sort: Created</option>
+        <option value="title">Sort: Title</option>
+      </select>
+      <select id="filterStateSelect" class="filter-select" title="Filter status">
+        <option value="">All status</option>
+      </select>
+      <select id="filterAssigneeSelect" class="filter-select" title="Filter assignee">
+        <option value="">All assignees</option>
+      </select>
+    </div>
+
+    <!-- Main body -->
+    <div class="widget-body" id="mainBody">
+      <div class="empty-state">
+        <div class="empty-state-icon">🎫</div>
+        <div>Loading tickets…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/edit modal -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modalTitle">New ticket</span>
+        <button class="btn btn-sm" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="titleInput" class="form-input title-input" placeholder="Issue title">
+        <textarea id="descInput" class="form-input desc-input" placeholder="Description (markdown supported)…" rows="8"></textarea>
+        <div class="form-row">
+          <label>Status
+            <select id="stateSelect" class="form-input"></select>
+          </label>
+          <label>Priority
+            <select id="prioritySelect" class="form-input">
+              <option value="0">— None</option>
+              <option value="1">🔴 Urgent</option>
+              <option value="2">🟠 High</option>
+              <option value="3">🟡 Medium</option>
+              <option value="4">🟢 Low</option>
+            </select>
+          </label>
+          <label>Assignee
+            <select id="assigneeSelect" class="form-input"></select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Labels
+            <div id="labelPicker" class="label-picker"></div>
+          </label>
+          <label>Estimate
+            <input type="number" id="estimateInput" class="form-input" min="0" max="100" placeholder="—">
+          </label>
+          <label>Due date
+            <input type="date" id="dueDateInput" class="form-input">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Parent
+            <select id="parentSelect" class="form-input"><option value="">— None</option></select>
+          </label>
+          <label style="flex:2">Identifier
+            <input type="text" id="identifierInput" class="form-input" readonly placeholder="auto">
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm" id="deleteBtn" style="margin-right:auto;display:none;color:var(--danger);">Delete</button>
+        <button class="btn btn-sm" data-close>Cancel</button>
+        <button class="btn btn-sm btn-primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail peek -->
+  <div class="modal detail-modal" id="detailModal">
+    <div class="modal-content detail-content">
+      <div class="modal-header">
+        <span id="detailHeader" class="detail-header"></span>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" id="editFromDetailBtn">Edit</button>
+          <button class="btn btn-sm" data-close>✕</button>
+        </div>
+      </div>
+      <div class="modal-body detail-body">
+        <div class="detail-main">
+          <h2 id="detailTitle" class="detail-title"></h2>
+          <div id="detailDescription" class="detail-description"></div>
+          <div class="detail-section">
+            <div class="section-divider">Activity</div>
+            <div id="detailHistory" class="detail-history"></div>
+          </div>
+          <div class="detail-section">
+            <div class="section-divider">Comments</div>
+            <div id="detailComments" class="detail-comments"></div>
+            <div class="comment-composer">
+              <textarea id="commentInput" placeholder="Leave a comment… (Cmd-Enter to send)" rows="2"></textarea>
+              <button class="btn btn-sm btn-primary" id="commentSendBtn">Send</button>
+            </div>
+          </div>
+        </div>
+        <aside class="detail-side">
+          <div class="prop-row"><span class="prop-label">Status</span><span id="detailState" class="status-pill"></span></div>
+          <div class="prop-row"><span class="prop-label">Priority</span><span id="detailPriority"></span></div>
+          <div class="prop-row"><span class="prop-label">Assignee</span><span id="detailAssignee"></span></div>
+          <div class="prop-row"><span class="prop-label">Labels</span><span id="detailLabels"></span></div>
+          <div class="prop-row"><span class="prop-label">Estimate</span><span id="detailEstimate"></span></div>
+          <div class="prop-row"><span class="prop-label">Due</span><span id="detailDue"></span></div>
+          <div class="prop-row"><span class="prop-label">Parent</span><span id="detailParent"></span></div>
+          <div class="prop-row"><span class="prop-label">Created</span><span id="detailCreated"></span></div>
+          <div class="prop-row"><span class="prop-label">Updated</span><span id="detailUpdated"></span></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cmd-K palette -->
+  <div class="modal palette-modal" id="paletteModal">
+    <div class="palette-content">
+      <input type="text" id="paletteInput" class="palette-input" placeholder="Type to search tickets, or create new…">
+      <div id="paletteResults" class="palette-results"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./tickets.js"></script>
+</body>
+</html>

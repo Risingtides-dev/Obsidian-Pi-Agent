@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Voice note to Obsidian automation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            paper: '#fafaf7',
+            ink: '#0a0a0a',
+            rule: '#0a0a0a',
+            mute: '#737373',
+            faint: '#d4d4d4',
+            signal: '#cc2030',
+          },
+          fontSize: {
+            mega: ['8rem', { lineHeight: '0.9', letterSpacing: '-0.04em' }],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body { background: #fafaf7; color: #0a0a0a; }
+    .grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 16px; }
+    .baseline { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 23px, rgba(0,0,0,0.04) 23px, rgba(0,0,0,0.04) 24px); }
+    .rule { background: #0a0a0a; height: 1px; }
+    .rule-thick { background: #0a0a0a; height: 4px; }
+    a { color: #0a0a0a; text-decoration: none; border-bottom: 1px solid #0a0a0a; padding-bottom: 1px; }
+    a:hover { color: #cc2030; border-bottom-color: #cc2030; }
+    ::selection { background: #cc2030; color: #fafaf7; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    pre { white-space: pre-wrap; }
+    @media (max-width: 768px) {
+      .grid-12 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body class="font-sans text-base text-ink baseline hyphens-none">
+  <section class="border-b border-ink">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 md:py-24 grid grid-cols-12 gap-4 items-end">
+      <div class="col-span-12 md:col-span-8">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium mb-12">No. 014 / Voice capture system</p>
+        <h1 class="text-6xl md:text-8xl font-medium tracking-tighter leading-[0.9]">
+          Voice note<br/>to vault.<br/>
+          <span class="text-signal">No friction.</span>
+        </h1>
+      </div>
+      <div class="col-span-12 md:col-span-4 md:pl-8">
+        <p class="text-base leading-[1.5] mb-6 max-w-prose">A Telegram bot accepts native voice notes or uploaded audio. A worker transcribes the file with Whisper, sends the transcript to an LLM, and writes a structured Markdown note into Obsidian.</p>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">Target: 6-Agent/tma-mini</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-ink py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium">01 — Intent</p>
+      </div>
+      <div class="col-span-12 md:col-span-9">
+        <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Turn dictated thoughts into durable notes without opening Obsidian.</h2>
+        <div class="max-w-2xl space-y-4 text-base leading-[1.5]">
+          <p>The human sends a voice memo from Telegram. The system captures source metadata, keeps the raw audio, generates a transcript, summarizes the content, and files the result as Markdown.</p>
+          <p>The output should be useful later: summary, key takeaways, action items, decisions, open questions, cleaned notes, and raw transcript.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-ink">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-12">
+      <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">
+        <div class="col-span-1">№</div>
+        <div class="col-span-3">Stage</div>
+        <div class="col-span-4 hidden md:block">System</div>
+        <div class="col-span-8 md:col-span-4">Result</div>
+      </div>
+      <ul>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">01</span>
+          <span class="col-span-3 font-medium">Capture</span>
+          <span class="col-span-4 hidden md:block text-mute">Telegram bot</span>
+          <span class="col-span-8 md:col-span-4">Receive <code>voice</code>, <code>audio</code>, or audio-like <code>document</code>.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">02</span>
+          <span class="col-span-3 font-medium">Download</span>
+          <span class="col-span-4 hidden md:block text-mute">Telegram file API</span>
+          <span class="col-span-8 md:col-span-4">Store audio and sidecar metadata by chat ID, message ID, sender, timestamp, MIME type.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">03</span>
+          <span class="col-span-3 font-medium">Queue</span>
+          <span class="col-span-4 hidden md:block text-mute">Folder watcher or jobs table</span>
+          <span class="col-span-8 md:col-span-4">Create a non-blocking transcription job so Telegram replies immediately.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">04</span>
+          <span class="col-span-3 font-medium">Transcribe</span>
+          <span class="col-span-4 hidden md:block text-mute">Whisper</span>
+          <span class="col-span-8 md:col-span-4">Normalize audio if required, then write raw transcript and optional timestamps.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">05</span>
+          <span class="col-span-3 font-medium">Summarize</span>
+          <span class="col-span-4 hidden md:block text-mute">LLM</span>
+          <span class="col-span-8 md:col-span-4">Extract title, summary, takeaways, tasks, decisions, and uncertain points.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">06</span>
+          <span class="col-span-3 font-medium">File</span>
+          <span class="col-span-4 hidden md:block text-mute">Obsidian vault</span>
+          <span class="col-span-8 md:col-span-4">Write rich Markdown into the inbox or project folder, then notify Telegram.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="border-b border-ink py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium">02 — Intake</p>
+      </div>
+      <div class="col-span-12 md:col-span-9 grid grid-cols-12 gap-4">
+        <div class="col-span-12 md:col-span-6 border border-ink p-6">
+          <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-4">Path A</p>
+          <h3 class="text-xl font-medium leading-snug mb-3">Native Telegram voice recorder</h3>
+          <p class="text-sm leading-[1.5] max-w-prose">Telegram sends a <code>voice</code> object, commonly OGG/Opus. The bot downloads it through <code>getFile</code>, assigns a stable file name, and stores metadata for replay.</p>
+        </div>
+        <div class="col-span-12 md:col-span-6 border border-ink p-6">
+          <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-4">Path B</p>
+          <h3 class="text-xl font-medium leading-snug mb-3">Dropped audio file</h3>
+          <p class="text-sm leading-[1.5] max-w-prose">Telegram sends an <code>audio</code> or <code>document</code> object. The bot validates MIME type and size, stores the original, and optionally normalizes through <code>ffmpeg</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-ink py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium">03 — Output</p>
+      </div>
+      <div class="col-span-12 md:col-span-9">
+        <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">The Markdown note is the product.</h2>
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-5">
+            <ul class="space-y-3 text-base leading-[1.5] max-w-prose">
+              <li><span class="font-medium">Frontmatter.</span> Source, sender, message ID, audio path, transcript path, models, tags.</li>
+              <li><span class="font-medium">Summary.</span> Three to six bullets for fast recall.</li>
+              <li><span class="font-medium">Extraction.</span> Tasks, decisions, open questions, people, projects, tools.</li>
+              <li><span class="font-medium">Cleaned notes.</span> A readable narrative version of the memo.</li>
+              <li><span class="font-medium">Raw transcript.</span> Preserved for search and audit.</li>
+            </ul>
+          </div>
+          <div class="col-span-12 md:col-span-7 border border-ink">
+            <div class="px-6 py-4 border-b border-ink flex justify-between items-baseline">
+              <p class="text-xs uppercase tracking-[0.1em] font-medium">Markdown skeleton</p>
+              <button onclick="copyBlock('markdown-template', this)" class="bg-paper text-ink border border-ink px-5 py-2 text-sm font-medium hover:bg-ink hover:text-paper transition-colors">Copy</button>
+            </div>
+            <pre id="markdown-template" class="p-6 text-xs leading-[1.5] overflow-auto">---
+title: "Voice note — {{summary_title}}"
+created: "{{created_at}}"
+source: "telegram"
+telegram_chat_id: "{{chat_id}}"
+telegram_message_id: "{{message_id}}"
+sender: "{{sender_name}}"
+audio_file: "{{audio_path}}"
+transcript_file: "{{transcript_path}}"
+models:
+  transcription: "{{whisper_model}}"
+  summarization: "{{llm_model}}"
+tags: [telegram, voice-note, ai-summary]
+---
+
+# {{summary_title}}
+
+## Summary
+{{executive_summary}}
+
+## Key takeaways
+{{key_takeaways}}
+
+## Action items
+{{action_items}}
+
+## Decisions
+{{decisions}}
+
+## Open questions
+{{open_questions}}
+
+## Cleaned notes
+{{cleaned_narrative}}
+
+---
+
+## Raw transcript
+{{raw_transcript}}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-ink">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 py-12">
+      <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">
+        <div class="col-span-1">№</div>
+        <div class="col-span-3">Build item</div>
+        <div class="col-span-4 hidden md:block">First version</div>
+        <div class="col-span-8 md:col-span-4">Production version</div>
+      </div>
+      <ul>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">01</span><span class="col-span-3 font-medium">Trigger</span><span class="col-span-4 hidden md:block text-mute">DM-to-bot</span><span class="col-span-8 md:col-span-4">Channel ingestion after permissions are confirmed.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">02</span><span class="col-span-3 font-medium">Job state</span><span class="col-span-4 hidden md:block text-mute">Folder watcher</span><span class="col-span-8 md:col-span-4">SQLite or durable queue keyed by Telegram message ID.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">03</span><span class="col-span-3 font-medium">Transcription</span><span class="col-span-4 hidden md:block text-mute">Local Whisper</span><span class="col-span-8 md:col-span-4">Retryable worker with partial transcript persistence.</span>
+        </li>
+        <li class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint">
+          <span class="col-span-1 tabular-nums">04</span><span class="col-span-3 font-medium">Routing</span><span class="col-span-4 hidden md:block text-mute">Inbox folder</span><span class="col-span-8 md:col-span-4">Hashtag or slash-command project routing.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="border-b border-ink py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium">04 — Prompt</p>
+      </div>
+      <div class="col-span-12 md:col-span-9 border border-ink">
+        <div class="px-6 py-4 border-b border-ink flex justify-between items-baseline">
+          <p class="text-xs uppercase tracking-[0.1em] font-medium">Summarizer contract</p>
+          <button onclick="copyBlock('prompt-template', this)" class="bg-paper text-ink border border-ink px-5 py-2 text-sm font-medium hover:bg-ink hover:text-paper transition-colors">Copy</button>
+        </div>
+        <pre id="prompt-template" class="p-6 text-sm leading-[1.5] overflow-auto">You are converting a dictated voice memo into an Obsidian note.
+
+Rules:
+- Preserve the speaker's intent.
+- Do not invent facts, dates, names, tasks, or decisions.
+- If the transcript is ambiguous, mark it as an open question.
+- Output clean Markdown only.
+- Include a concise title.
+- Extract action items as checkboxes when present.
+
+Metadata:
+{{metadata_json}}
+
+Transcript:
+{{transcript}}
+
+Return:
+# {{title}}
+## Summary
+## Key takeaways
+## Action items
+## Decisions
+## Open questions
+## Cleaned notes</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-3">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium">05 — Decisions</p>
+      </div>
+      <div class="col-span-12 md:col-span-9">
+        <div class="grid grid-cols-12 gap-4 border-t border-ink">
+          <div class="col-span-12 md:col-span-4 py-6 border-b border-faint md:pr-8">
+            <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-3">Start here</p>
+            <p class="font-medium">DM-to-bot before channel ingestion.</p>
+          </div>
+          <div class="col-span-12 md:col-span-8 py-6 border-b border-faint">
+            <p class="max-w-2xl">Direct messages are easier to authorize, test, and debug. A channel can be added later when the capture pipeline is stable.</p>
+          </div>
+          <div class="col-span-12 md:col-span-4 py-6 border-b border-faint md:pr-8">
+            <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-3">Preserve source</p>
+            <p class="font-medium">Keep audio and transcript.</p>
+          </div>
+          <div class="col-span-12 md:col-span-8 py-6 border-b border-faint">
+            <p class="max-w-2xl">The summary is useful, but the transcript is evidence. Store both so the system can re-summarize later with better prompts.</p>
+          </div>
+          <div class="col-span-12 md:col-span-4 py-6 border-b border-faint md:pr-8">
+            <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-3">Reduce hallucination</p>
+            <p class="font-medium">Uncertainty is a field, not a failure.</p>
+          </div>
+          <div class="col-span-12 md:col-span-8 py-6 border-b border-faint">
+            <p class="max-w-2xl">The LLM should mark ambiguous items as open questions instead of inventing missing details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (tg) { tg.ready(); tg.expand(); }
+    } catch(e) {}
+
+    async function copyBlock(id, button) {
+      const text = document.getElementById(id).innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => button.textContent = old, 1200);
+      } catch(e) {
+        button.textContent = 'Select text';
+      }
+    }
+  </script>
+</body>
+</html>

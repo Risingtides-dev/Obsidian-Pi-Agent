@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#fafaf9" />
+  <title>Thoth — Full State of the Union</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #f5f5f4;
+      --surface-2: #e7e5e4;
+      --line: #e7e5e4;
+      --line-2: #f5f5f4;
+      --text: #1c1917;
+      --text-2: rgba(28, 25, 23, 0.72);
+      --text-3: rgba(28, 25, 23, 0.42);
+      --text-4: rgba(28, 25, 23, 0.22);
+      --accent: #C8102E;
+      --accent-20: rgba(200, 16, 46, 0.12);
+      --accent-10: rgba(200, 16, 46, 0.07);
+      --font-sans: "IBM Plex Sans", "Hanken Grotesk", "Barlow", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius: 2px;
+      --shadow: 0 18px 56px rgba(0, 0, 0, 0.04);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0c0a09;
+        --surface: #1c1917;
+        --surface-2: #292524;
+        --line: #292524;
+        --line-2: #1c1917;
+        --text: #fafaf9;
+        --text-2: rgba(250, 250, 249, 0.72);
+        --text-3: rgba(250, 250, 249, 0.42);
+        --text-4: rgba(250, 250, 249, 0.22);
+        --shadow: 0 18px 56px rgba(0, 0, 0, 0.24);
+      }
+      meta[name="theme-color"] { content: #0c0a09; }
+    }
+
+    * { box-sizing: border-box; }
+    html {
+      color-scheme: light dark;
+      scroll-behavior: smooth;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+    }
+    a { color: inherit; text-decoration: none; }
+    img, svg { display: block; max-width: 100%; }
+    code, pre {
+      font-family: var(--font-mono);
+      font-size: 0.94em;
+    }
+    ::selection {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 24px;
+      padding: 12px 0 28px;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-main {
+      grid-column: span 8;
+      min-width: 0;
+    }
+    .hero-aside {
+      grid-column: span 4;
+      min-width: 0;
+      align-self: end;
+      border-left: 1px solid var(--line);
+      padding-left: 24px;
+    }
+
+    .kicker,
+    .section-kicker,
+    .rail-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .kicker::before,
+    .section-kicker::before,
+    .rail-kicker::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      font-size: clamp(3rem, 7vw, 5.6rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      font-weight: 300;
+      text-wrap: balance;
+      max-width: 10ch;
+    }
+    .deck {
+      max-width: 60ch;
+      font-size: 1.06rem;
+      line-height: 1.78;
+      color: var(--text-2);
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+      border-radius: var(--radius);
+      white-space: nowrap;
+    }
+    .chip.accent {
+      border-color: rgba(200, 16, 46, 0.25);
+      background: var(--accent-10);
+      color: var(--accent);
+    }
+
+    .summary-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .summary-row {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row .label {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+    .summary-row .value {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    aside {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      border-right: 1px solid var(--line);
+      padding-right: 24px;
+    }
+    .rail-block {
+      padding: 18px 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .rail-block:last-child { border-bottom: 0; }
+    .rail-note {
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-2);
+      max-width: 28ch;
+    }
+    .rail-facts {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .fact {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+    }
+    .fact:first-child { border-top: 0; padding-top: 0; }
+    .fact .fact-key {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .fact .fact-value {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .rail-nav {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+      margin-top: 14px;
+    }
+    .rail-nav a {
+      display: block;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-2);
+    }
+    .rail-nav a:hover {
+      color: var(--accent);
+    }
+    .rail-nav a span {
+      color: var(--text-3);
+      margin-right: 8px;
+    }
+
+    main { min-width: 0; }
+    .section {
+      padding: 40px 0;
+      border-top: 1px solid var(--line);
+    }
+    .section:first-child {
+      border-top: 0;
+      padding-top: 8px;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .section-label {
+      padding-top: 4px;
+    }
+    .section-num {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 1.08;
+      font-weight: 300;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+      max-width: 14ch;
+    }
+    .section-body {
+      min-width: 0;
+    }
+    .measure {
+      max-width: 60ch;
+    }
+    .section-body p {
+      margin: 0 0 14px;
+      color: var(--text-2);
+      font-size: 16px;
+      line-height: 1.78;
+    }
+    .section-body p strong { color: var(--text); font-weight: 500; }
+    .callout {
+      margin: 18px 0 0;
+      padding: 16px 18px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-10);
+      color: var(--text);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--text);
+    }
+    .quote {
+      margin: 0;
+      padding: 18px 0 0;
+      border-top: 1px solid var(--line);
+      max-width: 60ch;
+      font-size: 18px;
+      line-height: 1.85;
+      color: var(--text);
+    }
+    .quote em { color: var(--text-2); font-style: normal; }
+
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .span-7 { grid-column: span 7; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+
+    .diagram-wrap {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--surface), var(--bg));
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .diagram-caption {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .diagram {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      background: var(--bg);
+    }
+    .diagram text {
+      font-family: var(--font-sans);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin-top: 12px;
+    }
+    table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+    thead th {
+      padding: 12px 12px 10px;
+      text-align: left;
+      vertical-align: bottom;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--text-3);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      color: var(--text-2);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody td:first-child {
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
+      width: 22%;
+    }
+    tbody tr.critical td {
+      background: var(--accent-10);
+    }
+    tbody tr.critical td:first-child {
+      border-left: 2px solid var(--accent);
+      padding-left: 10px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 18px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step:last-child { border-bottom: 0; }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 34px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      background: var(--accent-10);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .step-head {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .step-title {
+      font-size: 18px;
+      line-height: 1.35;
+      font-weight: 400;
+      color: var(--text);
+      margin: 0;
+    }
+    .step-meta {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .step p {
+      margin: 0;
+      color: var(--text-2);
+      max-width: 60ch;
+    }
+
+    .questions {
+      display: grid;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+    }
+    .question {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 18px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .question:last-child { border-bottom: 0; }
+    .question .q {
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--text);
+      margin: 0;
+      font-weight: 400;
+    }
+    .question .a {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text-2);
+      margin: 0;
+      max-width: 52ch;
+    }
+
+    .references {
+      display: grid;
+      gap: 8px;
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+    .ref {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .ref:last-child { border-bottom: 0; }
+    .ref strong {
+      font-weight: 500;
+      color: var(--text);
+    }
+    .ref span {
+      color: var(--text-2);
+      text-align: right;
+      max-width: 52ch;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 18px;
+      margin-top: 36px;
+      border-top: 1px solid var(--line);
+      color: var(--text-3);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .mono { font-family: var(--font-mono); text-transform: none; letter-spacing: 0; }
+
+    @media (max-width: 980px) {
+      .hero, .layout, .grid-12 { grid-template-columns: 1fr; }
+      .hero-main, .hero-aside, .span-7, .span-5, .span-6 { grid-column: auto; }
+      aside {
+        position: relative;
+        top: auto;
+        border-right: 0;
+        padding-right: 0;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 28px;
+      }
+      .section-grid, .step, .question { grid-template-columns: 1fr; }
+      .section-title { max-width: 100%; }
+      .question .a { max-width: 100%; }
+      .ref { flex-direction: column; }
+      .ref span { text-align: left; max-width: 100%; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 18px 14px 44px; }
+      .hero-aside { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); padding-top: 16px; }
+      h1 { font-size: clamp(2.4rem, 14vw, 3.5rem); }
+      .deck { font-size: 1rem; }
+      .section { padding: 30px 0; }
+      .step-badge { width: 48px; height: 32px; }
+      table { min-width: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero" aria-label="Thoth full state of the union">
+      <div class="hero-main">
+        <div class="kicker">Thoth / Full State of the Union</div>
+        <h1>One read should explain the whole machine.</h1>
+        <p class="deck">
+          Thoth is a vault-backed agent platform. It is mostly working, but it still has no constitution: duplicate inboxes, duplicate Vault Keeper paths, no provenance on agent-written notes, and an Event Log that exists more in theory than in practice.
+        </p>
+        <div class="chips" aria-label="Status chips">
+          <span class="chip accent">active</span>
+          <span class="chip">architecture</span>
+          <span class="chip">audit</span>
+          <span class="chip">2026-05-14</span>
+          <span class="chip">telegram attachment</span>
+        </div>
+      </div>
+      <aside class="hero-aside">
+        <div class="summary-stack">
+          <div class="summary-row">
+            <div class="label">What it is</div>
+            <div class="value">An Obsidian vault that doubles as an agent platform and control surface.</div>
+          </div>
+          <div class="summary-row">
+            <div class="label">What’s broken</div>
+            <div class="value">The system can’t govern itself cleanly until the schema and Vault Keeper are reconciled.</div>
+          </div>
+          <div class="summary-row">
+            <div class="label">Next move</div>
+            <div class="value">Write <span class="mono">SCHEMA.md</span>, finish the cron dashboard, and make the Event Log real.</div>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <div class="layout">
+      <aside>
+        <div class="rail-block">
+          <div class="rail-kicker">Contents</div>
+          <nav class="rail-nav" aria-label="Section navigation">
+            <a href="#summary"><span>01</span>Summary</a>
+            <a href="#map"><span>02</span>System map</a>
+            <a href="#problems"><span>03</span>Problems</a>
+            <a href="#opportunities"><span>04</span>Opportunities</a>
+            <a href="#sequence"><span>05</span>Order of operations</a>
+            <a href="#questions"><span>06</span>Open questions</a>
+            <a href="#references"><span>07</span>References</a>
+          </nav>
+        </div>
+
+        <div class="rail-block">
+          <div class="rail-kicker">Facts</div>
+          <div class="rail-facts">
+            <div class="fact">
+              <div class="fact-key">Vault root</div>
+              <div class="fact-value">`/Users/risingtidesdev/dev/Thoth`</div>
+            </div>
+            <div class="fact">
+              <div class="fact-key">Worktrees</div>
+              <div class="fact-value">Three named worktrees + one audit worktree, all sharing vault notes.</div>
+            </div>
+            <div class="fact">
+              <div class="fact-key">Heartbeat</div>
+              <div class="fact-value">Vault Keeper exists in conflicting forms; the canonical path is still unresolved.</div>
+            </div>
+            <div class="fact">
+              <div class="fact-key">Surface</div>
+              <div class="fact-value">PI Cockpit is the center of gravity: hub, widgets, and Obsidian plugin.</div>
+            </div>
+            <div class="fact">
+              <div class="fact-key">Capture</div>
+              <div class="fact-value">Telegram, web clipper, scratchpad, and canvas watchers all write into the vault.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <section id="summary" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-kicker">Summary</span>
+            </div>
+            <div class="section-body">
+              <p class="quote">
+                Thoth is an <em>Obsidian vault that doubles as an agent platform</em>. The vault is the filesystem, the notes are the database, and daemons plus PI Cockpit bridge it to phones, browsers, and coding sessions. The architecture is real and mostly working — but the system is still in the awkward stage where there is no schema, no provenance, two inboxes, two Vault Keeper paths, half-finished widgets, and an Event Log that nobody writes to.
+              </p>
+              <div class="callout measure">
+                <p><strong>Read this as a constitution problem, not a feature problem.</strong> The highest-leverage work is not adding more surface area; it is writing the rules, reconciling the duplicates, and finishing the dashboard that lets the platform inspect itself.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="map" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">02</span>
+              <h2 class="section-title">System map</h2>
+            </div>
+            <div class="section-body">
+              <div class="grid-12">
+                <div class="span-7">
+                  <div class="diagram-wrap">
+                    <div class="diagram-caption">
+                      <span>File-first architecture</span>
+                      <span>Everything routes through the vault</span>
+                    </div>
+                    <svg class="diagram" viewBox="0 0 980 560" role="img" aria-label="Thoth system map">
+                      <rect x="360" y="178" width="260" height="160" fill="var(--surface)" stroke="var(--accent)" stroke-width="3" />
+                      <text x="490" y="230" text-anchor="middle" font-size="28" font-weight="500" fill="var(--text)">Vault / filesystem</text>
+                      <text x="490" y="266" text-anchor="middle" font-size="16" fill="var(--text-2)">source of truth · notes · artifacts</text>
+                      <text x="490" y="296" text-anchor="middle" font-size="14" fill="var(--text-3)">Obsidian watches the files</text>
+
+                      <rect x="56" y="88" width="220" height="86" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="166" y="120" text-anchor="middle" font-size="22" font-weight="500" fill="var(--text)">Telegram bot</text>
+                      <text x="166" y="145" text-anchor="middle" font-size="14" fill="var(--text-2)">captures text, links, voice, files</text>
+
+                      <rect x="706" y="88" width="220" height="86" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="816" y="120" text-anchor="middle" font-size="22" font-weight="500" fill="var(--text)">PI Cockpit</text>
+                      <text x="816" y="145" text-anchor="middle" font-size="14" fill="var(--text-2)">hub · widgets · plugin bridge</text>
+
+                      <rect x="56" y="382" width="220" height="86" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="166" y="414" text-anchor="middle" font-size="22" font-weight="500" fill="var(--text)">Obsidian</text>
+                      <text x="166" y="439" text-anchor="middle" font-size="14" fill="var(--text-2)">live vault UI and query layer</text>
+
+                      <rect x="706" y="382" width="220" height="86" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="816" y="414" text-anchor="middle" font-size="22" font-weight="500" fill="var(--text)">Vault Keeper</text>
+                      <text x="816" y="439" text-anchor="middle" font-size="14" fill="var(--text-2)">heartbeat, drift, validation</text>
+
+                      <rect x="134" y="238" width="164" height="68" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="216" y="270" text-anchor="middle" font-size="18" font-weight="500" fill="var(--text)">Worktrees</text>
+                      <text x="216" y="292" text-anchor="middle" font-size="13" fill="var(--text-2)">parallel code branches</text>
+
+                      <rect x="682" y="238" width="164" height="68" fill="var(--bg)" stroke="var(--line)" />
+                      <text x="764" y="270" text-anchor="middle" font-size="18" font-weight="500" fill="var(--text)">Event Log</text>
+                      <text x="764" y="292" text-anchor="middle" font-size="13" fill="var(--text-2)">inter-agent memory</text>
+
+                      <line x1="276" y1="132" x2="360" y2="208" stroke="var(--accent)" stroke-width="2" />
+                      <line x1="706" y1="132" x2="620" y2="208" stroke="var(--accent)" stroke-width="2" />
+                      <line x1="276" y1="425" x2="360" y2="312" stroke="var(--line)" stroke-width="2" />
+                      <line x1="706" y1="425" x2="620" y2="312" stroke="var(--line)" stroke-width="2" />
+                      <line x1="298" y1="272" x2="360" y2="272" stroke="var(--line)" stroke-width="2" />
+                      <line x1="620" y1="272" x2="682" y2="272" stroke="var(--line)" stroke-width="2" />
+                      <line x1="490" y1="338" x2="490" y2="382" stroke="var(--accent)" stroke-width="2" />
+                      <line x1="490" y1="178" x2="490" y2="174" stroke="var(--accent)" stroke-width="2" />
+
+                      <text x="490" y="512" text-anchor="middle" font-size="13" fill="var(--text-3)">The vault is the database; everything else is an interface, watcher, or transport.</text>
+                    </svg>
+                  </div>
+                </div>
+                <div class="span-5">
+                  <div class="table-wrap" aria-label="Architecture legend">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Component</th>
+                          <th>Role</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Vault</td>
+                          <td>Filesystem source of truth for notes, artifacts, and state.</td>
+                        </tr>
+                        <tr>
+                          <td>PI Cockpit</td>
+                          <td>WebSocket hub, widgets, Obsidian plugin, and mobile-facing control surface.</td>
+                        </tr>
+                        <tr>
+                          <td>Telegram bot</td>
+                          <td>Capture pipeline from phone into vault notes and attachments.</td>
+                        </tr>
+                        <tr>
+                          <td>Vault Keeper</td>
+                          <td>Heartbeat, validation, drift detection, and cleanup.</td>
+                        </tr>
+                        <tr>
+                          <td>Worktrees</td>
+                          <td>Parallel code branches with shared vault notes.</td>
+                        </tr>
+                        <tr>
+                          <td>Event Log</td>
+                          <td>Intended inter-agent comms channel; currently underused.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="problems" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">03</span>
+              <h2 class="section-title">Problems</h2>
+            </div>
+            <div class="section-body">
+              <div class="measure">
+                <p>The system is not broken in one dramatic place. It is fuzzy in a lot of small places, which makes it harder to trust. The most important issues are the ones that prevent governance, provenance, and self-healing.</p>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Issue</th>
+                      <th>Why it matters</th>
+                      <th>Best next move</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="critical">
+                      <td>No constitution</td>
+                      <td>There is no root-level <code>SCHEMA.md</code> that says which folders exist, who owns them, and what fields they require.</td>
+                      <td>Promote the Vault Keeper schema into a canonical root document.</td>
+                    </tr>
+                    <tr class="critical">
+                      <td>Duplicate Vault Keeper</td>
+                      <td>Two competing daemon paths exist with different schedules and labels; the wrong one is running.</td>
+                      <td>Pick one canonical daemon and unload the other.</td>
+                    </tr>
+                    <tr>
+                      <td>Two inboxes</td>
+                      <td><code>0-Inbox/</code> and <code>3-Resources/Inbox/</code> both collect capture with no firm rule.</td>
+                      <td>Commit to a single capture contract and document it.</td>
+                    </tr>
+                    <tr>
+                      <td>No provenance</td>
+                      <td>Agent-written notes do not say who wrote them or when they should be treated as agent-owned.</td>
+                      <td>Add <code>agent:</code> and <code>source:</code> frontmatter to writers.</td>
+                    </tr>
+                    <tr>
+                      <td>Unused Event Log</td>
+                      <td>The intended nervous system exists as a file, but the daemons barely write to it.</td>
+                      <td>Make every daemon append meaningful events.</td>
+                    </tr>
+                    <tr>
+                      <td>Daemon stdout drift</td>
+                      <td>Some watchers have stale logs; it is unclear whether they are idle or hung.</td>
+                      <td>Teach Vault Keeper to probe, not just timestamp-check.</td>
+                    </tr>
+                    <tr>
+                      <td>Telegram is capture-only</td>
+                      <td>The phone can send context into the vault, but it is not yet a full remote control surface.</td>
+                      <td>Wire Telegram to the hub and add control commands.</td>
+                    </tr>
+                    <tr>
+                      <td>Root-level cruft</td>
+                      <td>Loose files and backups at the vault root make the repository hard to trust at a glance.</td>
+                      <td>Archive or move them once the schema is written.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="opportunities" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">04</span>
+              <h2 class="section-title">Opportunities</h2>
+            </div>
+            <div class="section-body">
+              <div class="measure">
+                <p>The good news: the architecture already points at the right answers. The missing work is mostly connective tissue — the kind that turns a capable pile of parts into a platform.</p>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Opportunity</th>
+                      <th>Why it matters</th>
+                      <th>Shape</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Universal capture surface</td>
+                      <td>One contract for anything dropped into the vault, with Vault Keeper routing it on a timer.</td>
+                      <td>Capture folder with a clear contract.</td>
+                    </tr>
+                    <tr>
+                      <td>PI Cockpit widgets</td>
+                      <td>Obsidian becomes a live command surface for health, triage, briefing, and status.</td>
+                      <td>Small focused widgets, not more windows.</td>
+                    </tr>
+                    <tr>
+                      <td>Event Log as memory</td>
+                      <td>A plain markdown feed makes the platform legible and auditable.</td>
+                      <td>Every daemon appends meaningful events.</td>
+                    </tr>
+                    <tr>
+                      <td>Daily briefings</td>
+                      <td>Morning notes can summarize health, capture, and open work instead of starting blank.</td>
+                      <td>Auto-generated daily note.</td>
+                    </tr>
+                    <tr>
+                      <td>Provenance queries</td>
+                      <td>Frontmatter unlocks Dataview-style filters for agent ownership and capture type.</td>
+                      <td>Structured note metadata.</td>
+                    </tr>
+                    <tr>
+                      <td>Smart files</td>
+                      <td>Scratchpad-style watchers can generalize into reusable conversational surfaces.</td>
+                      <td>Drop a note, get an answer.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="sequence" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">05</span>
+              <h2 class="section-title">Order of operations</h2>
+            </div>
+            <div class="section-body">
+              <div class="measure">
+                <p>Do not try to do everything at once. The leverage is in finishing buckets in order, so each layer below can stabilize the next one.</p>
+              </div>
+              <div class="timeline">
+                <div class="step">
+                  <div><span class="step-badge">A</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Stop the bleeding</h3>
+                      <span class="step-meta">this week · one day</span>
+                    </div>
+                    <p>Reconcile Vault Keeper, commit or revert the in-flight PI Cockpit work, and remove the orphan backup.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div><span class="step-badge">B</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Write the constitution</h3>
+                      <span class="step-meta">next · one day</span>
+                    </div>
+                    <p>Write <code>SCHEMA.md</code>, decide the inbox contract, and add <code>agent:</code> to every writer that needs provenance.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div><span class="step-badge">C</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Finish the loop</h3>
+                      <span class="step-meta">next · one week</span>
+                    </div>
+                    <p>Ship the cron dashboard, wire Event Log writes, and generate daily briefings so the system can see itself.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div><span class="step-badge">D</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Make mobile first-class</h3>
+                      <span class="step-meta">after C</span>
+                    </div>
+                    <p>Connect Telegram to the hub, add control commands, and fix the auto-connect bug so the phone becomes a real remote.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div><span class="step-badge">E</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Restructure only after the rules exist</h3>
+                      <span class="step-meta">after A–D</span>
+                    </div>
+                    <p>Migrate folder structure only once the schema is canonical and the heartbeat can validate the new shape.</p>
+                  </div>
+                </div>
+                <div class="step">
+                  <div><span class="step-badge">F</span></div>
+                  <div>
+                    <div class="step-head">
+                      <h3 class="step-title">Compound</h3>
+                      <span class="step-meta">ongoing</span>
+                    </div>
+                    <p>Add more widgets, more smart files, and eventually use Telegram Mini Apps as a way to surface artifacts directly on mobile.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="questions" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">06</span>
+              <h2 class="section-title">Open questions</h2>
+            </div>
+            <div class="section-body">
+              <div class="questions">
+                <div class="question">
+                  <p class="q">What is the canonical Vault Keeper?</p>
+                  <p class="a">This decides the heartbeat schedule, the label, and which script becomes the system’s actual nervous system.</p>
+                </div>
+                <div class="question">
+                  <p class="q">What is the inbox contract?</p>
+                  <p class="a">This decides whether capture is routed automatically, reviewed manually, or split by source into a clean capture zone.</p>
+                </div>
+                <div class="question">
+                  <p class="q">Does code stay inside the vault?</p>
+                  <p class="a">If yes, the notes and the infrastructure share one world model; if no, the workspace becomes more fragmented.</p>
+                </div>
+                <div class="question">
+                  <p class="q">Do we commit to the Event Log?</p>
+                  <p class="a">If yes, the platform finally remembers its own actions; if no, the log should be retired instead of half-used.</p>
+                </div>
+                <div class="question">
+                  <p class="q">What should happen to the loose root files?</p>
+                  <p class="a">Archive them or move them once the schema defines the authoritative home for each kind of artifact.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="references" class="section">
+          <div class="section-grid">
+            <div class="section-label">
+              <span class="section-num">07</span>
+              <h2 class="section-title">References</h2>
+            </div>
+            <div class="section-body">
+              <div class="references">
+                <div class="ref"><strong>Vault Architecture — Full Breakdown &amp; Redesign Proposal</strong><span>the earlier deep audit that already did most of the hard thinking</span></div>
+                <div class="ref"><strong>PI Cockpit — Widget Consolidation Plan</strong><span>the widget roadmap and control-surface strategy</span></div>
+                <div class="ref"><strong>Telegram Bot — PI Cockpit Integration Plan</strong><span>the path to make the phone a full remote, not just capture-only</span></div>
+                <div class="ref"><strong>Cron Dashboard Spec</strong><span>the in-flight daemon management surface</span></div>
+                <div class="ref"><strong>Telegram Bridge Auto-Connect Issue</strong><span>the open bug that keeps mobile sessions from reconnecting cleanly</span></div>
+                <div class="ref"><strong>heartbeat.md</strong><span>the latest operational readout from the vault keeper</span></div>
+                <div class="ref"><strong>Source note</strong><span class="mono">.pi/agent/tmp/telegram/1778762421391-2026-05-14_Thoth_Full_State_of_the_Union.md</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer">
+          <div>Artifact: <span class="mono">6-Agent/tma-mini/state-of-the-union.html</span></div>
+          <div>Generated from Telegram attachment · Swiss-grid HTML artifact</div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

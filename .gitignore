@@ -66,3 +66,7 @@ pi-cockpit/hub/node_modules/
 # Hub logs
 pi-cockpit/logs/
 logs/
+
+# Local agent/tool state
+.opencode/
+.sisyphus/

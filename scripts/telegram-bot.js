@@ -8,14 +8,24 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const os = require('os');
 
 const CONFIG = require('./telegram-config.json');
 const VAULT = CONFIG.vaultPath;
 const INBOX = path.join(VAULT, CONFIG.inboxFolder);
+const ATTACHMENTS = path.join(VAULT, 'Attachments');
+const VOICE_AUDIO_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Audio');
+const VOICE_TRANSCRIPT_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Transcripts');
+const VOICE_SUMMARIES_DIR = path.join(VAULT, CONFIG.voiceSummariesFolder || path.join('4-Archive', 'Voice Summaries'));
+const OBSIDIAN_VAULT_NAME = CONFIG.obsidianVaultName || 'Thoth';
+const FFMPEG_BIN = CONFIG.ffmpegBin || 'ffmpeg';
 
 // ── Ensure inbox exists ────────────────────────────────
 fs.mkdirSync(INBOX, { recursive: true });
-fs.mkdirSync(path.join(VAULT, 'Attachments'), { recursive: true });
+fs.mkdirSync(ATTACHMENTS, { recursive: true });
+fs.mkdirSync(VOICE_AUDIO_DIR, { recursive: true });
+fs.mkdirSync(VOICE_TRANSCRIPT_DIR, { recursive: true });
+fs.mkdirSync(VOICE_SUMMARIES_DIR, { recursive: true });
 
 // ── DeepSeek API ───────────────────────────────────────
 async function askDeepSeek(systemPrompt, userMessage, maxTokens = 2000) {
@@ -64,7 +74,7 @@ function saveToVault(title, content, source = '', extraTags = []) {
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
   const safeTitle = title.replace(/[\/\\:*?"<>|]/g, '-').slice(0, 70).trim();
-  const filename = `${dateStr} ${safeTitle}.md`;
+  const filename = uniqueFilename(`${dateStr} ${safeTitle}.md`, INBOX);
   const filepath = path.join(INBOX, filename);
 
   const tags = ['telegram', ...extraTags].join(', ');
@@ -85,7 +95,68 @@ ${content}
 `;
 
   fs.writeFileSync(filepath, note, 'utf-8');
-  return { filepath, filename };
+  return { filepath, filename, vaultPath: vaultRelativePath(filepath), obsidianUrl: obsidianUriForPath(filepath) };
+}
+
+function vaultRelativePath(filepath) {
+  return path.relative(VAULT, filepath).split(path.sep).join('/');
+}
+
+function obsidianUriForPath(filepath) {
+  const rel = vaultRelativePath(filepath);
+  return `obsidian://open?vault=${encodeURIComponent(OBSIDIAN_VAULT_NAME)}&file=${encodeURIComponent(rel)}`;
+}
+
+function safeFilenamePart(value, fallback = 'audio') {
+  return String(value || fallback)
+    .replace(/[\/\\:*?"<>|]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 90)
+    .replace(/^-|-$/g, '') || fallback;
+}
+
+function escapeYaml(value) {
+  return String(value || '').replace(/"/g, '\\"');
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeHtmlAttr(value) {
+  return escapeHtml(value).replace(/'/g, '&#39;');
+}
+
+function makeHtmlResponse(text, extraOptions = {}) {
+  return {
+    text,
+    options: {
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      ...extraOptions,
+    },
+  };
+}
+
+function uniqueFilename(filename, directory) {
+  const ext = path.extname(filename);
+  const base = filename.slice(0, -ext.length);
+  let candidate = filename;
+  let i = 2;
+  while (fs.existsSync(path.join(directory, candidate))) {
+    candidate = `${base} ${i}${ext}`;
+    i += 1;
+  }
+  return candidate;
+}
+
+function formatNoteLink(result) {
+  return `📍 Note: ${result.vaultPath}\n${result.obsidianUrl}`;
 }
 
 // ── URL routing ─────────────────────────────────────────
@@ -293,51 +364,248 @@ function extractText(html) {
 }
 
 // ── Voice / Audio handler ──────────────────────────────
-async function handleVoice(ctx) {
-  const file = await ctx.getFile();
-  const tmpOgg = `/tmp/thoth-voice-${Date.now()}.ogg`;
-  const tmpWav = `/tmp/thoth-voice-${Date.now()}.wav`;
+const AUDIO_EXTENSIONS = new Set(['ogg', 'oga', 'opus', 'mp3', 'm4a', 'aac', 'wav', 'flac', 'webm', 'mp4']);
+
+function isAudioDocument(message) {
+  const doc = message?.document;
+  if (!doc) return false;
+  const mime = (doc.mime_type || '').toLowerCase();
+  const ext = (doc.file_name || '').split('.').pop()?.toLowerCase();
+  return mime.startsWith('audio/') || AUDIO_EXTENSIONS.has(ext);
+}
+
+function getAudioPayload(message) {
+  if (message.voice) {
+    return {
+      kind: 'voice',
+      fileId: message.voice.file_id,
+      originalName: 'telegram-voice.ogg',
+      mimeType: message.voice.mime_type || 'audio/ogg',
+      duration: message.voice.duration,
+      extension: 'ogg',
+    };
+  }
+
+  if (message.audio) {
+    const ext = (message.audio.file_name || '').split('.').pop()?.toLowerCase() || 'mp3';
+    return {
+      kind: 'audio',
+      fileId: message.audio.file_id,
+      originalName: message.audio.file_name || `telegram-audio.${ext}`,
+      mimeType: message.audio.mime_type || 'audio/*',
+      duration: message.audio.duration,
+      extension: ext,
+    };
+  }
+
+  if (isAudioDocument(message)) {
+    const ext = (message.document.file_name || '').split('.').pop()?.toLowerCase() || 'audio';
+    return {
+      kind: 'document-audio',
+      fileId: message.document.file_id,
+      originalName: message.document.file_name || `telegram-audio.${ext}`,
+      mimeType: message.document.mime_type || 'audio/*',
+      duration: null,
+      extension: ext,
+    };
+  }
+
+  return null;
+}
+
+function telegramFileUrl(filePath) {
+  return `https://api.telegram.org/file/bot${CONFIG.telegramToken}/${filePath}`;
+}
+
+async function downloadTelegramFile(ctx, fileId, destinationPath) {
+  const file = await ctx.api.getFile(fileId);
+  if (!file.file_path) throw new Error('Telegram did not return a file path');
+  const data = await fetchRaw(telegramFileUrl(file.file_path));
+  fs.writeFileSync(destinationPath, data);
+  return file;
+}
+
+function runFfmpegToWav(inputPath, outputPath) {
+  const result = spawnSync(FFMPEG_BIN, ['-y', '-i', inputPath, '-ar', '16000', '-ac', '1', outputPath], {
+    encoding: 'utf-8',
+    timeout: 120000,
+  });
+
+  if (result.status !== 0) {
+    const detail = (result.stderr || result.stdout || '').trim().slice(0, 500);
+    throw new Error(`ffmpeg failed${detail ? `: ${detail}` : ''}`);
+  }
+}
+
+function runWhisper(wavPath, workDir) {
+  const args = [
+    wavPath,
+    '--model', CONFIG.whisperModel || 'tiny',
+    '--output_format', 'txt',
+    '--output_dir', workDir,
+  ];
+
+  if (CONFIG.whisperLanguage) {
+    args.push('--language', CONFIG.whisperLanguage);
+  }
+
+  const result = spawnSync(CONFIG.whisperBin || 'whisper', args, {
+    encoding: 'utf-8',
+    timeout: CONFIG.whisperTimeoutMs || 300000,
+  });
+
+  if (result.status !== 0) {
+    const detail = (result.stderr || result.stdout || '').trim().slice(0, 700);
+    throw new Error(`Whisper failed${detail ? `: ${detail}` : ''}`);
+  }
+
+  const txtFile = path.join(workDir, `${path.basename(wavPath, path.extname(wavPath))}.txt`);
+  const transcript = fs.existsSync(txtFile) ? fs.readFileSync(txtFile, 'utf-8').trim() : '';
+  if (!transcript) throw new Error('Whisper produced an empty transcript');
+
+  return { transcript, txtFile };
+}
+
+function extractTitleFromMarkdown(markdown, fallback) {
+  const h1 = markdown.match(/^#\s+(.+)$/m)?.[1]?.trim();
+  if (h1) return h1.slice(0, 90);
+
+  const firstSummaryBullet = markdown.match(/^[-*]\s+(.+)$/m)?.[1]?.trim();
+  if (firstSummaryBullet) return firstSummaryBullet.split(/[.!?]/)[0].slice(0, 90);
+
+  return fallback.split(/\s+/).slice(0, 10).join(' ').slice(0, 90) || 'Voice note';
+}
+
+function stripLeadingH1(markdown) {
+  return markdown.replace(/^#\s+.+\n+/, '').trim();
+}
+
+async function summarizeVoiceTranscript(transcript, metadata) {
+  const systemPrompt = `You convert dictated voice memos into Obsidian-ready Markdown notes.
+Preserve intent. Do not invent facts, dates, names, tasks, or decisions.
+If something is ambiguous, put it under Open questions.
+Return clean Markdown only.`;
+
+  const userPrompt = `Metadata:\n${JSON.stringify(metadata, null, 2)}\n\nTranscript:\n${transcript}\n\nReturn exactly this structure:\n# Concise title\n\n## Summary\n- 3-6 bullets capturing the memo\n\n## Key takeaways\n- Important ideas, references, or context\n\n## Action items\n- [ ] Tasks explicitly implied by the speaker\n\n## Decisions\n- Decisions or commitments; write \"None captured\" if none\n\n## Open questions\n- Ambiguities or follow-ups; write \"None captured\" if none\n\n## Cleaned notes\nA polished, readable version of the memo in the speaker's intent.`;
+
+  return askDeepSeek(systemPrompt, userPrompt, 3500);
+}
+
+function saveVoiceSummaryToVault({ title, summary, transcript, metadata, audioRelPath, transcriptRelPath }) {
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const safeTitle = safeFilenamePart(title, 'Voice note').replace(/-/g, ' ').slice(0, 70).trim();
+  const filename = uniqueFilename(`${dateStr} ${safeFilenamePart(safeTitle, 'Voice note')}.md`, VOICE_SUMMARIES_DIR);
+  const filepath = path.join(VOICE_SUMMARIES_DIR, filename);
+
+  const note = `---
+title: "${escapeYaml(title)}"
+created: "${now.toISOString()}"
+source: "telegram"
+telegram_chat_id: "${metadata.chatId || ''}"
+telegram_message_id: "${metadata.messageId || ''}"
+sender: "${escapeYaml(metadata.senderName || '')}"
+audio_file: "${escapeYaml(audioRelPath)}"
+transcript_file: "${escapeYaml(transcriptRelPath)}"
+models:
+  transcription: "${escapeYaml(CONFIG.whisperModel || 'whisper')}"
+  summarization: "${escapeYaml(CONFIG.deepseekModel || 'deepseek')}"
+tags: [telegram, voice-note, transcript, ai-summary]
+---
+
+# ${title}
+
+${stripLeadingH1(summary)}
+
+---
+
+## Original audio
+![[${audioRelPath}]]
+
+## Source files
+- Audio: [[${audioRelPath}]]
+- Transcript: [[${transcriptRelPath}]]
+
+## Raw transcript
+${transcript}
+
+---
+*Captured via Thoth Telegram Bot · ${dateStr}*
+`;
+
+  fs.writeFileSync(filepath, note, 'utf-8');
+  return { filepath, filename, vaultPath: vaultRelativePath(filepath), obsidianUrl: obsidianUriForPath(filepath) };
+}
+
+async function handleAudioMessage(ctx) {
+  const msg = ctx.message;
+  const payload = getAudioPayload(msg);
+  if (!payload) throw new Error('No supported audio payload found');
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const sender = msg.from?.username || msg.from?.first_name || 'telegram';
+  const base = `${stamp}-${safeFilenamePart(sender)}-${msg.message_id}`;
+  const audioFilename = `${base}.${safeFilenamePart(payload.extension, 'audio')}`;
+  const audioPath = path.join(VOICE_AUDIO_DIR, audioFilename);
+  const transcriptFilename = `${base}.txt`;
+  const transcriptPath = path.join(VOICE_TRANSCRIPT_DIR, transcriptFilename);
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'thoth-voice-'));
+  const wavPath = path.join(workDir, `${base}.wav`);
+
+  const metadata = {
+    kind: payload.kind,
+    originalName: payload.originalName,
+    mimeType: payload.mimeType,
+    durationSeconds: payload.duration || null,
+    chatId: msg.chat?.id,
+    messageId: msg.message_id,
+    senderName: [msg.from?.first_name, msg.from?.last_name].filter(Boolean).join(' ') || msg.from?.username || '',
+    receivedAt: new Date((msg.date || Math.floor(Date.now() / 1000)) * 1000).toISOString(),
+  };
 
   try {
-    // Download voice file
-    const url = `https://api.telegram.org/file/bot${CONFIG.telegramToken}/${file.file_path}`;
-    const audioData = await fetchUrl(url);
-    fs.writeFileSync(tmpOgg, Buffer.from(await fetchRaw(url)));
+    await downloadTelegramFile(ctx, payload.fileId, audioPath);
+    fs.writeFileSync(path.join(VOICE_AUDIO_DIR, `${base}.json`), JSON.stringify({ ...metadata, audioFile: vaultRelativePath(audioPath) }, null, 2));
 
-    // Convert to wav for whisper
-    execSync(`ffmpeg -y -i "${tmpOgg}" -ar 16000 -ac 1 "${tmpWav}" 2>/dev/null`, { timeout: 15000 });
+    runFfmpegToWav(audioPath, wavPath);
+    const { transcript } = runWhisper(wavPath, workDir);
+    fs.writeFileSync(transcriptPath, transcript, 'utf-8');
 
-    // Transcribe
-    const whisperOut = execSync(
-      `${CONFIG.whisperBin} "${tmpWav}" --model ${CONFIG.whisperModel} --language ${CONFIG.whisperLanguage} --output_format txt --output_dir /tmp 2>/dev/null`,
-      { encoding: 'utf-8', timeout: 60000 }
-    );
+    const summary = await summarizeVoiceTranscript(transcript, {
+      ...metadata,
+      audioFile: vaultRelativePath(audioPath),
+      transcriptFile: vaultRelativePath(transcriptPath),
+    });
 
-    // Read transcript
-    const txtFile = tmpWav.replace('.wav', '.txt');
-    const transcript = fs.existsSync(txtFile) ? fs.readFileSync(txtFile, 'utf-8').trim() : '';
+    const title = extractTitleFromMarkdown(summary, transcript);
+    const result = saveVoiceSummaryToVault({
+      title,
+      summary,
+      transcript,
+      metadata,
+      audioRelPath: vaultRelativePath(audioPath),
+      transcriptRelPath: vaultRelativePath(transcriptPath),
+    });
 
-    if (!transcript) throw new Error('No transcript');
+    const preview = stripLeadingH1(summary).slice(0, 1100);
+    const html = `🎙️ Saved voice note: <code>${escapeHtml(result.filename)}</code>\n\n` +
+      `<a href="${escapeHtmlAttr(result.obsidianUrl)}">Open your note in Obsidian</a>\n` +
+      `<code>${escapeHtml(result.vaultPath)}</code>\n\n` +
+      `${escapeHtml(preview)}${summary.length > 1100 ? '...' : ''}`;
 
-    // Summarize
-    const systemPrompt = `You clean up and summarize voice notes. If it's a quick thought, make it a clean note. If it's a longer dictation, structure it.`;
-    const userPrompt = `Voice transcript:\n${transcript}\n\nTurn this into a clean, structured note. Keep the original meaning but make it readable. Add markdown formatting where helpful.`;
-
-    const summary = await askDeepSeek(systemPrompt, userPrompt, 2000);
-
-    const title = transcript.split(' ').slice(0, 8).join(' ').slice(0, 70);
-    const fullContent = `**Original transcript:**\n> ${transcript.slice(0, 300)}${transcript.length > 300 ? '...' : ''}\n\n---\n\n${summary}`;
-    const result = saveToVault(title, fullContent, '', ['voice', 'transcript']);
-
-    return `🎙️ **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
-
+    return makeHtmlResponse(html);
   } catch (e) {
-    throw new Error(`Voice failed: ${e.message}`);
+    try { fs.unlinkSync(audioPath); } catch {}
+    try { fs.unlinkSync(transcriptPath); } catch {}
+    throw new Error(`Audio failed: ${e.message}`);
   } finally {
-    try { fs.unlinkSync(tmpOgg); } catch {}
-    try { fs.unlinkSync(tmpWav); } catch {}
-    try { fs.unlinkSync(tmpWav.replace('.wav', '.txt')); } catch {}
+    try { fs.rmSync(workDir, { recursive: true, force: true }); } catch {}
   }
+}
+
+// Backward-compatible name used by older handler branches.
+async function handleVoice(ctx) {
+  return handleAudioMessage(ctx);
 }
 
 function fetchRaw(url) {
@@ -441,10 +709,11 @@ bot.command('start', async (ctx) => {
     `Send me anything and I'll summarize it and save it to your Obsidian vault:\n\n` +
     `• **Text** — notes, thoughts, ideas\n` +
     `• **URLs** — articles, YouTube, tweets\n` +
-    `• **Voice** — transcribed + summarized\n` +
+    `• **Voice/audio** — transcribed, summarized, saved, linked back\n` +
     `• **Photos** — saved with captions\n` +
     `• **Documents** — filed with notes\n\n` +
-    `Everything lands in \`0-Inbox/\``,
+    `Text/URLs land in \`${CONFIG.inboxFolder}/\`\n` +
+    `Voice summaries land in \`${path.relative(VAULT, VOICE_SUMMARIES_DIR).split(path.sep).join('/')}/\``,
     { parse_mode: 'Markdown' }
   );
 });
@@ -454,15 +723,15 @@ bot.on('message', async (ctx) => {
   const msg = ctx.message;
   if (!msg) return;
 
-  console.log(`📨 [${msg.from?.first_name || '?'}] ${msg.text ? 'text:' + msg.text.slice(0, 50) : msg.voice ? 'voice' : msg.photo ? 'photo' : msg.document ? 'doc' : msg.video ? 'video' : 'other'}`);
+  console.log(`📨 [${msg.from?.first_name || '?'}] ${msg.text ? 'text:' + msg.text.slice(0, 50) : msg.voice ? 'voice' : msg.audio ? 'audio' : isAudioDocument(msg) ? 'audio-doc' : msg.photo ? 'photo' : msg.document ? 'doc' : msg.video ? 'video' : 'other'}`);
 
   try {
     let response = '';
 
-    // Voice message
-    if (msg.voice) {
-      await ctx.reply('🎙️ Transcribing...');
-      response = await handleVoice(ctx);
+    // Voice message or uploaded audio file
+    if (msg.voice || msg.audio || isAudioDocument(msg)) {
+      await ctx.reply('🎙️ Transcribing audio, then I’ll summarize it into Obsidian...');
+      response = await handleAudioMessage(ctx);
     }
     // Photo
     else if (msg.photo) {
@@ -511,17 +780,28 @@ bot.on('message', async (ctx) => {
     }
 
     if (response) {
-      // Strip markdown that might break Telegram's parser
-      const cleanResponse = response
-        .replace(/\*\*/g, '')
-        .replace(/__/g, '')
-        .replace(/\*([^*]+)\*/g, '$1');
+      const responseText = typeof response === 'string' ? response : response.text;
+      const responseOptions = typeof response === 'string'
+        ? { link_preview_options: { is_disabled: true } }
+        : (response.options || {});
+
+      // Strip markdown that might break Telegram's parser for plain-text responses.
+      const cleanResponse = typeof response === 'string'
+        ? responseText
+          .replace(/\*\*/g, '')
+          .replace(/__/g, '')
+          .replace(/\*([^*]+)\*/g, '$1')
+        : responseText;
+
       try {
-        await ctx.reply(cleanResponse, { link_preview_options: { is_disabled: true } });
+        await ctx.reply(cleanResponse, responseOptions);
       } catch (replyErr) {
         // Fallback: plain text without any formatting
         console.error('Reply error:', replyErr.message);
-        await ctx.reply(cleanResponse.slice(0, 500));
+        const fallback = cleanResponse
+          .replace(/<a\s+href="([^"]+)">([^<]+)<\/a>/g, '$2: $1')
+          .replace(/<[^>]+>/g, '');
+        await ctx.reply(fallback.slice(0, 1000), { link_preview_options: { is_disabled: true } });
       }
     }
   } catch (e) {
@@ -546,6 +826,7 @@ process.on('unhandledRejection', (reason) => {
 console.log('🦉 Thoth Telegram Bot starting...');
 console.log(`📁 Vault: ${VAULT}`);
 console.log(`📥 Inbox: ${INBOX}`);
+console.log(`🎙️ Voice summaries: ${VOICE_SUMMARIES_DIR}`);
 
 bot.start({
   onStart: (me) => console.log(`✅ Bot @${me.username} is live`),
