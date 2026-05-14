@@ -18,8 +18,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Artifacts live in the vault at 6-Agent/tma/
-// From hub/ dir: go up 3 to repo root, then Thoth/6-Agent/tma/
-const ARTIFACTS_DIR = join(__dirname, "..", "..", "..", "Thoth", "6-Agent", "tma");
+// From hub/ dir: go up 2 to vault root, then 6-Agent/tma/
+const ARTIFACTS_DIR = join(__dirname, "..", "..", "6-Agent", "tma");
 
 const MIME = {
   ".html": "text/html; charset=utf-8",

@@ -546,7 +546,7 @@ async function handleMessage(ws, raw) {
 // ── Create HTTP + WS server ────────────────────────────────
 const server = createServer((req, res) => {
   // Route TMA hostname → artifact server
-  if ((req.headers.host || "").startsWith("tma.") || req.url?.startsWith("/tma/")) {
+  if ((req.headers.host || "").includes("tma") || (req.headers.host || "").includes("thoth") || req.url?.startsWith("/tma/")) {
     handleTmaRoutes(req, res);
     return;
   }
