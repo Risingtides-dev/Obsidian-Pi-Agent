@@ -116,7 +116,7 @@ Each worktree has its own copy of `scripts/` (on its branch) but **no notes**. T
 
 **Creating a worktree:**
 ```bash
-cd ~/dev/Thoth
+cd <vault-root>
 wt my-feature           # creates ~/.worktrees/Thoth-my-feature/ + new branch
 cd ~/.worktrees/Thoth-my-feature
 pi                      # starts Pi session with vault_path context
@@ -150,7 +150,7 @@ No message broker. No polling. No API. Just markdown on a shared filesystem. Obs
 
 ### Starting a new feature
 ```bash
-cd ~/dev/Thoth
+cd <vault-root>
 wt my-feature
 thoth                      # pick the new worktree, start session
 ```
@@ -186,7 +186,7 @@ These are set by the Pi shell wrapper and available in every session:
 | Variable | Example | Meaning |
 |----------|---------|---------|
 | `git_status` | `🔀vaultkeeper 🐙` | Current branch, worktree indicator, GitHub connected |
-| `vault_path` | `$VAULT_PATH` (e.g. `~/dev/Thoth`) | Main vault location — read/write notes here |
+| `vault_path` | current vault root for this device/session | Main vault location — read/write notes here |
 | `thoth.current_project` | `Thoth-vaultkeeper / vaultkeeper` | Active project focus (dot-separated convention) |
 
 ## Available Infrastructure
