@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Agent Surface</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            head: ['Playfair Display', 'Times New Roman', 'serif'],
+            body: ['Source Serif 4', 'Charter', 'Georgia', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            news: {
+              paper: '#fbfaf6',
+              warm: '#f3eee0',
+              ink: '#111111',
+              soft: '#2a2a28',
+              mute: '#5a5a55',
+              faint: '#8a8a82',
+              rule: '#111111',
+              ruleSoft: '#bfbcb2',
+              red: '#a01818',
+            },
+          },
+          fontSize: {
+            'broadsheet': ['5rem', { lineHeight: '0.95', letterSpacing: '-0.02em' }],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { background: #fbfaf6; color: #111111; }
+    .rule { border-top: 1px solid #111; }
+    .rule-thick { border-top: 3px solid #111; }
+    .rule-double { border-top: 1px solid #111; border-bottom: 1px solid #111; height: 4px; }
+    .rule-soft { border-top: 1px solid #bfbcb2; }
+    .dropcap::first-letter { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 4.5em; line-height: 0.85; float: left; padding: 0.05em 0.08em 0 0; color: #111; }
+    .smallcaps { font-feature-settings: 'smcp'; letter-spacing: 0.06em; }
+    .tabular { font-variant-numeric: tabular-nums; }
+    blockquote { font-style: italic; }
+    .cols-2 { column-count: 2; column-gap: 28px; column-rule: 1px solid #bfbcb2; }
+    .cols-2 > p, .cols-3 > p { break-inside: avoid; margin-bottom: 0.7em; }
+    .no-break { break-inside: avoid; }
+    ::selection { background: #f0e8c8; color: #111; }
+    @media (max-width: 640px) {
+      .cols-2 { column-count: 1; column-rule: none; }
+    }
+  </style>
+</head>
+<body class="font-body text-[16px] text-news-ink leading-[1.5]">
+
+<!-- Masthead -->
+<header class="border-b-4 border-news-ink">
+  <div class="max-w-7xl mx-auto px-6 pt-5 pb-2">
+    <div class="flex items-end justify-between mb-2">
+      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Vol. I · No. 001</span>
+      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Thoth Editions</span>
+    </div>
+    <h1 class="font-head text-broadsheet font-black tracking-tighter leading-[0.9] text-center">
+      The Agent Surface
+    </h1>
+    <div class="flex items-center justify-center gap-3 pt-2 border-t border-news-ink">
+      <span class="font-sans text-xs uppercase tracking-[0.2em] font-medium">Tuesday, May 12, 2026</span>
+      <span class="text-news-red">●</span>
+      <span class="font-sans text-xs uppercase tracking-[0.2em] font-medium">HTML as the new protocol for AI output</span>
+    </div>
+  </div>
+</header>
+
+<!-- Lead story -->
+<section class="max-w-7xl mx-auto px-6 py-8">
+  <div class="grid grid-cols-12 gap-6">
+    <article class="col-span-12 md:col-span-8 md:border-r md:border-news-ruleSoft md:pr-6">
+      <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold text-news-red mb-2">Cover · Analysis</p>
+      <h2 class="font-head text-4xl md:text-5xl font-black leading-[1.0] tracking-tight mb-4">
+        Why HTML Is Becoming the Universal Surface for AI Agents
+      </h2>
+      <p class="font-body text-lg italic text-news-soft leading-snug max-w-2xl mb-3">
+        From Claude Artifacts to ChatGPT Canvas to Telegram Mini Apps, the industry is converging on a single insight: when agents produce HTML, they can communicate anything.
+      </p>
+      <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mb-6">
+        By <span class="text-news-ink">Thoth Research</span> · 8 min read
+      </p>
+      <div class="cols-2 font-body text-base leading-[1.55]">
+
+        <p class="dropcap"><span class="smallcaps text-xs uppercase font-bold not-italic mr-1">SAN FRANCISCO —</span>In the span of eighteen months, the AI industry has quietly converged on a single, unremarkable technology as its primary output medium: HTML. Not JSON. Not markdown. Not proprietary widget protocols. The hypertext markup language — old enough to vote, simple enough to render on any device — has become the unexpected lingua franca of agentic communication.</p>
+
+        <p>The evidence is accumulating. Anthropic's Claude Artifacts renders generated code and documents in a dedicated pane alongside chat. OpenAI's ChatGPT Canvas edits text and code in a split workspace. Vercel's AI SDK streams React components directly from language model output. Google's Gemini Canvas provides a real-time collaborative workspace. And now, Telegram Mini Apps — a platform built for e-commerce and games — is being repurposed as a delivery surface for AI-generated documents.</p>
+
+        <p>What ties these disparate efforts together is a shared architectural insight: HTML is the most expressive, portable, and universally supported render format ever created. Every device with a screen can display it. Every developer knows it. Every browser can run JavaScript inside it. When an agent generates HTML, it generates a complete, self-contained experience — not just text, but structure, layout, interactivity, and state.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">The filesystem as API</h4>
+
+        <p>Beneath the surface, a deeper pattern is emerging. Traditional software communicates through REST APIs, databases, and message queues. Agent-native systems are increasingly communicating through the filesystem. The agent writes a file. A watcher detects the change. The surface re-renders.</p>
+
+        <p>This is the architecture that powers Thoth's artifact dashboard. The PI Cockpit hub watches a vault directory. When an agent writes an HTML or Markdown file, the hub detects it, serves it through a Cloudflare tunnel, and the Telegram Mini App renders it. No API call. No database. No deployment step. The filesystem <em>is</em> the protocol.</p>
+
+        <figure class="my-6 px-5 py-4 border-y-2 border-news-ink no-break">
+          <p class="font-head text-xl italic font-medium leading-[1.25] mb-2">"HTML is the only output format where the agent can express typographic hierarchy, interactive controls, and visual structure — not just semantics."</p>
+          <figcaption class="font-sans text-xs uppercase tracking-[0.12em] text-news-mute font-medium">— Common architectural pattern across all major AI platforms</figcaption>
+        </figure>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Three reasons HTML wins</h4>
+
+        <p><strong>First, portability.</strong> A self-contained HTML file with inline CSS and a CDN-loaded framework renders identically on an iPhone, a desktop browser, an Obsidian pane, or a Telegram Mini App. No platform-specific SDK. No native bridge. The browser is the runtime.</p>
+
+        <p><strong>Second, expressiveness.</strong> Markdown captures semantics. JSON captures data. HTML captures <em>design</em>. When an agent generates a document, it can make choices about layout, hierarchy, color, and typography that plain text formats cannot convey. A Swiss Grid dashboard and a Glassy SaaS landing page are both HTML — but they communicate entirely different intentions.</p>
+
+        <p><strong>Third, interactivity.</strong> HTML with JavaScript is a full application platform. Agents can generate not just static documents but interactive dashboards, forms, visualizations, and tools. A generated HTML page can fetch live data, respond to user input, and update in real time — all without leaving the chat surface.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">The style guide approach</h4>
+
+        <p>One challenge with HTML-as-output is consistency. If every agent generates raw, unstyled HTML, the result is functional but ugly. The emerging solution: style guides. A style guide is a comprehensive design system — colors, typography, spacing, component patterns — that the agent follows when generating HTML.</p>
+
+        <p>Thoth bundles ten professional style guides ranging from Glassy Modern SaaS to Brutalist to Swiss Grid. The agent loads a guide, internalizes the rules, and produces HTML that looks like a human designer made it. This turns the agent from a markdown generator into a design-aware publisher.</p>
+
+      </div>
+    </article>
+
+    <!-- Sidebar -->
+    <aside class="col-span-12 md:col-span-4">
+      <p class="font-sans text-xs uppercase tracking-[0.18em] font-bold border-b-2 border-news-ink pb-1 mb-3">In this issue</p>
+      <ul class="divide-y divide-news-ruleSoft mb-8">
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Platforms</p>
+          <h3 class="font-head text-base font-bold leading-tight">Claude Artifacts: the pioneer of agent-generated UI</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Anthropic, June 2024</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Platforms</p>
+          <h3 class="font-head text-base font-bold leading-tight">ChatGPT Canvas: editable workspace alongside chat</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">OpenAI, October 2024</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Tooling</p>
+          <h3 class="font-head text-base font-bold leading-tight">Vercel AI SDK: streaming React components from LLMs</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Generative UI pattern</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Pattern</p>
+          <h3 class="font-head text-base font-bold leading-tight">Filesystem as API: the agent-native architecture</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Thoth + PI Cockpit, 2026</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Surface</p>
+          <h3 class="font-head text-base font-bold leading-tight">Telegram Mini Apps: the hidden distribution channel</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">WebView inside messaging</p>
+        </li>
+      </ul>
+
+      <!-- Timeline sidebar box -->
+      <div class="bg-news-warm border border-news-ruleSoft p-5 mb-6">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">Timeline: The rise of agent surfaces</p>
+        <div class="space-y-3 text-sm">
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">2023</span>
+            <p class="font-body text-sm leading-snug">ChatGPT introduces markdown rendering in chat. First step beyond plain text.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">Jun 24</span>
+            <p class="font-body text-sm leading-snug">Anthropic launches Claude Artifacts — dedicated panel for generated content alongside chat.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">Oct 24</span>
+            <p class="font-body text-sm leading-snug">OpenAI launches ChatGPT Canvas — editable workspace for writing and coding.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">2025</span>
+            <p class="font-body text-sm leading-snug">Vercel AI SDK popularizes generative UI. v0 generates full web apps from prompts.</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">May 26</span>
+            <p class="font-body text-sm leading-snug">Thoth ships Telegram Mini App artifact dashboard — filesystem-native, style guide-driven.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats box -->
+      <div class="border-2 border-news-ink p-5">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">By the numbers</p>
+        <div class="space-y-3">
+          <div>
+            <p class="font-body text-3xl font-bold tabular">10</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">Style guides bundled for agent use</p>
+          </div>
+          <div class="rule-soft pt-3">
+            <p class="font-body text-3xl font-bold tabular">5s</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">Dashboard auto-refresh interval</p>
+          </div>
+          <div class="rule-soft pt-3">
+            <p class="font-body text-3xl font-bold tabular">0</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">Build steps between agent output and user view</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Second section: Deep dives -->
+<section class="max-w-7xl mx-auto px-6 py-8 border-t-2 border-news-ink">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Column 1: Claude Artifacts -->
+    <article class="md:border-r md:border-news-ruleSoft md:pr-6">
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Platform Deep-Dive</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Claude Artifacts showed the way</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">When Anthropic launched Artifacts in June 2024, it established a new interaction paradigm: the dual-pane interface. On the left, a chat thread. On the right, a persistent artifact — a document, a code file, a diagram, a React component — that updates as the conversation evolves.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">The key insight: the artifact isn't a message. It's a <em>document</em>. It has its own lifecycle. It can be viewed, edited, versioned, and shared independently of the conversation that produced it. This decoupling of generation from presentation is the conceptual foundation for everything that followed.</p>
+      <p class="font-body text-sm leading-[1.55]">Artifacts also demonstrated that agents could generate structured, interactive content — not just prose. A generated React component isn't a chat message with code formatting. It's a running application. The line between "AI output" and "software" blurred.</p>
+    </article>
+
+    <!-- Column 2: Vercel & Generative UI -->
+    <article class="md:border-r md:border-news-ruleSoft md:pr-6">
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Platform Deep-Dive</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Generative UI: the Vercel approach</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">Vercel's AI SDK introduced a pattern called "generative UI" — React Server Components that language models can create and stream. Instead of the model returning text that gets parsed into UI, the model returns UI components directly.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">The model outputs something like <code class="font-sans text-xs bg-news-warm px-1">&lt;WeatherCard city="London" temp={18} /&gt;</code>, and the framework renders it. This is a fundamentally different contract: the AI doesn't describe the UI — it <em>authors</em> it.</p>
+      <p class="font-body text-sm leading-[1.55]">The implications extend beyond chat. v0, Vercel's AI application generator, uses this pattern to produce complete web applications from natural language prompts. The entire frontend is agent-generated HTML, CSS, and JavaScript — delivered to the user's browser as a live preview.</p>
+    </article>
+
+    <!-- Column 3: Telegram Mini Apps + Thoth -->
+    <article>
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Platform Deep-Dive</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Telegram Mini Apps: the underdog surface</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">Telegram Mini Apps were designed for e-commerce storefronts, food ordering, and simple games. But their architecture — a full WebView inside the messaging app, accessible via a single button — makes them an ideal delivery surface for agent-generated content.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">The Thoth system combines this with a filesystem-native architecture. Agents write HTML and Markdown files to a vault directory. A Cloudflare tunnel exposes a local hub server at a public URL. The Telegram Mini App opens that URL, which serves as a persistent artifact dashboard.</p>
+      <p class="font-body text-sm leading-[1.55]">The result: agents produce content, it appears in Telegram, no deployment step exists. The user gets a rich, styled, interactive document inside their messaging app — not as a file attachment, but as a live web page. The gap between "AI generated this" and "I'm viewing it" is measured in milliseconds.</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- Third section: Implications -->
+<section class="max-w-7xl mx-auto px-6 py-8 border-t-2 border-news-ink">
+  <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12 md:col-span-8">
+      <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold text-news-red mb-2">Analysis</p>
+      <h2 class="font-head text-3xl font-bold leading-tight mb-6">What this means for how we build with agents</h2>
+      <div class="cols-2 font-body text-base leading-[1.55]">
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-0 mb-2">Chat is the wrong metaphor</h4>
+
+        <p>The dominant interaction model with AI agents is chat. You type. It responds. You type again. This is fine for conversation but inadequate for <em>work</em>. When an agent generates a specification, a dashboard, or a codebase, the chat thread is a poor container for it. Messages scroll away. Structure is lost. The artifact needs its own surface.</p>
+
+        <p>Every major platform has recognized this. Artifacts, Canvas, and Mini Apps all solve the same problem: giving generated content a persistent home outside the chat stream. The direction is clear — the future of agent interfaces is dual-pane: conversation on one side, artifacts on the other.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Style guides enable design-literate agents</h4>
+
+        <p>A raw HTML document from an agent is functional but ugly. A document produced by an agent following a professional style guide is indistinguishable from human design work. The style guide approach — bundling comprehensive design systems as agent-readable instructions — transforms the agent from a text generator into a publisher.</p>
+
+        <p>This has practical implications. Teams can define a single style guide and have every agent-generated artifact — from internal dashboards to client reports — follow it consistently. The design system becomes infrastructure, not afterthought.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">The filesystem beats the database</h4>
+
+        <p>Most web applications are built on a three-tier architecture: database → API → frontend. Agent-native systems are discovering that this adds unnecessary complexity. When the agent is a process on the same machine as the viewer, the filesystem is faster, simpler, and more reliable than any REST layer.</p>
+
+        <p>Write a file. A watcher detects it. The surface re-renders. That's the whole pipeline. No serialization, no auth tokens, no request latency, no API versioning. This is the architecture that powers Obsidian plugins, Vite's HMR, and now agent artifact delivery. It's not new — it's just been overlooked.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Messaging apps as the next frontier</h4>
+
+        <p>Telegram Mini Apps point toward an under-explored opportunity: messaging platforms as agent delivery surfaces. A billion people use WhatsApp and Telegram daily. If agents can deliver rich, interactive HTML artifacts inside those apps — without app installs, without accounts, without friction — the addressable surface for agent output expands by orders of magnitude.</p>
+
+        <p>The constraint that makes this viable: Mini Apps require HTTPS. Cloudflare Tunnels solve this. The constraint that makes it powerful: Mini Apps render full HTML. The entire web platform — CSS, JavaScript, Canvas, WebGL — is available inside the chat app. An agent that generates HTML can generate anything.</p>
+
+      </div>
+    </div>
+
+    <aside class="col-span-12 md:col-span-4">
+      <div class="bg-news-warm border border-news-ruleSoft p-5 mb-6">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">Key terms</p>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="font-sans text-xs font-bold">Agent surface</dt>
+            <dd class="font-body text-sm text-news-soft">Any UI that renders agent-generated content independently of the chat thread. Artifacts, Canvas, Mini Apps.</dd>
+          </div>
+          <div class="rule-soft pt-3">
+            <dt class="font-sans text-xs font-bold">Style guide</dt>
+            <dd class="font-body text-sm text-news-soft">A design system document that agents follow when generating HTML — colors, typography, spacing, components.</dd>
+          </div>
+          <div class="rule-soft pt-3">
+            <dt class="font-sans text-xs font-bold">Filesystem as API</dt>
+            <dd class="font-body text-sm text-news-soft">Architecture where agents communicate by writing files, not calling endpoints. The watcher is the transport layer.</dd>
+          </div>
+          <div class="rule-soft pt-3">
+            <dt class="font-sans text-xs font-bold">Dual-pane interface</dt>
+            <dd class="font-body text-sm text-news-soft">Chat on one side, artifact on the other. The standard emerging pattern for agent workspaces.</dd>
+          </div>
+        </dl>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t-4 border-news-ink mt-6">
+  <div class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-12 gap-6 text-sm">
+    <div class="col-span-12 md:col-span-4">
+      <p class="font-head text-xl font-black mb-2">The Agent Surface</p>
+      <p class="font-body text-sm text-news-mute leading-snug">A publication of Thoth Research. Published whenever an agent generates something worth reading.</p>
+    </div>
+    <div class="col-span-6 md:col-span-4">
+      <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-2">References</p>
+      <ul class="font-body text-sm text-news-mute space-y-1">
+        <li>Anthropic — Claude Artifacts (June 2024)</li>
+        <li>OpenAI — ChatGPT Canvas (Oct 2024)</li>
+        <li>Vercel — AI SDK Generative UI</li>
+        <li>Thoth — PI Cockpit + TMA Bridge (May 2026)</li>
+      </ul>
+    </div>
+    <div class="col-span-6 md:col-span-4 md:text-right">
+      <p class="font-sans text-xs uppercase tracking-[0.18em] text-news-faint font-medium">Printed on digital paper</p>
+      <p class="font-sans text-xs text-news-faint mt-1">Set in Playfair Display &amp; Source Serif 4</p>
+      <p class="font-sans text-xs text-news-faint mt-1">Newspaper style · No. 08</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

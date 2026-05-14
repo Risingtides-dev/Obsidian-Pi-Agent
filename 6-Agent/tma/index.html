@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Thoth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            paper: '#fafaf7',
+            ink: '#0a0a0a',
+            mute: '#737373',
+            faint: '#d4d4d4',
+            signal: '#cc2030',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { background: #fafaf7; color: #0a0a0a; }
+    a { color: #0a0a0a; text-decoration: none; }
+    .row-hover:hover { background: #0a0a0a; color: #fafaf7; }
+    .row-hover:hover .muted { color: rgba(250,250,247,0.5); }
+    ::selection { background: #cc2030; color: #fafaf7; }
+  </style>
+</head>
+<body class="font-sans text-base text-ink">
+
+<!-- Header -->
+<header class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 flex items-end justify-between">
+    <a href="/" class="font-medium text-lg tracking-tighter no-underline">Thoth</a>
+    <div class="flex items-end gap-6 text-sm">
+      <button onclick="loadArtifacts()" class="bg-transparent border-none text-sm text-mute p-0 cursor-pointer">Refresh</button>
+      <span id="count" class="text-xs uppercase tracking-[0.08em] font-medium text-mute tabular-nums">—</span>
+    </div>
+  </div>
+</header>
+
+<!-- Artifact list -->
+<section>
+  <div class="max-w-7xl mx-auto px-6 md:px-8">
+    <!-- Column headers -->
+    <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute py-3 border-b border-ink">
+      <div class="col-span-1">№</div>
+      <div class="col-span-6 md:col-span-5">Artifact</div>
+      <div class="col-span-2 hidden md:block">Type</div>
+      <div class="col-span-2 hidden md:block">Size</div>
+      <div class="col-span-5 md:col-span-2 text-right">Modified</div>
+    </div>
+
+    <!-- List -->
+    <div id="artifact-list">
+      <div class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint animate-pulse">
+        <span class="col-span-1 text-faint">—</span>
+        <span class="col-span-6 md:col-span-5"><span class="inline-block w-40 h-4 bg-faint"></span></span>
+        <span class="col-span-2 hidden md:block"><span class="inline-block w-10 h-3 bg-faint"></span></span>
+        <span class="col-span-2 hidden md:block"><span class="inline-block w-10 h-3 bg-faint"></span></span>
+        <span class="col-span-5 md:col-span-2 text-right"><span class="inline-block w-14 h-3 bg-faint"></span></span>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div id="empty" class="py-24 text-center hidden">
+      <p class="text-sm text-mute">No artifacts</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-ink mt-0">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 flex justify-between text-xs text-mute">
+    <span>Thoth</span>
+    <span>Set in Inter</span>
+  </div>
+</footer>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+  } catch(e) {}
+
+  function timeAgo(ts) {
+    const diff = Date.now() - new Date(ts).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return mins + 'm';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h';
+    return Math.floor(hours / 24) + 'd';
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + 'B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + 'K';
+    return (bytes / 1048576).toFixed(1) + 'M';
+  }
+
+  function render(files) {
+    const list = document.getElementById('artifact-list');
+    const empty = document.getElementById('empty');
+    const count = document.getElementById('count');
+
+    count.textContent = String(files.length).padStart(3, '0');
+
+    if (!files.length) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+
+    list.innerHTML = files.map((f, i) => {
+      const num = String(i + 1).padStart(3, '0');
+      const url = '/' + f.name.replace(/\.(md|html)$/, '');
+      const title = f.name.replace(/\.[^.]+$/, '').replace(/-/g, ' ');
+      const type = f.name.endsWith('.html') ? 'HTML' : f.name.endsWith('.md') ? 'MD' : '—';
+
+      return `<a href="${url}" class="grid grid-cols-12 gap-4 items-baseline py-4 border-b border-faint row-hover transition-colors duration-150 no-underline">
+        <span class="col-span-1 tabular-nums text-mute muted">${num}</span>
+        <span class="col-span-6 md:col-span-5 font-medium capitalize truncate">${title}</span>
+        <span class="col-span-2 hidden md:block text-xs uppercase tracking-[0.08em] text-mute muted">${type}</span>
+        <span class="col-span-2 hidden md:block tabular-nums text-mute muted">${formatSize(f.size)}</span>
+        <span class="col-span-5 md:col-span-2 text-right tabular-nums text-xs text-mute muted">${timeAgo(f.modified)}</span>
+      </a>`;
+    }).join('');
+  }
+
+  async function loadArtifacts() {
+    try {
+      const resp = await fetch('/list');
+      render(await resp.json());
+    } catch(e) {}
+  }
+
+  loadArtifacts();
+  setInterval(loadArtifacts, 5000);
+</script>
+</body>
+</html>

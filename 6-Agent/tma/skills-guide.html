@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Claude code skills guide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            paper: '#fafaf7',
+            ink: '#0a0a0a',
+            rule: '#0a0a0a',
+            mute: '#737373',
+            faint: '#d4d4d4',
+            signal: '#cc2030',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { background: #fafaf7; color: #0a0a0a; }
+    .grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 16px; }
+    .rule { background: #0a0a0a; height: 1px; }
+    .rule-thick { background: #0a0a0a; height: 4px; }
+    .rule-faint { background: #d4d4d4; height: 1px; }
+    a { color: #0a0a0a; text-decoration: none; border-bottom: 1px solid #0a0a0a; padding-bottom: 1px; }
+    a:hover { color: #cc2030; border-bottom-color: #cc2030; }
+    ::selection { background: #cc2030; color: #fafaf7; }
+    pre { font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'; font-size: 0.8125rem; background: #0a0a0a; color: #fafaf7; padding: 24px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+    code { font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'; font-size: 0.8125rem; font-weight: 500; }
+    .code-inline { background: rgba(0,0,0,0.04); padding: 2px 6px; }
+    .number { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="font-sans text-base text-ink">
+
+<!-- Header -->
+<header class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 grid grid-cols-12 items-end gap-4">
+    <a href="/" class="col-span-3 font-medium text-lg tracking-tighter no-underline border-none">Thoth</a>
+    <div class="col-span-7"></div>
+    <div class="col-span-2 text-right text-xs uppercase tracking-[0.08em] font-medium text-mute">№ 004 · may 2026</div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-24 grid grid-cols-12 gap-4 items-end">
+    <div class="col-span-12 md:col-span-8">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium mb-12">Instructional</p>
+      <h1 class="text-5xl md:text-7xl font-medium tracking-tighter leading-[0.95] max-w-2xl">
+        Building reusable skills for claude code
+      </h1>
+    </div>
+    <div class="col-span-12 md:col-span-4 md:pl-8">
+      <p class="text-base leading-[1.5] mb-6">How to create custom slash commands that give agents environment variables, database access, and domain context — so they execute repetitive tasks without being told the setup every time.</p>
+      <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">25 min read · grounded in risingtides campaign hub</p>
+    </div>
+  </div>
+</section>
+
+<!-- 01 — What are skills -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">01 — Concept</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">What claude code skills actually are</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>A claude code skill is a markdown file in <code class="code-inline">.claude/commands/</code> that gets loaded as a slash command. When you type <code class="code-inline">/my-skill</code>, claude reads the file, inserts its contents into the system prompt, and executes with whatever context, tools, and instructions you've defined.</p>
+        <p>Skills solve the context problem. Instead of pasting database schemas and environment setup at the start of every session, you encode it once in a file. The agent arrives already knowing the tables, the variables, the business rules, and the output format you expect.</p>
+        <p>The same pattern works in pi via <code class="code-inline">.pi/skills/</code> — the html-artifacts skill you use is built this way. Both systems treat the markdown file as the skill definition. The difference is in how environment variables are injected.</p>
+      </div>
+
+      <div class="mt-8 grid grid-cols-12 gap-4 text-sm">
+        <div class="col-span-12 md:col-span-6 border border-ink p-6">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-3">Claude code skills</p>
+          <p class="text-sm leading-[1.5] text-mute">Custom slash commands stored as <code class="code-inline">.claude/commands/skill-name.md</code>. Loaded at session start or invoked with <code class="code-inline">/skill-name</code>. Environment variables come from <code class="code-inline">.claude/settings.json</code>.</p>
+        </div>
+        <div class="col-span-12 md:col-span-6 border border-ink p-6">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-3">Pi skills</p>
+          <p class="text-sm leading-[1.5] text-mute">Markdown files with yaml frontmatter in <code class="code-inline">.pi/skills/skill-name/SKILL.md</code>. Can include style guides, reference files, and tool definitions. Environment comes from pi extensions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 — Anatomy of a skill -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">02 — Anatomy</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">The three layers every skill needs</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>A well-built skill has three distinct sections. Each answers a different question the agent will ask itself when it starts the task.</p>
+      </div>
+
+      <!-- Layer 1 -->
+      <div class="mt-8 mb-12">
+        <div class="rule-thick mb-4"></div>
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-3">
+            <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">Layer 1</p>
+          </div>
+          <div class="col-span-12 md:col-span-9">
+            <h3 class="text-xl font-medium leading-snug mb-3">Identity and purpose — what am i doing and why</h3>
+            <p class="text-sm leading-[1.5] text-mute mb-4">The first section tells the agent its role and what output is expected. Be specific about the domain, the audience, and the format. This is where you kill ambiguity.</p>
+            <div class="bg-ink text-paper p-6">
+              <pre># Campaign Intelligence Agent
+
+You are a data analyst agent for Rising Tides, a social media
+marketing agency running TikTok and Instagram UGC campaigns for
+record labels. Your job is to answer questions about campaigns,
+creators, sound IDs, and performance data.
+
+## Output rules
+- Always return data in a markdown table
+- Include campaign slug in every response for traceability
+- Round dollar amounts to the nearest dollar
+- Flag creators with posts_owed > posts_done as behind schedule
+- Never expose database credentials or connection strings</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2 -->
+      <div class="mb-12">
+        <div class="rule-thick mb-4"></div>
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-3">
+            <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">Layer 2</p>
+          </div>
+          <div class="col-span-12 md:col-span-9">
+            <h3 class="text-xl font-medium leading-snug mb-3">Domain context — what does the agent need to know</h3>
+            <p class="text-sm leading-[1.5] text-mute mb-4">This is the schema, the business rules, the constraints. Every table, every relationship, every convention. The agent should not have to discover the database structure — you tell it upfront.</p>
+            <div class="bg-ink text-paper p-6">
+              <pre>## Database Schema (PostgreSQL on Railway)
+
+### campaigns — one row per client campaign
+| Column | Type | Description |
+|--------|------|-------------|
+| id | integer | Primary key |
+| slug | varchar | URL-safe identifier (e.g. alameda_broken_record_promo) |
+| title | varchar | Human-readable name |
+| artist | varchar | Recording artist name |
+| song | varchar | Track title |
+| sound_id | varchar | TikTok sound ID (the audio the creator uses) |
+| additional_sounds | jsonb | Array of extra sound IDs for multi-sound campaigns |
+| status | varchar | "active" or "finished" |
+| budget | float | Total campaign budget in dollars |
+| platform | varchar | "tiktok" or "instagram" |
+| cobrand_share_url | text | Cobrand tracking dashboard URL |
+
+### creators — one row per booked creator per campaign
+| Column | Type | Description |
+|--------|------|-------------|
+| id | integer | Primary key |
+| campaign_id | integer | FK to campaigns.id |
+| username | varchar | Creator's social media handle |
+| posts_owed | integer | Total posts the creator committed to |
+| posts_done | integer | Posts confirmed completed |
+| total_rate | float | Total payment for all posts |
+| per_post_rate | float | Payment per individual post |
+| paypal_email | varchar | Creator's PayPal for payments |
+| paid | varchar | "yes" or "no" |
+| platform | varchar | "tiktok" or "instagram" |
+| niches | jsonb | Array of content categories |
+
+### matched_videos — one row per tracked video post
+7640 total rows as of May 2026.
+
+### Key relationships
+- creators.campaign_id → campaigns.id
+- matched_videos.creator_id → creators.id
+- campaigns with completion_status = "completed" are finished
+- sound_id values are TikTok audio identifiers (16–19 digit numeric strings)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 3 -->
+      <div class="mb-12">
+        <div class="rule-thick mb-4"></div>
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 md:col-span-3">
+            <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">Layer 3</p>
+          </div>
+          <div class="col-span-12 md:col-span-9">
+            <h3 class="text-xl font-medium leading-snug mb-3">Tools and environment — how does the agent access the world</h3>
+            <p class="text-sm leading-[1.5] text-mute mb-4">This is the connection layer. You tell the agent which tools to use and where the secrets live. For claude code, environment variables are set in <code class="code-inline">.claude/settings.json</code> under <code class="code-inline">env</code>. The agent sees them as regular env vars.</p>
+            <div class="bg-ink text-paper p-6">
+              <pre>## Environment variables
+
+All set in .claude/settings.json under the "env" key:
+
+DATABASE_URL — PostgreSQL connection string
+  Format: postgresql://user:pass@host:5432/db
+  For Railway: use railway run or inject via railway variables
+  The .internal hostname only works inside Railway's network
+  Use railway connect postgres for local querying
+
+ANTHROPIC_API_KEY — Claude API key (for sub-agent calls)
+
+## Tools available
+
+- bash — run psql queries via railway connect or direct connection
+- read — read project files (models.py, config.py for schema reference)
+- write — never write to the database directly (read-only analysis)
+
+## Query approach
+
+Use railway connect postgres for local development:
+  echo "SELECT ..." | railway connect postgres
+
+Or use psql directly if DATABASE_URL has a public host:
+  psql "$DATABASE_URL" -c "SELECT ..."
+
+## Current database stats (May 2026)
+
+The live database on happy-wholesome contains:
+- 143 campaigns (primarily active, many completed)
+- 1,593 creators across all campaigns
+- 7,640 matched video posts
+- Sound IDs are TikTok audio identifiers (16–19 digit numbers)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 — Environment variables -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">03 — Environment</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Injecting environment variables into claude code skills</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>Claude code reads environment variables from <code class="code-inline">.claude/settings.json</code> at the project root. This is where database urls, api keys, and service tokens live. When the agent runs, these are available as regular environment variables.</p>
+      </div>
+
+      <div class="mt-8 bg-ink text-paper p-6 max-w-prose">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">.claude/settings.json</p>
+        <pre>{
+  "env": {
+    "DATABASE_URL": "postgresql://postgres:...@postgres.railway.internal:5432/railway",
+    "RAILWAY_PROJECT_ID": "1cc43c48-8891-4784-9f72-23174abdd21e",
+    "RAILWAY_ENVIRONMENT": "production",
+    "ANTHROPIC_API_KEY": "sk-ant-api03-..."
+  },
+  "enabledPlugins": {
+    "claude-code-plugins@claude-code-plugins": true
+  }
+}</pre>
+      </div>
+
+      <div class="mt-8 max-w-prose">
+        <h3 class="text-xl font-medium leading-snug mb-3">The railway internal hostname problem</h3>
+        <p class="text-sm leading-[1.5] text-mute mb-4">Railway sets <code class="code-inline">DATABASE_URL</code> with a <code class="code-inline">.internal</code> hostname that only resolves inside Railway's network. For local development, you have two options.</p>
+        <div class="space-y-3 text-sm leading-[1.5] text-mute">
+          <p>→ <span class="font-medium text-ink">Option a — railway connect (recommended).</span> Use <code class="code-inline">echo "SELECT ..." | railway connect postgres</code>. This tunnels through the railway cli and handles authentication automatically.</p>
+          <p>→ <span class="font-medium text-ink">Option b — public hostname.</span> Replace <code class="code-inline">.internal</code> with the public proxy. Railway exposes a tcp proxy for postgres at a public endpoint. Check your database service settings for the public connection string.</p>
+          <p>→ <span class="font-medium text-ink">Option c — shell wrapper.</span> Write a <code class="code-inline">db-query</code> shell script that wraps <code class="code-inline">railway connect postgres</code> and pass it as an available tool in the skill.</p>
+        </div>
+      </div>
+
+      <div class="mt-8 max-w-prose">
+        <h3 class="text-xl font-medium leading-snug mb-3">Variable scoping — what the agent can see</h3>
+        <p class="text-sm leading-[1.5] text-mute mb-4">Anything in <code class="code-inline">settings.json</code> under <code class="code-inline">env</code> is available to the agent. The agent can also access any variable set in the shell that launched claude code. Be intentional about what you expose.</p>
+        <div class="border border-ink p-6">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-3">Variable exposure checklist</p>
+          <div class="space-y-2 text-sm text-mute leading-[1.5]">
+            <p>→ Database url — needed for queries, never exposed in output</p>
+            <p>→ Api keys — needed for sub-agent calls, never logged</p>
+            <p>→ Slack tokens — needed for the orchestrator skill</p>
+            <p>→ Notion keys — needed for crm sync skill</p>
+            <p>→ Tiktok cookies — needed for scraping skill, high sensitivity</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 — Best practices -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">04 — Best practices</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Eight rules for skills that last</h2>
+
+      <div class="space-y-8 max-w-prose">
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">1</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Skills are read-only instruction files</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Don't put executable code in the skill itself. The skill defines what the agent should do and how. The agent writes the code to do it. Separation of specification from execution prevents the skill from becoming a maintenance burden when apis change.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">2</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Include schema, not just names</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Don't just list table names. Include column types, relationships, and real example values. Agents reason better with concrete data shapes than abstract descriptions. Include <code class="code-inline">1 row of realistic sample data</code> for each table.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">3</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Define output format explicitly</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">The difference between a good skill and a bad one is whether you have to reformat the answer. Specify: markdown table, csv, json, or prose. Include an example of the exact output shape you want.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">4</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Encode constraints, not just capabilities</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Tell the agent what not to do. Never modify the database. Never expose credentials. Never query tables you haven't described. The guardrails are as important as the tools.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">5</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Version the skill alongside the codebase</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Skills in <code class="code-inline">.claude/commands/</code> are part of the repository. They evolve with the schema. When a column is added to the database, update the skill. Git history tells you what the agent knew when.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">6</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Test with real queries before shipping</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Run every example query in the skill against the actual database. A broken example erodes trust faster than no example. Keep a <code class="code-inline">test-queries.sql</code> file that validates the skill's assumptions.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">7</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">One skill, one domain</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">A skill that can query campaigns, manage creators, sync notion, and post to slack is four skills. Split them. Each skill gets its own markdown file, its own environment variables, and its own clear purpose. Composition happens at the session level when you invoke multiple skills.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">8</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Include live stats that validate the skill works</p>
+            <p class="text-sm text-mute leading-[1.5] mt-1">Add a section at the bottom with current counts. The agent can quickly verify the database is accessible and the schema matches. If the agent queries <code class="code-inline">SELECT count(*) FROM campaigns</code> and gets 0 instead of 143, it knows something is wrong before wasting a session.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 — Example: Campaign Hub -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">05 — Example</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">The campaign intelligence skill — built from a real database</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>Here is a complete, production-ready skill file grounded in the Rising Tides campaign hub database on Railway's <code class="code-inline">happy-wholesome</code> project. The database has 143 campaigns, 1,593 creators, and 7,640 matched videos as of May 2026.</p>
+      </div>
+
+      <div class="mt-8 bg-ink text-paper p-6 max-w-prose">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">.claude/commands/campaign-intel.md</p>
+        <pre># Campaign Intelligence Agent
+
+You are a data analyst for Rising Tides, a social media
+marketing agency. Your job is to answer questions about
+TikTok and Instagram UGC influencer campaigns, creators,
+sound IDs, and performance data from the campaign hub
+PostgreSQL database on Railway (happy-wholesome).
+
+## Output rules
+- Always return data in a markdown table
+- Include campaign slug in every response
+- Round dollar amounts to nearest dollar
+- Flag creators with posts_owed > posts_done as ⚠ behind
+- Never expose DATABASE_URL, API keys, or credentials
+- Use sentence case for all headings
+
+## Database connection
+
+The database is PostgreSQL on Railway. Connect via:
+  echo "SELECT ..." | railway connect postgres
+
+Or use psql:
+  psql "$DATABASE_URL" -c "SELECT ..."
+
+DATABASE_URL is set in .claude/settings.json env.
+
+## Schema
+
+### campaigns (143 rows)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | integer | PK |
+| slug | varchar | URL-safe (e.g. alameda_broken_record_promo) |
+| title | varchar | Human name |
+| artist | varchar | Recording artist |
+| song | varchar | Track title |
+| sound_id | varchar | TikTok audio ID (16-19 digit string) |
+| additional_sounds | jsonb | Extra sound IDs |
+| status | varchar | "active" or "finished" |
+| budget | float | Total budget in USD |
+| platform | varchar | "tiktok" or "instagram" |
+| cobrand_share_url | text | Cobrand tracking link |
+| completion_status | varchar | "none", "booked", or "completed" |
+
+### creators (1,593 rows)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | integer | PK |
+| campaign_id | integer | FK to campaigns |
+| username | varchar | Social handle |
+| posts_owed | integer | Committed posts |
+| posts_done | integer | Completed posts |
+| total_rate | float | Total payment |
+| per_post_rate | float | Per-post payment |
+| paypal_email | varchar | Payment destination |
+| paid | varchar | "yes" or "no" |
+| platform | varchar | "tiktok" or "instagram" |
+| niches | jsonb | Content categories |
+
+### matched_videos (7,640 rows)
+Link between creators and tracked TikTok/IG videos.
+
+## Key relationships
+- creators.campaign_id → campaigns.id
+- matched_videos.creator_id → creators.id
+- sound_id uniquely identifies TikTok audio for scraping
+- campaigns with completion_status = "completed" are finished
+
+## Common queries
+
+Active campaigns with sound IDs:
+  SELECT slug, title, sound_id FROM campaigns
+  WHERE status = 'active' AND sound_id != '';
+
+Top creators by total payment:
+  SELECT c.username, c.total_rate, c.posts_done,
+         c.posts_owed, cmp.title
+  FROM creators c
+  JOIN campaigns cmp ON c.campaign_id = cmp.id
+  WHERE c.total_rate > 0
+  ORDER BY c.total_rate DESC LIMIT 10;
+
+Creators behind schedule:
+  SELECT c.username, c.posts_owed, c.posts_done,
+         (c.posts_owed - c.posts_done) as behind,
+         cmp.slug
+  FROM creators c
+  JOIN campaigns cmp ON c.campaign_id = cmp.id
+  WHERE c.posts_owed > c.posts_done
+  ORDER BY behind DESC;
+
+Campaigns by completion status:
+  SELECT completion_status, count(*)
+  FROM campaigns GROUP BY completion_status;
+
+## Constraints
+- Read-only. Never run INSERT, UPDATE, DELETE, or DROP.
+- Never query financial data (paypal_email) unless asked.
+- If a query returns 0 results, verify the table name and
+  column names against the schema above before trying again.
+- The database is production. Timeout queries at 30 seconds.
+
+## Validation (run on first use)
+SELECT count(*) FROM campaigns;  -- expect 143
+SELECT count(*) FROM creators;   -- expect 1593
+SELECT count(*) FROM matched_videos; -- expect 7640</pre>
+      </div>
+
+      <!-- Live data snapshot -->
+      <div class="mt-12">
+        <h3 class="text-xl font-medium leading-snug mb-3">Live data snapshot from happy-wholesome</h3>
+        <p class="text-sm text-mute leading-[1.5] mb-4">These results are from the actual production database, queried during the writing of this document. They validate that the skill works and give the agent concrete starting data.</p>
+
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mt-8 mb-3 pb-3 border-b border-ink">Active campaigns with sound ids</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-faint"><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Campaign</th><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Artist</th><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Song</th><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Sound ID</th></tr></thead>
+            <tbody>
+              <tr class="border-b border-faint"><td class="py-2">alameda_broken_record_promo</td><td class="py-2">Alemeda</td><td class="py-2">Broken Record</td><td class="py-2 text-xs number">7607445596362885137</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">bella_kay_iloveit</td><td class="py-2">Bella Kay</td><td class="py-2">iloveit R3</td><td class="py-2 text-xs number">7593256456959952897</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">blake_whiten_break_me_promo</td><td class="py-2">Blake Whiten</td><td class="py-2">Break Me</td><td class="py-2 text-xs number">7601318599127861249</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">brady_toops_so_high_promo</td><td class="py-2">Brady Toops</td><td class="py-2">So High</td><td class="py-2 text-xs number">7603918121527429121</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">gregory_alan_isakov_mistakes_promo</td><td class="py-2">Gregory Alan Isakov</td><td class="py-2">Mistakes</td><td class="py-2 text-xs number">7447921407828346896</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">highup_dont_go_promo</td><td class="py-2">Highup</td><td class="py-2">Don't Go</td><td class="py-2 text-xs number">7606158184516716580</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">justine_sky_thong_promo</td><td class="py-2">Justine Sky</td><td class="py-2">Thong</td><td class="py-2 text-xs number">7601409010488461329</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">mike_posner_took_a_pill_promo</td><td class="py-2">Mike Posner</td><td class="py-2">Took a Pill in Ibiza</td><td class="py-2 text-xs number">7611397035480075534</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">sailorr_coconut_promo</td><td class="py-2">SAILORR</td><td class="py-2">COCONUT Promo</td><td class="py-2 text-xs number">7579160901782554640</td></tr>
+              <tr><td class="py-2">sombr_homewrecker_promo_r3</td><td class="py-2">Sombr</td><td class="py-2">Homewrecker</td><td class="py-2 text-xs number">7594724578065173278</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mt-8 mb-3 pb-3 border-b border-ink">Top creators by payment</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="border-b border-faint"><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Creator</th><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Platform</th><th class="text-right py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Rate</th><th class="text-right py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Done</th><th class="text-right py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Owed</th><th class="text-left py-2 text-xs uppercase tracking-[0.08em] font-medium text-mute">Campaign</th></tr></thead>
+            <tbody>
+              <tr class="border-b border-faint"><td class="py-2">truckquotes45</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$800</td><td class="py-2 text-right number">22</td><td class="py-2 text-right number">30</td><td class="py-2 text-xs">Blake Whiten — Bet on That</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">lifecontent1</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$660</td><td class="py-2 text-right number">6</td><td class="py-2 text-right number">33</td><td class="py-2 text-xs">Jake Marsh — Down the Line r2</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">reidjohnson18</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$640</td><td class="py-2 text-right number">16</td><td class="py-2 text-right number">16</td><td class="py-2 text-xs">Manning Rothrock — Way back when</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">6.7jr_</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$600</td><td class="py-2 text-right number">8</td><td class="py-2 text-right number">12</td><td class="py-2 text-xs">Blake Whiten — Bet on That</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">theelliebarker</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$500</td><td class="py-2 text-right number">5</td><td class="py-2 text-right number">5</td><td class="py-2 text-xs">Jake Marsh — Down the Line r2</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">reidjohnson18</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$440</td><td class="py-2 text-right number">11</td><td class="py-2 text-right number">11</td><td class="py-2 text-xs">Scoot Teasley — Welcome to the Country</td></tr>
+              <tr class="border-b border-faint"><td class="py-2">simbaaaaaaa15</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$375</td><td class="py-2 text-right number">4</td><td class="py-2 text-right number">6</td><td class="py-2 text-xs">Brothel in Belize — Ephemeral</td></tr>
+              <tr><td class="py-2">love4infiny</td><td class="py-2">tiktok</td><td class="py-2 text-right number">$360</td><td class="py-2 text-right number">17</td><td class="py-2 text-right number">6</td><td class="py-2 text-xs">Alemeda — Broken Record r2</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 — Environment diagram -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">06 — Diagram</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">How environment variables flow into a claude code skill</h2>
+
+      <div class="border border-ink p-6 bg-ink text-paper max-w-prose">
+        <pre>┌─────────────────────────────────────────────────┐
+│ .claude/settings.json                           │
+│                                                 │
+│ { "env": {                                      │
+│     "DATABASE_URL": "postgresql://...",          │
+│     "RAILWAY_PROJECT_ID": "1cc43c48...",         │
+│     "ANTHROPIC_API_KEY": "sk-ant-..."            │
+│ } }                                             │
+└────────────┬────────────────────────────────────┘
+             │ loaded at claude code startup
+             ▼
+┌─────────────────────────────────────────────────┐
+│ Claude Code process                             │
+│                                                 │
+│ env vars available:                             │
+│   DATABASE_URL                                  │
+│   RAILWAY_PROJECT_ID                            │
+│   ANTHROPIC_API_KEY                             │
+└────────────┬────────────────────────────────────┘
+             │ /campaign-intel invoked
+             ▼
+┌─────────────────────────────────────────────────┐
+│ .claude/commands/campaign-intel.md              │
+│                                                 │
+│ Skill defines:                                  │
+│   - Agent identity and output rules            │
+│   - Database schema (tables, columns, types)    │
+│   - Query templates (common analysis paths)     │
+│   - Constraints (read-only, no credential leak) │
+│                                                 │
+│ Agent uses bash to run:                         │
+│   echo "SELECT ..." | railway connect postgres  │
+│                                                 │
+│ Or direct psql:                                 │
+│   psql "$DATABASE_URL" -c "SELECT ..."          │
+└────────────┬────────────────────────────────────┘
+             │ query results
+             ▼
+┌─────────────────────────────────────────────────┐
+│ Agent formats output                            │
+│                                                 │
+│ - Markdown table with campaign slugs            │
+│ - Dollar amounts rounded                        │
+│ - Behind-schedule creators flagged              │
+│ - No credentials in response                    │
+└─────────────────────────────────────────────────┘</pre>
+      </div>
+
+      <div class="mt-8 max-w-prose">
+        <h3 class="text-xl font-medium leading-snug mb-3">The railway variable bridge</h3>
+        <p class="text-sm leading-[1.5] text-mute mb-4">For production use, railway variables are pulled at deploy time. For local development, the <code class="code-inline">railway connect</code> command tunnels through the cli. The pattern for skills is consistent regardless of environment.</p>
+        <div class="border border-ink p-6">
+          <pre># Development (local)
+echo "SELECT count(*) FROM campaigns;" | railway connect postgres
+
+# Production (inside railway)
+psql "$DATABASE_URL" -c "SELECT count(*) FROM campaigns;"
+
+# The skill should document both approaches so the
+# agent chooses the right one based on environment.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 — Quick start -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">07 — Quick start</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Create your first skill in five minutes</h2>
+
+      <div class="space-y-6 max-w-prose">
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">1</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Create the commands directory</p>
+            <div class="bg-ink text-paper p-4 mt-2"><pre>mkdir -p .claude/commands</pre></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">2</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Add environment variables to settings</p>
+            <div class="bg-ink text-paper p-4 mt-2"><pre>// .claude/settings.json
+{
+  "env": {
+    "DATABASE_URL": "postgresql://..."
+  }
+}</pre></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">3</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Write the skill file with three layers</p>
+            <div class="bg-ink text-paper p-4 mt-2"><pre>// .claude/commands/campaign-intel.md
+// Layer 1: identity and output rules
+// Layer 2: schema and domain context
+// Layer 3: tools and environment access</pre></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 items-start">
+          <span class="col-span-1 text-sm font-medium number text-right">4</span>
+          <div class="col-span-11">
+            <p class="text-sm font-medium">Invoke the skill in claude code</p>
+            <div class="bg-ink text-paper p-4 mt-2"><pre>/campaign-intel
+Which creators are behind schedule on active campaigns?
+Show me their username, posts owed, posts done, and campaign.</pre></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 max-w-prose">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-sm text-mute leading-[1.5]">A skill is leverage. You spend twenty minutes writing it once, and every future session where you invoke it saves you five minutes of context-setting. After four uses, it pays for itself. After forty, it's changed how you work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-ink mt-16">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-12 grid grid-cols-12 gap-4 text-sm">
+    <div class="col-span-12 md:col-span-4">
+      <p class="font-medium mb-2">Thoth research</p>
+      <p class="text-mute leading-[1.5]">Instructional design<br>May 2026 · Arlington VA</p>
+    </div>
+    <div class="col-span-6 md:col-span-4">
+      <p class="font-medium mb-2">References</p>
+      <ul class="text-mute space-y-1">
+        <li><a class="border-none" href="https://docs.anthropic.com/en/docs/claude-code">Claude code documentation</a></li>
+        <li><a class="border-none" href="https://docs.railway.com">Railway documentation</a></li>
+        <li><a class="border-none" href="https://github.com/Risingtides-dev/risingtides-campaign-hub">Campaign hub repository</a></li>
+      </ul>
+    </div>
+    <div class="col-span-6 md:col-span-4 md:text-right text-xs uppercase tracking-[0.08em] font-medium text-mute">
+      <p>Set in Inter</p>
+      <p class="mt-1">Swiss grid · style 05</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

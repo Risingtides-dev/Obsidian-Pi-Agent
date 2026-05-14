@@ -25,6 +25,7 @@ import { scanDaemons, readHeartbeat, restartDaemon, readDaemonLog } from "./daem
 import { listRoutines, getRoutine, saveRoutine, deleteRoutine, toggleRoutine, runRoutineNow, readRoutineLog } from "./routines-monitor.js";
 import { getLayout, listLayouts, LAYOUTS } from "./layouts.js";
 import { PiBridge } from "./pi-bridge.js";
+import { handleTmaRoutes } from "./tma-bridge.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3099;
@@ -544,6 +545,11 @@ async function handleMessage(ws, raw) {
 
 // ── Create HTTP + WS server ────────────────────────────────
 const server = createServer((req, res) => {
+  // Route TMA hostname → artifact server
+  if ((req.headers.host || "").startsWith("tma.") || req.url?.startsWith("/tma/")) {
+    handleTmaRoutes(req, res);
+    return;
+  }
   if (req.url?.startsWith("/api/")) {
     handleRest(req, res);
   } else if (req.url === "/health") {

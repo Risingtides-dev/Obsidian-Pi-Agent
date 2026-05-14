@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Multi-orchestration agent workflows</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          colors: {
+            paper: '#fafaf7',
+            ink: '#0a0a0a',
+            rule: '#0a0a0a',
+            mute: '#737373',
+            faint: '#d4d4d4',
+            signal: '#cc2030',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { background: #fafaf7; color: #0a0a0a; }
+    .grid-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 16px; }
+    .rule { background: #0a0a0a; height: 1px; }
+    .rule-thick { background: #0a0a0a; height: 4px; }
+    .rule-faint { background: #d4d4d4; height: 1px; }
+    a { color: #0a0a0a; text-decoration: none; border-bottom: 1px solid #0a0a0a; padding-bottom: 1px; }
+    a:hover { color: #cc2030; border-bottom-color: #cc2030; }
+    ::selection { background: #cc2030; color: #fafaf7; }
+    pre { font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'; font-size: 0.8125rem; background: #0a0a0a; color: #fafaf7; padding: 24px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+    code { font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'; font-size: 0.8125rem; font-weight: 500; }
+    .code-inline { background: rgba(0,0,0,0.04); padding: 2px 6px; }
+    .number { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="font-sans text-base text-ink">
+
+<!-- Header -->
+<header class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 grid grid-cols-12 items-end gap-4">
+    <a href="/" class="col-span-3 font-medium text-lg tracking-tighter no-underline border-none">Thoth</a>
+    <div class="col-span-7"></div>
+    <div class="col-span-2 text-right text-xs uppercase tracking-[0.08em] font-medium text-mute">№ 003 · may 2026</div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-24 grid grid-cols-12 gap-4 items-end">
+    <div class="col-span-12 md:col-span-8">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium mb-12">Systems architecture</p>
+      <h1 class="text-5xl md:text-7xl font-medium tracking-tighter leading-[0.95] max-w-2xl">
+        Linear agent workflows in a multi-orchestration pipeline
+      </h1>
+    </div>
+    <div class="col-span-12 md:col-span-4 md:pl-8">
+      <p class="text-base leading-[1.5] mb-6">How to chain Slack, Linear, GitHub, and local agent runtimes into a continuous loop — orchestrator builds PRDs, workers execute tasks, reviewer agents gate merges, and status flows back to the team.</p>
+      <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute">45 min read · may 12 2026</p>
+    </div>
+  </div>
+</section>
+
+<!-- 01 — Architecture -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">01 — Architecture</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Four platforms, four agent types, one event loop</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>The multi-orchestration pattern connects four platforms through a shared event loop. Each platform runs its own agent. Events propagate across them via webhooks and API calls, creating a continuous workflow where human review is interleaved with agent execution at every stage.</p>
+
+        <p>The orchestrator lives where the conversation happens (Slack). It translates human intent into structured tasks (Linear), which worker agents pick up and execute locally. Output flows back through pull requests (GitHub), where reviewer agents provide automated feedback. The orchestrator closes the loop by reporting results to the channel.</p>
+      </div>
+
+      <!-- Layer diagram -->
+      <div class="mt-8 grid grid-cols-12 gap-4 text-sm">
+        <div class="col-span-12 md:col-span-3 border border-ink p-4">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-2">Layer 1</p>
+          <p class="font-medium mb-1">Slack</p>
+          <p class="text-xs text-mute leading-[1.5]">Orchestrator agent reads channel history, builds PRDs, decomposes to Linear issues</p>
+        </div>
+        <div class="col-span-12 md:col-span-3 border border-ink p-4">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-2">Layer 2</p>
+          <p class="font-medium mb-1">Linear</p>
+          <p class="text-xs text-mute leading-[1.5]">Task backbone — issues assigned to workers, webhooks trigger execution, GitHub integration auto-links PRs</p>
+        </div>
+        <div class="col-span-12 md:col-span-3 border border-ink p-4">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-2">Layer 3</p>
+          <p class="font-medium mb-1">GitHub</p>
+          <p class="text-xs text-mute leading-[1.5]">Webhooks fire on PR events, reviewer agent analyzes diffs, check runs gate merges</p>
+        </div>
+        <div class="col-span-12 md:col-span-3 border border-ink p-4 bg-signal/5">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-signal mb-2">Layer 4</p>
+          <p class="font-medium mb-1">Local runtimes</p>
+          <p class="text-xs text-mute leading-[1.5]">Worker agents poll Linear, execute in worktrees, push branches — filesystem is the protocol</p>
+        </div>
+      </div>
+
+      <!-- Core insight -->
+      <div class="mt-8 max-w-prose">
+        <p class="text-xs uppercase tracking-[0.1em] font-medium text-mute mb-3">Core insight</p>
+        <p class="text-base leading-[1.5] mb-4">Each platform already has agent primitives. The innovation is chaining them through webhooks rather than building a centralized orchestrator. The events are the architecture.</p>
+        <div class="border border-ink p-6 bg-ink text-paper">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">Event flow</p>
+          <p class="text-sm leading-[1.7]">
+            Slack msg → Orchestrator parses intent → Creates Linear issue<br>
+            Linear webhook → Worker picks up task → Writes code locally<br>
+            Worker pushes branch → Opens PR → GitHub webhook fires<br>
+            Reviewer agent analyzes diff → Posts review → Check run created<br>
+            Human merges → Linear auto-closes → Orchestrator posts to Slack
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 — Linear API -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">02 — Linear API</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Issues, webhooks, and the graphql surface area</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>Linear exposes a comprehensive GraphQL API at <code class="code-inline">api.linear.app/graphql</code>. Authentication via personal API keys or OAuth2 applications. Every entity — issues, projects, teams, cycles, comments — is queryable and mutable through mutations.</p>
+      </div>
+
+      <!-- Operations table -->
+      <div class="mt-8">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">Key graphql operations for agent workflows</p>
+        <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute py-3 border-b border-faint">
+          <div class="col-span-4">Operation</div>
+          <div class="col-span-4">Mutation / query</div>
+          <div class="col-span-4">Pipeline role</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Create issue</code></div>
+          <div class="col-span-4"><code class="text-xs">issueCreate</code></div>
+          <div class="col-span-4 text-mute">Orchestrator creates tasks from PRD</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Assign issue</code></div>
+          <div class="col-span-4"><code class="text-xs">issueUpdate</code></div>
+          <div class="col-span-4 text-mute">Route to correct worker agent</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Query assigned</code></div>
+          <div class="col-span-4"><code class="text-xs">issues(filter)</code></div>
+          <div class="col-span-4 text-mute">Workers poll for their tasks</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Update state</code></div>
+          <div class="col-span-4"><code class="text-xs">issueUpdate</code></div>
+          <div class="col-span-4 text-mute">Worker marks in progress → done</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Add comment</code></div>
+          <div class="col-span-4"><code class="text-xs">commentCreate</code></div>
+          <div class="col-span-4 text-mute">Agent posts progress, links to PRs</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Link pr</code></div>
+          <div class="col-span-4"><code class="text-xs">attachmentLinkGitHubPR</code></div>
+          <div class="col-span-4 text-mute">Auto-link when worker opens PR</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4"><code class="text-xs">Create project</code></div>
+          <div class="col-span-4"><code class="text-xs">projectCreate</code></div>
+          <div class="col-span-4 text-mute">Orchestrator groups issues</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 text-sm">
+          <div class="col-span-4"><code class="text-xs">Webhook crud</code></div>
+          <div class="col-span-4"><code class="text-xs">webhookCreate / update</code></div>
+          <div class="col-span-4 text-mute">Programmatic webhook registration</div>
+        </div>
+      </div>
+
+      <!-- Webhooks -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Linear webhooks</h3>
+        <p class="max-w-prose text-base leading-[1.5] mb-6">Linear webhooks fire on issue state transitions, comments, and assignment changes. They are the critical bridge between Linear and the local agent runtime.</p>
+
+        <div class="bg-ink text-paper p-6">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">Webhook payload (simplified)</p>
+          <pre>{
+  "action": "update",
+  "type": "Issue",
+  "data": {
+    "id": "c1f4e8...",
+    "title": "Add oauth flow to api",
+    "state": { "name": "In Progress" },
+    "assignee": { "name": "Worker Agent 3" },
+    "labels": [{ "name": "agent:worker-3" }]
+  },
+  "url": "https://linear.app/..."
+}</pre>
+        </div>
+
+        <div class="mt-8 max-w-prose space-y-3 text-sm leading-[1.5]">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-2">Events agents should listen for</p>
+          <div class="grid grid-cols-12 gap-2 items-baseline"><span class="col-span-1 text-xs font-medium number">01</span><span class="col-span-11"><span class="font-medium">Issue assigned to agent</span> — trigger worker to pick up task</span></div>
+          <div class="grid grid-cols-12 gap-2 items-baseline"><span class="col-span-1 text-xs font-medium number">02</span><span class="col-span-11"><span class="font-medium">State change to in review</span> — trigger reviewer agent</span></div>
+          <div class="grid grid-cols-12 gap-2 items-baseline"><span class="col-span-1 text-xs font-medium number">03</span><span class="col-span-11"><span class="font-medium">Comment added by orchestrator</span> — additional context for worker</span></div>
+          <div class="grid grid-cols-12 gap-2 items-baseline"><span class="col-span-1 text-xs font-medium number">04</span><span class="col-span-11"><span class="font-medium">Pr linked to issue</span> — sync github ↔ linear state</span></div>
+        </div>
+      </div>
+
+      <!-- Linear + GitHub built-in -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Linear and github integration (built-in)</h3>
+        <p class="max-w-prose text-base leading-[1.5] mb-6">Linear natively integrates with GitHub. When a branch or PR references an issue ID, they link automatically. For agent workflows, this means a worker creates a branch named <code class="code-inline">ENG-123-add-oauth-flow</code>, pushes it, and Linear links it to the issue without any API call.</p>
+        <div class="max-w-prose space-y-2 text-sm leading-[1.5] text-mute">
+          <p>→ Auto-linking — include <code class="code-inline">ENG-123</code> in branch name or pr description</p>
+          <p>→ Status sync — pr merge or close updates linear issue state</p>
+          <p>→ Branch creation — linear can create branches via github api</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 — GitHub -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">03 — GitHub</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Webhooks, oauth apps, and review automation</h2>
+
+      <!-- Webhook events table -->
+      <div class="mt-8">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">Webhook events for review cycles</p>
+        <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute py-3 border-b border-faint">
+          <div class="col-span-3">Event</div>
+          <div class="col-span-4">Payload key</div>
+          <div class="col-span-5">Agent trigger</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3"><code class="text-xs">pull_request.opened</code></div>
+          <div class="col-span-4"><code class="text-xs">pull_request.head.sha</code></div>
+          <div class="col-span-5 text-mute">Trigger reviewer agent to analyze new pr</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3"><code class="text-xs">pull_request.synchronize</code></div>
+          <div class="col-span-4"><code class="text-xs">head.sha (new commit)</code></div>
+          <div class="col-span-5 text-mute">Re-run review on updated code</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3"><code class="text-xs">check_run.rerequested</code></div>
+          <div class="col-span-4"><code class="text-xs">check_run.id</code></div>
+          <div class="col-span-5 text-mute">Re-run agent check suite</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3"><code class="text-xs">status</code></div>
+          <div class="col-span-4"><code class="text-xs">state, sha, context</code></div>
+          <div class="col-span-5 text-mute">Monitor ci before agent review</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 text-sm">
+          <div class="col-span-3"><code class="text-xs">push</code></div>
+          <div class="col-span-4"><code class="text-xs">ref, commits</code></div>
+          <div class="col-span-5 text-mute">Worker pushes to feature branch</div>
+        </div>
+      </div>
+
+      <!-- OAuth vs GitHub App -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Oauth apps versus github apps</h3>
+        <div class="max-w-prose text-base leading-[1.5] mb-6">
+          <p>Two authentication models exist. For agent workflows, use <span class="font-medium">GitHub Apps</span> — granular permissions, per-installation tokens, built-in webhooks, higher rate limits. OAuth apps act as the authenticated user and inherit their permissions, which is simpler but less appropriate for automated agents.</p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">
+          <div class="col-span-2">Aspect</div>
+          <div class="col-span-5">Oauth app</div>
+          <div class="col-span-5">Github app (recommended)</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-2 font-medium">Identity</div>
+          <div class="col-span-5 text-mute">Acts as authenticated user</div>
+          <div class="col-span-5">Acts as its own bot identity</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-2 font-medium">Permissions</div>
+          <div class="col-span-5 text-mute">Inherits user permissions</div>
+          <div class="col-span-5">Granular, per-repo permissions</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-2 font-medium">Token</div>
+          <div class="col-span-5 text-mute">User token (8h expiry)</div>
+          <div class="col-span-5">Installation token (1h, auto-refresh)</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-2 font-medium">Webhooks</div>
+          <div class="col-span-5 text-mute">Per-repo or org webhooks</div>
+          <div class="col-span-5">Built-in, app-level webhooks</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-2 font-medium">Rate limit</div>
+          <div class="col-span-5 text-mute">5,000/hr (user-based)</div>
+          <div class="col-span-5">5,000–15,000/hr (per install)</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 text-sm">
+          <div class="col-span-2 font-medium">Best for</div>
+          <div class="col-span-5 text-mute">Personal scripts</div>
+          <div class="col-span-5">Automated agents, ci bots</div>
+        </div>
+      </div>
+
+      <!-- Reviewer agent pattern -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Reviewer agent pattern</h3>
+        <p class="max-w-prose text-base leading-[1.5] mb-6">The reviewer agent listens for <code class="code-inline">pull_request.opened</code> webhooks and executes a structured pipeline.</p>
+
+        <div class="bg-ink text-paper p-6">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">Reviewer agent — on pull_request.opened</p>
+          <pre>1. receive webhook → extract pr number, head sha, repo
+2. fetch pr diff → GET /repos/:owner/:repo/pulls/:number/files
+3. fetch pr description + linked linear issue (regex branch name)
+4. run analysis → diff → agent prompt → structured review
+5. post review → POST /repos/:owner/:repo/pulls/:number/reviews
+     { "body": "...", "event": "COMMENT" | "REQUEST_CHANGES" | "APPROVE",
+       "comments": [{"path": "src/auth.ts", "line": 42, "body": "..."}] }
+6. update linear → post comment with review summary + pr link
+7. signal orchestrator → post review status to slack thread</pre>
+        </div>
+
+        <!-- Check runs -->
+        <div class="mt-8 max-w-prose">
+          <h4 class="text-sm font-medium mb-2">Check runs as quality gates</h4>
+          <p class="text-base leading-[1.5] mb-4">GitHub apps can create check runs that appear in the pr ci panel. A reviewer agent creates a check run named <code class="code-inline">agent-review</code> that passes or fails based on analysis, with line-level annotations.</p>
+          <div class="border border-ink p-6 bg-ink text-paper">
+            <pre>POST /repos/:owner/:repo/check-runs
+{
+  "name": "Agent Review",
+  "head_sha": "abc123...",
+  "status": "completed",
+  "conclusion": "success" | "failure" | "neutral",
+  "output": {
+    "title": "3 suggestions, 0 blockers",
+    "summary": "...",
+    "annotations": [
+      { "path": "src/auth.ts", "start_line": 42,
+        "annotation_level": "warning", "message": "..." }
+    ]
+  }
+}</pre>
+          </div>
+          <p class="text-sm text-mute leading-[1.5] mt-4">Combined with branch protection rules (require <code class="code-inline">agent-review</code> check before merge), this creates a hard gate — no code passes without agent review.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 — Slack -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">04 — Slack</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">The orchestrator surface</h2>
+      <div class="max-w-prose space-y-4 text-base leading-[1.5]">
+        <p>Slack serves as the human-agent interface. The orchestrator agent lives in a project channel, reads the conversation, and translates discussion into structured work items. This is where PRDs are born, refined collaboratively, and decomposed into tasks.</p>
+      </div>
+
+      <!-- Capabilities -->
+      <div class="mt-8">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">Orchestrator capabilities</p>
+        <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute py-3 border-b border-faint">
+          <div class="col-span-4">Capability</div>
+          <div class="col-span-4">Slack api</div>
+          <div class="col-span-4">Result</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4 font-medium">Read channel history</div>
+          <div class="col-span-4"><code class="text-xs">conversations.history</code></div>
+          <div class="col-span-4 text-mute">Understand team discussion context</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4 font-medium">Detect intent</div>
+          <div class="col-span-4"><code class="text-xs">app_mention event</code></div>
+          <div class="col-span-4 text-mute">Trigger on @orchestrator mentions</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4 font-medium">Post threaded reply</div>
+          <div class="col-span-4"><code class="text-xs">chat.postMessage</code></div>
+          <div class="col-span-4 text-mute">Draft prd inline, gather feedback</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4 font-medium">Block kit formatting</div>
+          <div class="col-span-4"><code class="text-xs">blocks in payload</code></div>
+          <div class="col-span-4 text-mute">Rich prd display — sections, dividers</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-4 font-medium">Create linear issue</div>
+          <div class="col-span-4"><code class="text-xs">graphql via linear api</code></div>
+          <div class="col-span-4 text-mute">Decompose prd into task issues</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 text-sm">
+          <div class="col-span-4 font-medium">Update status</div>
+          <div class="col-span-4"><code class="text-xs">chat.update</code></div>
+          <div class="col-span-4 text-mute">Keep prd message live-updating</div>
+        </div>
+      </div>
+
+      <!-- PRD flow -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Prd building flow</h3>
+        <div class="space-y-6 max-w-prose">
+          <div class="grid grid-cols-12 gap-4 items-start">
+            <span class="col-span-1 text-sm font-medium number text-right">1</span>
+            <div class="col-span-11">
+              <p class="text-sm font-medium">Team discusses feature in channel</p>
+              <p class="text-sm text-mute leading-[1.5] mt-1">Orchestrator reads <code class="code-inline">conversations.history</code> to build context. It identifies feature request, constraints, and stakeholders from the thread.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4 items-start">
+            <span class="col-span-1 text-sm font-medium number text-right">2</span>
+            <div class="col-span-11">
+              <p class="text-sm font-medium">Orchestrator drafts prd as threaded reply</p>
+              <p class="text-sm text-mute leading-[1.5] mt-1">Posts structured prd using block kit — problem statement, user stories, acceptance criteria, technical notes. Team reacts and comments inline.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4 items-start">
+            <span class="col-span-1 text-sm font-medium number text-right">3</span>
+            <div class="col-span-11">
+              <p class="text-sm font-medium">Team refines — orchestrator updates prd in place</p>
+              <p class="text-sm text-mute leading-[1.5] mt-1">Uses <code class="code-inline">chat.update</code> to keep prd message current. Each edit reflects team feedback until consensus.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4 items-start">
+            <span class="col-span-1 text-sm font-medium number text-right">4</span>
+            <div class="col-span-11">
+              <p class="text-sm font-medium">Decomposes into linear issues</p>
+              <p class="text-sm text-mute leading-[1.5] mt-1">Creates a Linear Project for the feature, then individual Issues for each user story. Labels with <code class="code-inline">agent:worker-N</code> to route to specific workers.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4 items-start">
+            <span class="col-span-1 text-sm font-medium number text-right">5</span>
+            <div class="col-span-11">
+              <p class="text-sm font-medium">Posts issue links to slack thread</p>
+              <p class="text-sm text-mute leading-[1.5] mt-1">Created 4 issues under project ENG-42. Worker agents will pick these up. Track progress on the Linear board.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status dashboard -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Real-time status dashboard</h3>
+        <p class="max-w-prose text-base leading-[1.5] mb-6">The orchestrator maintains a live-updating status message in the slack thread.</p>
+        <div class="border border-ink p-6 bg-ink text-paper max-w-prose">
+          <pre>Project: Oauth flow refactor
+60% complete
+
+  Done    ENG-123: Add token refresh logic — merged
+  Review  ENG-124: Update api middleware — in review (pr 47)
+  Active  ENG-125: Write integration tests — worker 3
+  Todo    ENG-126: Update docs</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 — End-to-end pipeline -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">05 — Pipeline</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">End-to-end walkthrough from slack to merged code</h2>
+      <div class="max-w-prose text-base leading-[1.5] mb-8">
+        <p>The full lifecycle of a feature, with every agent handoff mapped. From slack conversation to merged pull request in approximately 65 minutes, with human review interleaved at each stage.</p>
+      </div>
+
+      <!-- Phase 1 -->
+      <div class="mb-8">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium mb-3">Phase 1 · slack · prd creation and task decomposition</p>
+        <div class="space-y-3 text-sm leading-[1.5] max-w-prose">
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+0m</span><span class="col-span-11">Team discusses we need oauth token refresh in <code class="code-inline">#engineering</code></span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+2m</span><span class="col-span-11">Someone tags <code class="code-inline">@orchestrator</code> — build a prd for this</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+5m</span><span class="col-span-11">Orchestrator reads last 50 messages, posts structured prd as threaded reply</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+20m</span><span class="col-span-11">Consensus reached — orchestrator creates linear project plus 4 issues</span></div>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="mb-8">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium mb-3">Phase 2 · linear → local · task assignment and worker execution</p>
+        <div class="space-y-3 text-sm leading-[1.5] max-w-prose">
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+21m</span><span class="col-span-11">Linear webhook fires — 4 issues created, assigned to worker agents</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+22m</span><span class="col-span-11">Workers poll linear api for assigned tasks in todo state</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+25m</span><span class="col-span-11">Worker 3 creates branch <code class="code-inline">ENG-125-integration-tests</code> in local worktree</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+40m</span><span class="col-span-11">Worker writes code, runs tests, commits — posts progress comment on linear issue</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+45m</span><span class="col-span-11">Worker pushes branch, opens pr via <code class="code-inline">gh pr create</code> — linear auto-links via branch name</span></div>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="mb-8">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium mb-3">Phase 3 · github · automated review and quality gate</p>
+        <div class="space-y-3 text-sm leading-[1.5] max-w-prose">
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+46m</span><span class="col-span-11">GitHub webhook fires — <code class="code-inline">pull_request.opened</code></span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+47m</span><span class="col-span-11">Reviewer agent receives webhook, fetches pr diff and description</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+48m</span><span class="col-span-11">Agent analyzes diff against prd (fetched from linear issue description)</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+50m</span><span class="col-span-11">Agent posts pr review with line-specific comments, creates check run</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+51m</span><span class="col-span-11">Agent posts review summary as linear comment on ENG-125</span></div>
+        </div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="mb-8">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium mb-3">Phase 4 · feedback loop · human review, merge, and close</p>
+        <div class="space-y-3 text-sm leading-[1.5] max-w-prose">
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+55m</span><span class="col-span-11">Human developer reviews pr alongside agent review comments</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+60m</span><span class="col-span-11">Human approves, pr merged — linear auto-closes issue</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+61m</span><span class="col-span-11">Orchestrator detects issue state change via linear webhook</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs text-mute number">T+65m</span><span class="col-span-11">All 4 issues done — orchestrator posts final summary to slack thread</span></div>
+        </div>
+      </div>
+
+      <!-- Full diagram -->
+      <div class="mt-8">
+        <div class="rule-thick mb-4"></div>
+        <p class="text-xs uppercase tracking-[0.08em] font-medium mb-3">Event flow diagram</p>
+        <div class="border border-ink p-6 bg-ink text-paper">
+          <pre>Slack → Orchestrator → Linear (create issues)
+                          │
+                      ← webhook
+                          │
+                          ▼
+Worker Agent ← Linear (poll assigned)
+    │
+    ├→ git checkout -b ENG-XXX
+    ├→ write code (local filesystem)
+    ├→ git push + gh pr create
+    │
+    ▼
+GitHub → webhook (pull_request.opened) → Reviewer Agent
+                                                │
+                                                ├→ fetch diff
+                                                ├→ analyze + post review
+                                                ├→ create check run
+                                                └→ update Linear issue
+                                                        │
+Human reviews → Merge PR → Linear auto-close issue
+                                │
+Orchestrator ← Linear webhook ←┘
+    │
+    └→ Slack: update status dashboard</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 — Implementation -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">06 — Implementation</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Working code for each integration point</h2>
+
+      <!-- Step 1: Linear API -->
+      <div class="mb-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Step 1 — set up linear api access</h3>
+        <div class="bg-ink text-paper p-6 max-w-prose">
+          <pre># Create a linear api key at linear.app/settings/api
+export LINEAR_API_KEY="lin_api_..."
+
+# Test query
+curl -X POST https://api.linear.app/graphql \
+  -H "Authorization: $LINEAR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ viewer { id name } teams { nodes { id name } } }"}'</pre>
+        </div>
+      </div>
+
+      <!-- Step 2: GitHub App -->
+      <div class="mb-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Step 2 — create a github app</h3>
+        <div class="max-w-prose space-y-3 text-sm leading-[1.5]">
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">1</span><span class="col-span-11">GitHub Settings → Developer Settings → GitHub Apps → New GitHub App</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">2</span><span class="col-span-11">Set webhook url to your cloudflare tunnel endpoint</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">3</span><span class="col-span-11">Set webhook secret — generate random string, store in env</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">4</span><span class="col-span-11">Permissions: pull requests read and write, checks read and write, contents read</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">5</span><span class="col-span-11">Subscribe to events: pull request, check run, push</span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">6</span><span class="col-span-11">Generate private key, store as <code class="code-inline">GITHUB_APP_PRIVATE_KEY</code></span></div>
+          <div class="grid grid-cols-12 gap-2"><span class="col-span-1 text-xs font-medium number">7</span><span class="col-span-11">Install the app on target repositories</span></div>
+        </div>
+      </div>
+
+      <!-- Step 3: Webhook receiver -->
+      <div class="mb-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Step 3 — webhook receiver (local)</h3>
+        <p class="max-w-prose text-sm text-mute leading-[1.5] mb-4">The webhook receiver runs locally on the mac mini and is exposed via cloudflare tunnel.</p>
+        <div class="bg-ink text-paper p-6 max-w-prose">
+          <pre>// webhook-receiver.ts — runs as launchd daemon
+import { Webhooks } from "@octokit/webhooks";
+import { createNodeMiddleware } from "@octokit/webhooks";
+import { createServer } from "node:http";
+
+const webhooks = new Webhooks({ secret: process.env.WEBHOOK_SECRET });
+
+webhooks.on("pull_request.opened", async ({ payload }) => {
+  const { number, head } = payload.pull_request;
+  const issueId = extractLinearIssue(head.ref); // regex ENG-XXX
+
+  // trigger reviewer agent
+  await triggerReviewerAgent({ prNumber: number, issueId });
+});
+
+webhooks.on("pull_request.closed", async ({ payload }) => {
+  if (payload.pull_request.merged) {
+    await updateLinearIssue(
+      extractLinearIssue(payload.pull_request.head.ref),
+      { stateId: "done-state-id" }
+    );
+  }
+});
+
+createServer(createNodeMiddleware(webhooks)).listen(3000);</pre>
+        </div>
+      </div>
+
+      <!-- Step 4: Worker loop -->
+      <div class="mb-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Step 4 — worker agent loop</h3>
+        <p class="max-w-prose text-sm text-mute leading-[1.5] mb-4">Worker agents run as pi sessions in worktrees, polling linear for assigned tasks.</p>
+        <div class="bg-ink text-paper p-6 max-w-prose">
+          <pre>// worker-loop.ts — runs every 60s via cron or while+sleep
+async function workerLoop(workerId: string) {
+  const issues = await linearGraphQL(`
+    query {
+      issues(filter: {
+        assignee: { name: { eq: "${workerId}" } },
+        state: { name: { eq: "Todo" } }
+      }) { nodes { id title description branchName } }
+    }
+  `);
+
+  for (const issue of issues) {
+    // 1. mark in progress
+    await markInProgress(issue.id);
+
+    // 2. create worktree + branch
+    exec(`cd ~/dev/Thoth && wt ${issue.branchName}`);
+
+    // 3. spawn pi coding agent with issue context
+    const session = createAgentSession({
+      systemPrompt: buildPrompt(issue.description),
+      cwd: `~/.worktrees/Thoth-${issue.branchName}`
+    });
+    await session.prompt(`Implement: ${issue.title}`);
+
+    // 4. commit, push, open pr
+    exec(`git add . && git commit -m "${issue.title}"`);
+    exec(`git push origin ${issue.branchName}`);
+    exec(`gh pr create --title "${issue.title}" --body "Closes ${issue.branchName}"`);
+
+    // 5. mark ready for review
+    await setInReview(issue.id);
+  }
+}</pre>
+        </div>
+      </div>
+
+      <!-- Step 5: Orchestrator -->
+      <div class="mb-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Step 5 — orchestrator (slack bot)</h3>
+        <p class="max-w-prose text-sm text-mute leading-[1.5] mb-4">The orchestrator runs as a slack bot using <code class="code-inline">@slack/bolt</code>.</p>
+        <div class="bg-ink text-paper p-6 max-w-prose">
+          <pre>// orchestrator.ts
+import { App } from "@slack/bolt";
+
+const app = new App({
+  token: process.env.SLACK_BOT_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET
+});
+
+app.event("app_mention", async ({ event, say, client }) => {
+  const thread = await client.conversations.replies({
+    channel: event.channel,
+    ts: event.thread_ts || event.ts
+  });
+
+  // build prd from conversation context
+  const prd = await buildPRD(thread.messages, event.text);
+  await say({ text: prd, thread_ts: event.ts });
+});
+
+app.command("/decompose", async ({ command, ack, say }) => {
+  await ack();
+  const issues = await decomposeToLinear(command.text);
+  await say(`Created ${issues.length} issues in linear`);
+});</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 — Thoth deployment -->
+<section class="border-b border-ink">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-16 grid grid-cols-12 gap-4">
+    <div class="col-span-12 md:col-span-3">
+      <p class="text-xs uppercase tracking-[0.1em] font-medium">07 — Thoth deployment</p>
+    </div>
+    <div class="col-span-12 md:col-span-9">
+      <h2 class="text-3xl md:text-4xl font-medium tracking-tight leading-tight mb-8 max-w-2xl">Running the pipeline on the mac mini</h2>
+
+      <!-- Agent mapping -->
+      <div class="mt-8">
+        <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute pb-3 border-b border-ink">Agent roles on thoth</p>
+        <div class="grid grid-cols-12 gap-4 text-xs uppercase tracking-[0.08em] font-medium text-mute py-3 border-b border-faint">
+          <div class="col-span-3">Agent role</div>
+          <div class="col-span-4">Implementation</div>
+          <div class="col-span-5">Runtime</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3 font-medium">Orchestrator</div>
+          <div class="col-span-4 text-mute">Slack bolt app as launchd daemon</div>
+          <div class="col-span-5">24/7 node.js process</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3 font-medium">Webhook receiver</div>
+          <div class="col-span-4 text-mute">Express server via cloudflare tunnel</div>
+          <div class="col-span-5">Launchd daemon (port 3000)</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3 font-medium">Worker agents</div>
+          <div class="col-span-4 text-mute">Pi sessions in git worktrees</div>
+          <div class="col-span-5">On-demand (cron or event-driven)</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 border-b border-faint text-sm">
+          <div class="col-span-3 font-medium">Reviewer agent</div>
+          <div class="col-span-4 text-mute">Pi session triggered by webhook</div>
+          <div class="col-span-5">On-demand</div>
+        </div>
+        <div class="grid grid-cols-12 gap-4 items-baseline py-3 text-sm">
+          <div class="col-span-3 font-medium">Status dashboard</div>
+          <div class="col-span-4 text-mute">Living.md in vault, auto-refreshed</div>
+          <div class="col-span-5">5-min cron</div>
+        </div>
+      </div>
+
+      <!-- Filesystem audit trail -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Filesystem-native audit trail</h3>
+        <p class="max-w-prose text-base leading-[1.5] mb-6">Because Thoth uses the filesystem as its protocol, the entire pipeline is observable via Obsidian.</p>
+        <div class="max-w-prose space-y-2 text-sm leading-[1.5] text-mute">
+          <p>→ Prds land in <code class="code-inline">1-Projects/</code> as markdown notes</p>
+          <p>→ Agent sessions recorded in <code class="code-inline">~/.pi/agent/sessions/</code> — full transcripts</p>
+          <p>→ Event log in <code class="code-inline">Event Log.md</code> captures all agent handoffs</p>
+          <p>→ Code output exists in worktrees, versioned in git</p>
+          <p>→ Dashboard in <code class="code-inline">Living.md</code> renders pipeline status in obsidian</p>
+        </div>
+      </div>
+
+      <!-- launchd config -->
+      <div class="mt-16">
+        <h3 class="text-xl font-medium leading-snug mb-3">Launchd configuration</h3>
+        <div class="bg-ink text-paper p-6 max-w-prose">
+          <p class="text-xs uppercase tracking-[0.08em] font-medium text-mute mb-4">~/Library/LaunchAgents/com.thoth.orchestrator.plist</p>
+          <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" ...&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+    &lt;key&gt;Label&lt;/key&gt;
+    &lt;string&gt;com.thoth.orchestrator&lt;/string&gt;
+    &lt;key&gt;ProgramArguments&lt;/key&gt;
+    &lt;array&gt;
+        &lt;string&gt;/opt/homebrew/bin/node&lt;/string&gt;
+        &lt;string&gt;~/dev/Thoth/scripts/orchestrator.js&lt;/string&gt;
+    &lt;/array&gt;
+    &lt;key&gt;RunAtLoad&lt;/key&gt;
+    &lt;true/&gt;
+    &lt;key&gt;KeepAlive&lt;/key&gt;
+    &lt;true/&gt;
+    &lt;key&gt;EnvironmentVariables&lt;/key&gt;
+    &lt;dict&gt;
+        &lt;key&gt;LINEAR_API_KEY&lt;/key&gt;
+        &lt;string&gt;lin_api_...&lt;/string&gt;
+        &lt;key&gt;SLACK_BOT_TOKEN&lt;/key&gt;
+        &lt;string&gt;xoxb-...&lt;/string&gt;
+        &lt;key&gt;GITHUB_APP_PRIVATE_KEY&lt;/key&gt;
+        &lt;string&gt;-----BEGIN RSA PRIVATE KEY-----...&lt;/string&gt;
+    &lt;/dict&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-ink mt-16">
+  <div class="max-w-7xl mx-auto px-6 md:px-8 py-12 grid grid-cols-12 gap-4 text-sm">
+    <div class="col-span-12 md:col-span-4">
+      <p class="font-medium mb-2">Thoth research</p>
+      <p class="text-mute leading-[1.5]">Systems architecture<br>May 2026 · Arlington VA</p>
+    </div>
+    <div class="col-span-6 md:col-span-4">
+      <p class="font-medium mb-2">References</p>
+      <ul class="text-mute space-y-1">
+        <li><a class="border-none" href="https://developers.linear.app">Linear API documentation</a></li>
+        <li><a class="border-none" href="https://docs.github.com/en/webhooks">GitHub webhooks</a></li>
+        <li><a class="border-none" href="https://docs.github.com/en/apps">GitHub apps</a></li>
+        <li><a class="border-none" href="https://slack.dev/bolt-js">Slack bolt framework</a></li>
+      </ul>
+    </div>
+    <div class="col-span-6 md:col-span-4 md:text-right text-xs uppercase tracking-[0.08em] font-medium text-mute">
+      <p>Set in Inter</p>
+      <p class="mt-1">Swiss grid · style 05</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

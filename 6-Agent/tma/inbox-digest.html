@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Thoth Inbox Digest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            head: ['Playfair Display', 'Times New Roman', 'serif'],
+            body: ['Source Serif 4', 'Charter', 'Georgia', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            news: {
+              paper: '#fbfaf6',
+              warm: '#f3eee0',
+              ink: '#111111',
+              soft: '#2a2a28',
+              mute: '#5a5a55',
+              faint: '#8a8a82',
+              rule: '#111111',
+              ruleSoft: '#bfbcb2',
+              red: '#a01818',
+            },
+          },
+          fontSize: {
+            'broadsheet': ['5.5rem', { lineHeight: '0.95', letterSpacing: '-0.02em' }],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { background: #fbfaf6; color: #111111; }
+    .rule { border-top: 1px solid #111; }
+    .rule-thick { border-top: 3px solid #111; }
+    .rule-double { border-top: 1px solid #111; border-bottom: 1px solid #111; height: 4px; }
+    .rule-soft { border-top: 1px solid #bfbcb2; }
+    .dropcap::first-letter { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 4.5em; line-height: 0.85; float: left; padding: 0.05em 0.08em 0 0; color: #111; }
+    .smallcaps { font-feature-settings: 'smcp'; letter-spacing: 0.06em; }
+    .tabular { font-variant-numeric: tabular-nums; }
+    a { color: #111; text-decoration: underline; text-decoration-thickness: 0.5px; text-underline-offset: 2px; }
+    a:hover { color: #a01818; }
+    blockquote { font-style: italic; }
+    .cols-2 { column-count: 2; column-gap: 28px; column-rule: 1px solid #bfbcb2; }
+    .cols-2 > p, .cols-3 > p { break-inside: avoid; margin-bottom: 0.7em; }
+    .no-break { break-inside: avoid; }
+    ::selection { background: #f0e8c8; color: #111; }
+    @media (max-width: 640px) {
+      .cols-2 { column-count: 1; column-rule: none; }
+    }
+  </style>
+</head>
+<body class="font-body text-[16px] text-news-ink leading-[1.5]">
+
+<!-- Masthead -->
+<header class="border-b-4 border-news-ink">
+  <div class="max-w-7xl mx-auto px-6 pt-6 pb-3">
+    <div class="flex items-end justify-between mb-3">
+      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Vol. I · No. 002</span>
+      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Thoth Editions · Inbox Desk</span>
+    </div>
+    <h1 class="font-head text-broadsheet font-black tracking-tighter leading-[0.9] text-center mb-1">
+      The Inbox Digest
+    </h1>
+    <div class="flex items-center justify-center gap-3 pt-2 border-t border-news-ink">
+      <span class="font-sans text-xs uppercase tracking-[0.2em] font-medium">Tuesday, May 12, 2026</span>
+      <span class="text-news-red">●</span>
+      <span class="font-sans text-xs uppercase tracking-[0.2em] font-medium">What the agents captured overnight</span>
+    </div>
+  </div>
+</header>
+
+<!-- Stats bar -->
+<section class="max-w-7xl mx-auto px-6 py-3 border-b-2 border-news-ink">
+  <div class="flex items-center justify-between font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute">
+    <span>2 articles · 1 project review</span>
+    <span>Source: 3-Resources/Inbox/</span>
+    <span>Vault: Thoth · Obsidian</span>
+  </div>
+</section>
+
+<!-- Lead: PI Cockpit SDK Review -->
+<section class="max-w-7xl mx-auto px-6 py-8">
+  <div class="grid grid-cols-12 gap-6">
+    <article class="col-span-12 md:col-span-8 border-r border-news-ruleSoft pr-6">
+      <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold text-news-red mb-2">Project Review · PI Cockpit</p>
+      <h2 class="font-head text-4xl md:text-5xl font-black leading-[1.0] tracking-tight mb-4">
+        SDK Integration Plan Survives Peer Review — Three Corrections Needed Before Code
+      </h2>
+      <p class="font-body text-lg italic text-news-soft leading-snug max-w-2xl mb-3">
+        The plan to wire PI's TypeScript SDK directly into the Cockpit hub is architecturally sound, but string-based model IDs, session switching, and typedef verification need attention.
+      </p>
+      <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mb-6">
+        By <span class="text-news-ink">Thoth Research</span> · Session: Claude Opus 4.7 · 1M ctx
+      </p>
+      <div class="cols-2 font-body text-base leading-[1.55]">
+
+        <p class="dropcap"><span class="smallcaps text-xs uppercase font-bold not-italic mr-1">ARLINGTON, VA —</span>The PI Cockpit project — which embeds a full AI control surface into Obsidian via the Custom Frames plugin — crossed a key checkpoint this week. A plan to replace the current pi-acp bridge with a direct SDK integration survived a thorough review, but three concrete corrections must land before any agent writes <code class="font-sans text-xs bg-news-warm px-1">hub/pi-bridge.js</code>.</p>
+
+        <p>The review verified four "check before coding" items against the installed <code class="font-sans text-xs bg-news-warm px-1">@mariozechner/pi-coding-agent@0.73.1</code> package. The verdict: the package name is correct, dependencies are populated in the worktree, and core APIs — <code class="font-sans text-xs bg-news-warm px-1">createAgentSession</code>, <code class="font-sans text-xs bg-news-warm px-1">AgentSession</code>, <code class="font-sans text-xs bg-news-warm px-1">ModelRegistry</code> — exist as documented. The worktree at <code class="font-sans text-xs bg-news-warm px-1">~/.worktrees/Thoth-pi-cockpit/</code> is ready for development.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Correction 1: Models aren't strings</h4>
+
+        <p>The original plan assumed <code class="font-sans text-xs bg-news-warm px-1">session.setModel("deepseek-v4-pro")</code> would work. It won't. The SDK expects <code class="font-sans text-xs bg-news-warm px-1">Model&lt;any&gt;</code> objects, not string IDs. The bridge needs to import <code class="font-sans text-xs bg-news-warm px-1">getModel</code> from <code class="font-sans text-xs bg-news-warm px-1">@mariozechner/pi-ai</code> and map widget model IDs to <code class="font-sans text-xs bg-news-warm px-1">(provider, modelId)</code> pairs before passing to the SDK.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Correction 2: Session switching is multi-step</h4>
+
+        <p>The plan described a single <code class="font-sans text-xs bg-news-warm px-1">piBridge.switchSession(path)</code> call. In reality, switching requires tearing down the current <code class="font-sans text-xs bg-news-warm px-1">AgentSession</code>, building a new <code class="font-sans text-xs bg-news-warm px-1">SessionManager</code> against the target path, calling <code class="font-sans text-xs bg-news-warm px-1">createAgentSession</code> again, and re-subscribing to events. The <code class="font-sans text-xs bg-news-warm px-1">AgentSessionRuntime</code> class may simplify this — the implementing agent should read its typedef before deciding.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">Correction 3: Read typedefs, not blog posts</h4>
+
+        <p>The plan cited a Nader Dabit article for API shapes. The review flagged this as risky — typedefs are the canonical source. Three files must be read before coding: <code class="font-sans text-xs bg-news-warm px-1">agent-session.d.ts</code> (event shapes), <code class="font-sans text-xs bg-news-warm px-1">agent-session-runtime.d.ts</code> (lifecycle), and <code class="font-sans text-xs bg-news-warm px-1">model-registry.d.ts</code> (model API).</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">What the plan got right</h4>
+
+        <p>The decision to use direct SDK over pi-acp was correct — the MCP and skills passthrough issues on the acp path would have been problematic. Skills and MCP display widgets don't need changes (they read from the filesystem). The WebSocket protocol stays intact — only hub-side handlers change. The plugin ItemView structure remains.</p>
+
+        <p>The review also surfaced an operational detail: the hub runs from the worktree, not the vault. During active development, the launchd-managed hub should be killed and the dev loop run manually from <code class="font-sans text-xs bg-news-warm px-1">~/.worktrees/Thoth-pi-cockpit/pi-cockpit/hub/</code> to avoid the styles.css revert issue that bit the team earlier.</p>
+
+        <p class="font-sans text-xs italic text-news-mute mt-4">Continued on Page A4, Column 1 →</p>
+      </div>
+    </article>
+
+    <!-- Sidebar -->
+    <aside class="col-span-12 md:col-span-4">
+      <p class="font-sans text-xs uppercase tracking-[0.18em] font-bold border-b-2 border-news-ink pb-1 mb-3">In this issue</p>
+      <ul class="divide-y divide-news-ruleSoft mb-8">
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Cockpit</p>
+          <h3 class="font-head text-base font-bold leading-tight">SDK bridge passes review — 3 corrections flagged</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Page A1 · 1,200 words</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Reference</p>
+          <h3 class="font-head text-base font-bold leading-tight">Nader Dabit on building agent frameworks with PI</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Page A3 · 800 words</p>
+        </li>
+        <li class="py-3">
+          <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Vault</p>
+          <h3 class="font-head text-base font-bold leading-tight">Five reference docs in 3-Resources/</h3>
+          <p class="font-sans text-xs text-news-mute mt-1">Page A5 · 400 words</p>
+        </li>
+      </ul>
+
+      <!-- Key facts box -->
+      <div class="bg-news-warm border border-news-ruleSoft p-5 mb-6">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">PI Cockpit — By the numbers</p>
+        <div class="space-y-3">
+          <div>
+            <p class="font-body text-2xl font-bold tabular">0.73.1</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">SDK version installed</p>
+          </div>
+          <div class="rule-soft pt-3">
+            <p class="font-body text-2xl font-bold tabular">3</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">Corrections before code</p>
+          </div>
+          <div class="rule-soft pt-3">
+            <p class="font-body text-2xl font-bold tabular">4</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">Widgets in Obsidian</p>
+          </div>
+          <div class="rule-soft pt-3">
+            <p class="font-body text-2xl font-bold tabular">0</p>
+            <p class="font-sans text-xs text-news-mute uppercase tracking-[0.1em]">WS protocol changes needed</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event types box -->
+      <div class="border-2 border-news-ink p-5">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">Streaming events wired early</p>
+        <div class="font-body text-sm leading-[1.55] space-y-2">
+          <div><span class="font-sans text-xs font-bold text-news-red">AgentStart/End</span> — streaming status indicators</div>
+          <div class="rule-soft pt-2"><span class="font-sans text-xs font-bold text-news-red">TurnStart/End</span> — top-level turn boundaries</div>
+          <div class="rule-soft pt-2"><span class="font-sans text-xs font-bold text-news-red">ToolCall/Result</span> — collapsible tool cards</div>
+          <div class="rule-soft pt-2"><span class="font-sans text-xs font-bold text-news-red">SessionCompact</span> — refresh UI on compaction</div>
+          <div class="rule-soft pt-2"><span class="font-sans text-xs font-bold text-news-red">text_delta / thinking_delta</span> — streaming text</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Second story: PI Agent Framework -->
+<section class="max-w-7xl mx-auto px-6 py-8 border-t-2 border-news-ink">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <article class="md:border-r md:border-news-ruleSoft md:pr-6">
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Reference · Agent Architecture</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Nader Dabit Maps the PI Agent Stack: Four Layers From Provider to Terminal</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">A comprehensive guide by developer-educator Nader Dabit walks through PI's composable TypeScript architecture, demonstrating how four independent layers compose into a production-grade coding agent without vendor lock-in.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">The stack begins with <span class="font-sans text-xs font-bold">pi-ai</span>, which normalizes LLM calls across providers — the foundational layer that makes provider switching possible without code changes. Above it sits <span class="font-sans text-xs font-bold">pi-agent-core</span>, handling the agent loop, tool execution, and event streaming. This is the heart of the agent — the stateful engine that manages turns, messages, and tool calls.</p>
+      <p class="font-body text-sm leading-[1.55]">The <span class="font-sans text-xs font-bold">pi-coding-agent</span> layer adds file-system tools — read, write, edit, bash — and session persistence, turning the core agent into a full coding assistant. Finally, <span class="font-sans text-xs font-bold">pi-tui</span> provides the terminal UI with markdown rendering, code blocks, and an inline editor. The article demonstrates each layer in isolation, showing teams how to swap or replace components without breaking the whole system.</p>
+      <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mt-3">By Nader Dabit · nader.substack.com</p>
+    </article>
+
+    <article class="md:border-r md:border-news-ruleSoft md:pr-6">
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Analysis · The Filesystem Pattern</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Why the Vault Architecture Works: Zero-Build Artifact Delivery</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">The Thoth system — and by extension the PI Cockpit — rests on an architectural insight that's easy to miss: agents write files, watchers detect changes, surfaces re-render. There is no database, no API layer, no deployment step.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">This pattern was first described in the Agent Surface issue of this publication, but it's worth restating in light of the Cockpit review. The hub's skill scanner uses <code class="font-sans text-xs bg-news-warm px-1">chokidar</code> to watch the filesystem for skill changes. The artifact dashboard watches <code class="font-sans text-xs bg-news-warm px-1">6-Agent/tma/</code> for new HTML files. The session monitor reads PI session files as they're written. Everything is a file.</p>
+      <p class="font-body text-sm leading-[1.55]">This is not a compromise — it's a deliberate choice. The filesystem is faster than any REST call, requires no authentication, and works with every tool in the ecosystem. When the PI SDK bridge lands, it will join this pattern: the hub writes session state, the SDK consumes it, the widgets react. No database required.</p>
+      <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mt-3">Thoth Research · Filesystem Desk</p>
+    </article>
+
+    <article>
+      <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Vault Reference · 3-Resources</p>
+      <h3 class="font-head text-2xl font-bold leading-tight mb-3">Five Reference Documents Powering the Digital Twin</h3>
+      <p class="font-body text-sm leading-[1.55] mb-2">The <code class="font-sans text-xs bg-news-warm px-1">3-Resources/</code> directory holds the operational knowledge base for the Thoth digital twin, freshly updated and injected into every agent session.</p>
+
+      <div class="space-y-2 mt-3">
+        <div class="rule-soft pt-2">
+          <p class="font-sans text-xs font-bold">System Prompt.md</p>
+          <p class="font-body text-sm text-news-mute">The digital twin identity — proactive, context-aware, orchestrating tools across sessions.</p>
+        </div>
+        <div class="rule-soft pt-2">
+          <p class="font-sans text-xs font-bold">Thoth — Digital Twin.md</p>
+          <p class="font-body text-sm text-news-mute">Human profile: Smaths, Arlington VA, agency developer, tinkerer.</p>
+        </div>
+        <div class="rule-soft pt-2">
+          <p class="font-sans text-xs font-bold">Thoth — Obsidian Integration.md</p>
+          <p class="font-body text-sm text-news-mute">REST API, vault structure, plugin stack, sync architecture. 9KB reference.</p>
+        </div>
+        <div class="rule-soft pt-2">
+          <p class="font-sans text-xs font-bold">Thoth Worktrees.md</p>
+          <p class="font-body text-sm text-news-mute">Session launcher internals, context injection, worktree lifecycle.</p>
+        </div>
+        <div class="rule-soft pt-2">
+          <p class="font-sans text-xs font-bold">AGENTS.md</p>
+          <p class="font-body text-sm text-news-mute">Quick-reference card — project dir, tools, required reading links.</p>
+        </div>
+      </div>
+
+      <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mt-4">All docs in 3-Resources/ · Updated May 2026</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- Telegram Bridge section -->
+<section class="max-w-7xl mx-auto px-6 py-8 border-t-2 border-news-ink">
+  <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12 md:col-span-8">
+      <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold text-news-red mb-2">Analysis · Telegram Bridge</p>
+      <h2 class="font-head text-3xl font-bold leading-tight mb-6">The Inbox Pipeline: How Telegram Becomes Vault Knowledge</h2>
+      <div class="cols-2 font-body text-base leading-[1.55]">
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-0 mb-2">24/7 Capture, Zero Friction</h4>
+
+        <p>The Telegram-to-Inbox pipeline runs continuously on the Mac Mini. Every message Smaths sends from Telegram — links, articles, ideas, screenshots — flows through the pi-telegram extension, gets formatted with YAML frontmatter, and lands in <code class="font-sans text-xs bg-news-warm px-1">3-Resources/Inbox/</code> as a dated markdown note. No copy-paste. No app switching. The capture happens in the messaging app he's already in.</p>
+
+        <p>The bot runs as a launchd daemon, surviving reboots and crashes. Its config lives in <code class="font-sans text-xs bg-news-warm px-1">~/.pi/agent/telegram.json</code>. When Smaths sends "stop" or "/stop", it aborts the current pi turn — a safety valve for runaway agent loops.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">The Two Articles in Today's Inbox</h4>
+
+        <p>The PI agent framework article from Nader Dabit arrived via web clipping, captured at 00:21 on May 11. The Cockpit SDK review was generated at 00:49 the same night — a late-session deep-dive by Claude Opus 4.7 with a 1-million-token context window, verifying the PI SDK integration plan against the actual installed packages.</p>
+
+        <p>Both notes follow the same frontmatter convention: title, source, clipped timestamp, and tags. This makes them queryable via Dataview inside Obsidian and filterable by the inbox reader.</p>
+
+        <h4 class="font-sans text-xs uppercase tracking-[0.15em] font-bold mt-6 mb-2">The Mini App as a Delivery Surface</h4>
+
+        <p>This very page you're reading is the proof of concept: an HTML artifact generated from vault content, rendered in the Telegram Mini App, styled as a newspaper. The agent reads inbox notes from the filesystem, synthesizes them into a digest, writes a self-contained HTML file to <code class="font-sans text-xs bg-news-warm px-1">6-Agent/tma/</code>, and it appears instantly at <code class="font-sans text-xs bg-news-warm px-1">tma.agentsworld.org</code>. No build. No deploy. No API. Just files.</p>
+
+        <figure class="my-8 px-6 py-4 border-y-2 border-news-ink no-break">
+          <p class="font-head text-2xl italic font-medium leading-[1.25] mb-3">"The filesystem is faster than any REST call, requires no authentication, and works with every tool in the ecosystem."</p>
+          <figcaption class="font-sans text-xs uppercase tracking-[0.12em] text-news-mute font-medium">— The Agent Surface, Thoth Editions, May 2026</figcaption>
+        </figure>
+
+      </div>
+    </div>
+
+    <aside class="col-span-12 md:col-span-4">
+      <div class="bg-news-warm border border-news-ruleSoft p-5 mb-6">
+        <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-3">The Pipeline</p>
+        <div class="space-y-4 text-sm">
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">1</span>
+            <p class="font-body text-sm leading-snug">Smaths sends a link or message in Telegram</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">2</span>
+            <p class="font-body text-sm leading-snug">pi-telegram receives it, forwards to Thoth agent</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">3</span>
+            <p class="font-body text-sm leading-snug">Agent formats as markdown with YAML frontmatter</p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">4</span>
+            <p class="font-body text-sm leading-snug">Writes to <code class="font-sans text-xs bg-white/50 px-1">3-Resources/Inbox/</code></p>
+          </div>
+          <div class="flex gap-3">
+            <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">5</span>
+            <p class="font-body text-sm leading-snug">Obsidian sees it instantly via filesystem watcher</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="mt-12 border-t-4 border-news-ink">
+  <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between font-sans text-xs uppercase tracking-[0.12em] text-news-mute">
+    <span>Thoth Editions · Arlington, VA</span>
+    <span>Set in Source Serif &middot; Headlines in Playfair Display</span>
+    <span>Printed on digital paper</span>
+  </div>
+</footer>
+
+</body>
+</html>
