@@ -155,13 +155,13 @@ function broadcast(msg, excludeWs = null) {
   });
 }
 
-function broadcastToWidgets(msg) {
-  // Historical name kept for call-site compatibility. In practice this is the
-  // UI broadcast channel: static web widgets identify as "widget" and native
-  // Obsidian ItemViews share the companion plugin connection identified as
-  // "plugin". Native panes must receive filesystem-driven updates too — e.g.
-  // tickets created by scripts should hydrate into the Tickets ItemView without
-  // requiring a manual refresh/reopen.
+function broadcastToUi(msg) {
+  // UI broadcast channel contract: delivers filesystem-driven updates to every
+  // client that renders PI Cockpit state visually — both static web widgets
+  // (clientType "widget") and the native Obsidian companion plugin (clientType
+  // "plugin", which owns the ItemView panes).  The invariant is that any state
+  // change originating on disk (file watcher) or from a UI action MUST reach
+  // all connected UI surfaces so they stay in sync without manual refresh.
   const data = JSON.stringify(msg);
   wss.clients.forEach(client => {
     if (client.readyState === 1 && (client._clientType === "widget" || client._clientType === "plugin")) {
@@ -189,7 +189,7 @@ async function handleMessage(ws, raw) {
 
       if (ws._clientType === "plugin") {
         state.obsidianPluginConnected = true;
-        broadcastToWidgets({ type: "plugin-status", connected: true });
+        broadcastToUi({ type: "plugin-status", connected: true });
       } else {
         state.connectedWidgets.add(ws._widgetName);
       }
@@ -457,7 +457,7 @@ async function handleMessage(ws, raw) {
 
     case "theme-update":
       state.theme = { vars: msg.vars, isDark: msg.isDark, ts: Date.now() };
-      broadcastToWidgets({
+      broadcastToUi({
         type: "theme-update",
         vars: msg.vars,
         isDark: msg.isDark,
@@ -470,7 +470,7 @@ async function handleMessage(ws, raw) {
         const daemons = scanDaemons();
         const heartbeat = readHeartbeat();
         ws.send(JSON.stringify({ type: "daemons-updated", daemons, heartbeat }));
-        broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+        broadcastToUi({ type: "daemons-updated", daemons, heartbeat });
       }
       break;
 
@@ -487,7 +487,7 @@ async function handleMessage(ws, raw) {
         setTimeout(() => {
           const daemons = scanDaemons();
           const heartbeat = readHeartbeat();
-          broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+          broadcastToUi({ type: "daemons-updated", daemons, heartbeat });
         }, 1500);
       }
       break;
@@ -520,7 +520,7 @@ async function handleMessage(ws, raw) {
     case "save-routine":
       try {
         const saved = saveRoutine(msg.routine || {});
-        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        broadcastToUi({ type: "routines-updated", routines: listRoutines() });
         ws.send(JSON.stringify({ type: "routine-saved", routine: saved }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `save-routine: ${err.message}` }));
@@ -530,7 +530,7 @@ async function handleMessage(ws, raw) {
     case "delete-routine":
       try {
         deleteRoutine(msg.slug);
-        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        broadcastToUi({ type: "routines-updated", routines: listRoutines() });
         ws.send(JSON.stringify({ type: "routine-deleted", slug: msg.slug }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `delete-routine: ${err.message}` }));
@@ -540,7 +540,7 @@ async function handleMessage(ws, raw) {
     case "toggle-routine":
       try {
         const r = toggleRoutine(msg.slug, msg.enabled);
-        broadcastToWidgets({ type: "routines-updated", routines: listRoutines() });
+        broadcastToUi({ type: "routines-updated", routines: listRoutines() });
         ws.send(JSON.stringify({ type: "routine-toggled", slug: msg.slug, ...r }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `toggle-routine: ${err.message}` }));
@@ -579,7 +579,7 @@ async function handleMessage(ws, raw) {
     case "ticket-save":
       try {
         const saved = saveTicket(msg.ticket || {});
-        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
         ws.send(JSON.stringify({ type: "ticket-saved", ticket: saved }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `ticket-save: ${err.message}` }));
@@ -589,7 +589,7 @@ async function handleMessage(ws, raw) {
     case "ticket-delete":
       try {
         deleteTicket(msg.identifier);
-        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
         ws.send(JSON.stringify({ type: "ticket-deleted", identifier: msg.identifier }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `ticket-delete: ${err.message}` }));
@@ -599,7 +599,7 @@ async function handleMessage(ws, raw) {
     case "ticket-transition":
       try {
         const updated = transitionTicket(msg.identifier, msg.state, msg.actor || "user");
-        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
         ws.send(JSON.stringify({ type: "ticket-saved", ticket: updated }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `ticket-transition: ${err.message}` }));
@@ -611,7 +611,7 @@ async function handleMessage(ws, raw) {
         const c = addComment(msg.identifier, { body: msg.body, author: msg.author, parent: msg.parent });
         const comments = listComments(msg.identifier);
         ws.send(JSON.stringify({ type: "ticket-comments", identifier: msg.identifier, comments, added: c }));
-        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `ticket-comment-add: ${err.message}` }));
       }
@@ -630,7 +630,7 @@ async function handleMessage(ws, raw) {
     case "tickets-meta-save":
       try {
         const meta = saveTicketsMeta(msg.meta || {});
-        broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+        broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
         ws.send(JSON.stringify({ type: "tickets-meta-saved", meta }));
       } catch (err) {
         ws.send(JSON.stringify({ type: "error", message: `tickets-meta-save: ${err.message}` }));
@@ -672,7 +672,7 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     if (ws._clientType === "plugin") {
       state.obsidianPluginConnected = false;
-      broadcastToWidgets({ type: "plugin-status", connected: false });
+      broadcastToUi({ type: "plugin-status", connected: false });
     } else if (ws._clientType === "widget") {
       state.connectedWidgets.delete(ws._widgetName);
     }
@@ -698,7 +698,7 @@ const watcher = chokidar.watch(
 watcher.on("all", (event, filePath) => {
   if (event === "add" || event === "change" || event === "unlink") {
     scanSessions();
-    broadcastToWidgets({
+    broadcastToUi({
       type: "sessions-updated",
       sessions: state.sessions,
       trigger: event,
@@ -716,7 +716,7 @@ const heartbeatWatcher = chokidar.watch(HEARTBEAT_PATH, {
 heartbeatWatcher.on("change", () => {
   const daemons = scanDaemons();
   const heartbeat = readHeartbeat();
-  broadcastToWidgets({ type: "daemons-updated", daemons, heartbeat });
+  broadcastToUi({ type: "daemons-updated", daemons, heartbeat });
 });
 
 // ── Tickets file watcher ───────────────────────────────────
@@ -734,7 +734,7 @@ ticketsWatcher.on("all", (event) => {
   if (event !== "add" && event !== "change" && event !== "unlink") return;
   clearTimeout(ticketsBroadcastTimer);
   ticketsBroadcastTimer = setTimeout(() => {
-    broadcastToWidgets({ type: "tickets-snapshot", ...getTicketsSnapshot() });
+    broadcastToUi({ type: "tickets-snapshot", ...getTicketsSnapshot() });
   }, 150);
 });
 

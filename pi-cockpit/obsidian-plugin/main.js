@@ -100,6 +100,19 @@ function iconEl(name, size) {
   return span;
 }
 const RECONNECT_DELAY = 3000;
+const QUEUE_MAX = 25;
+const SAFE_TYPES = new Set([
+  "refresh-daemons",
+  "refresh-routines",
+  "refresh-skills",
+  "tickets-refresh",
+  "ticket-get",
+  "get-routine",
+  "view-daemon-log",
+  "get-session-stats",
+  "copy-skill",
+  "copy-mcp",
+]);
 
 const VIEW_SESSIONS = "pi-cockpit-sessions";
 const VIEW_CHAT     = "pi-cockpit-chat";
@@ -126,6 +139,7 @@ class HubClient {
     this.listeners = new Map();   // type → Set<cb>
     this.reconnectTimer = null;
     this.state = {};              // last state-sync snapshot
+    this._queue = [];             // bounded safe-message queue for pre-connect sends
   }
 
   connect() {
@@ -143,6 +157,15 @@ class HubClient {
         clientType: "plugin",
         widgetName: "obsidian-native",
       }));
+      // Flush any queued safe messages (refresh/get/copy) that arrived before connect.
+      if (this._queue.length) {
+        const pending = this._queue.splice(0);
+        for (const m of pending) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(m));
+          }
+        }
+      }
       this.emit("connected", {});
     };
 
@@ -156,6 +179,7 @@ class HubClient {
 
     this.ws.onclose = () => {
       this.connected = false;
+      this._queue = [];  // discard stale queue on disconnect
       this.emit("disconnected", {});
       this.scheduleReconnect();
     };
@@ -174,6 +198,10 @@ class HubClient {
   send(msg) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
+    } else if (SAFE_TYPES.has(msg.type) && this._queue.length < QUEUE_MAX) {
+      // Queue safe refresh/get/copy messages until connected.
+      // Destructive/action messages are deliberately dropped — replay is unsafe.
+      this._queue.push(msg);
     }
   }
 
