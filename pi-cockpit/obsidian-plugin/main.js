@@ -295,6 +295,14 @@ const STYLES = `
   background: var(--background-modifier-hover); color: var(--text-muted);
   font-family: var(--font-monospace);
 }
+.pi-cockpit-chip-inset {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
 .pi-cockpit-time { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* Sessions: project row + nested children */
@@ -1627,7 +1635,7 @@ class ModelView extends BasePiView {
       const main = item.createDiv({ cls: "pi-cockpit-item-main" });
       const titleLine = main.createDiv({ cls: "pi-cockpit-item-title" });
       titleLine.createSpan({ text: agent.name });
-      titleLine.createSpan({ cls: "pi-cockpit-chip", text: agent.model });
+      titleLine.createSpan({ cls: "pi-cockpit-chip pi-cockpit-chip-inset", text: agent.model });
       titleLine.lastChild.style.marginLeft = "6px";
       main.createDiv({ cls: "pi-cockpit-item-sub", text: agent.specialty });
     }
