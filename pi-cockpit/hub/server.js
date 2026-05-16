@@ -156,9 +156,15 @@ function broadcast(msg, excludeWs = null) {
 }
 
 function broadcastToWidgets(msg) {
+  // Historical name kept for call-site compatibility. In practice this is the
+  // UI broadcast channel: static web widgets identify as "widget" and native
+  // Obsidian ItemViews share the companion plugin connection identified as
+  // "plugin". Native panes must receive filesystem-driven updates too — e.g.
+  // tickets created by scripts should hydrate into the Tickets ItemView without
+  // requiring a manual refresh/reopen.
   const data = JSON.stringify(msg);
   wss.clients.forEach(client => {
-    if (client.readyState === 1 && client._clientType === "widget") {
+    if (client.readyState === 1 && (client._clientType === "widget" || client._clientType === "plugin")) {
       client.send(data);
     }
   });
