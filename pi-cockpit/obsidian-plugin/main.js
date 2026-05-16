@@ -106,6 +106,7 @@ const VIEW_CHAT     = "pi-cockpit-chat";
 const VIEW_SKILLS   = "pi-cockpit-skills";
 const VIEW_MODEL    = "pi-cockpit-model";
 const VIEW_CRON     = "pi-cockpit-cron";
+const VIEW_TICKETS  = "pi-cockpit-tickets";
 
 const WIDGET_TO_VIEW = {
   "session-switcher":  VIEW_SESSIONS,
@@ -113,6 +114,7 @@ const WIDGET_TO_VIEW = {
   "skills-directory":  VIEW_SKILLS,
   "model-switcher":    VIEW_MODEL,
   "cron-dashboard":    VIEW_CRON,
+  "tickets":           VIEW_TICKETS,
 };
 
 // ───────────────────────── HubClient (shared, single connection) ─────────────────────────
@@ -763,6 +765,128 @@ const STYLES = `
 .pi-cockpit-stats-bar .pi-cockpit-stat { white-space: nowrap; }
 .pi-cockpit-stats-bar .pi-cockpit-stat-label { opacity: 0.7; margin-right: 4px; }
 .pi-cockpit-stats-bar .pi-cockpit-stat-val { color: var(--text-normal); }
+
+
+/* ── Tickets view: native Obsidian theme surface ── */
+.pi-tickets-toolbar {
+  display: flex; gap: 8px; align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  flex-shrink: 0;
+}
+.pi-tickets-toolbar .pi-cockpit-search {
+  margin: 0; width: auto; flex: 1;
+}
+.pi-tickets-select {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  font-family: var(--font-interface);
+  padding: 6px 8px;
+  max-width: 160px;
+}
+.pi-tickets-list .pi-cockpit-item {
+  padding: 12px 14px;
+  gap: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pi-tickets-list .pi-cockpit-item:last-child { border-bottom: 0; }
+.pi-tickets-list .pi-cockpit-item-title {
+  font-size: var(--font-ui-medium);
+  margin-bottom: 4px;
+}
+.pi-tickets-list .pi-cockpit-item-sub {
+  font-size: var(--font-ui-smaller);
+  line-height: 1.45;
+  white-space: normal;
+  font-family: var(--font-interface);
+}
+.pi-tickets-group-header {
+  padding: 10px 14px 5px;
+  font-size: var(--font-ui-smaller);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pi-tickets-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+  gap: 10px;
+  padding: 10px;
+  overflow-x: auto;
+  height: 100%;
+}
+.pi-tickets-column {
+  min-width: 240px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.pi-tickets-column-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.pi-tickets-card {
+  margin: 8px;
+  padding: 10px;
+  border-radius: 7px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+}
+.pi-tickets-card:hover { background: var(--background-modifier-hover); }
+.pi-tickets-card-title {
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.pi-tickets-card-meta {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.pi-ticket-desc {
+  color: var(--text-normal);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: var(--font-ui-small);
+}
+.pi-ticket-comment-list, .pi-ticket-history-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pi-ticket-comment, .pi-ticket-history-row {
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+.pi-ticket-comment-meta, .pi-ticket-history-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: 4px;
+}
 
 /* ── Cron view: looser row spacing ── */
 .pi-cron-list .pi-cockpit-item {
@@ -1756,6 +1880,398 @@ class CronView extends BasePiView {
   }
 }
 
+
+// ───────────────────────── Tickets View ─────────────────────────
+
+class TicketsView extends BasePiView {
+  getViewType() { return VIEW_TICKETS; }
+  getDisplayText() { return "Tickets"; }
+  getIcon() { return "list"; }
+
+  async onOpen() {
+    injectStyles();
+    const root = this.contentEl;
+    root.empty();
+    root.addClass("pi-cockpit-root");
+
+    const header = root.createDiv({ cls: "pi-cockpit-header" });
+    header.createSpan({ cls: "pi-cockpit-title", text: "Tickets" });
+    const headerRight = header.createDiv({ cls: "pi-cockpit-header-right" });
+    this.countEl = headerRight.createSpan({ cls: "pi-cockpit-subtitle", text: "0" });
+    const newBtn = headerRight.createEl("button", { cls: "pi-cockpit-header-btn", attr: { title: "New ticket" } });
+    phosphorIcon(newBtn, "plus", 14);
+    newBtn.addEventListener("click", () => this.openTicketEditor(null));
+
+    const tabs = root.createDiv({ cls: "pi-cockpit-tabs" });
+    this.tabList = tabs.createDiv({ cls: "pi-cockpit-tab active", text: "List" });
+    this.tabBoard = tabs.createDiv({ cls: "pi-cockpit-tab", text: "Board" });
+    this.tabList.addEventListener("click", () => this.switchView("list"));
+    this.tabBoard.addEventListener("click", () => this.switchView("board"));
+
+    const toolbar = root.createDiv({ cls: "pi-tickets-toolbar" });
+    this.searchEl = toolbar.createEl("input", { cls: "pi-cockpit-search", attr: { type: "text", placeholder: "Search tickets…" } });
+    this.searchEl.addEventListener("input", () => this.render());
+    this.stateFilter = toolbar.createEl("select", { cls: "pi-tickets-select" });
+    this.stateFilter.addEventListener("change", () => this.render());
+    this.assigneeFilter = toolbar.createEl("select", { cls: "pi-tickets-select" });
+    this.assigneeFilter.addEventListener("change", () => this.render());
+
+    this.bodyEl = root.createDiv({ cls: "pi-cockpit-body pi-tickets-list" });
+    this.renderConnectionFooter(root);
+
+    this.tickets = [];
+    this.meta = { states: [], labels: [], users: [], projects: [] };
+    this.priorityLabels = { 0: "None", 1: "Urgent", 2: "High", 3: "Medium", 4: "Low" };
+    this.activeView = "list";
+    this.renderFilters();
+    this.render();
+
+    if (this.hub.connected) this.hub.send({ type: "tickets-refresh" });
+    this.sub("connected", () => this.hub.send({ type: "tickets-refresh" }));
+    this.sub("tickets-snapshot", (d) => {
+      this.tickets = Array.isArray(d.tickets) ? d.tickets : [];
+      if (d.meta) this.meta = d.meta;
+      if (d.priorityLabels) this.priorityLabels = d.priorityLabels;
+      this.renderFilters();
+      this.render();
+    });
+    this.sub("ticket-saved", (d) => {
+      new obsidian.Notice(d.ticket?.identifier ? `Saved ${d.ticket.identifier}` : "Ticket saved");
+      this.closeSheet();
+    });
+    this.sub("ticket-deleted", (d) => {
+      new obsidian.Notice(d.identifier ? `Deleted ${d.identifier}` : "Ticket deleted");
+      this.closeSheet();
+    });
+    this.sub("error", (d) => {
+      const msg = d.message || "PI Cockpit error";
+      if (msg.startsWith("ticket-") || msg.startsWith("tickets-")) new obsidian.Notice(msg);
+    });
+  }
+
+  async onClose() {
+    this.closeSheet();
+    await super.onClose();
+  }
+
+  switchView(view) {
+    this.activeView = view;
+    this.tabList.toggleClass("active", view === "list");
+    this.tabBoard.toggleClass("active", view === "board");
+    this.render();
+  }
+
+  renderFilters() {
+    if (!this.stateFilter || !this.assigneeFilter) return;
+    const currentState = this.stateFilter.value;
+    const currentAssignee = this.assigneeFilter.value;
+
+    this.stateFilter.empty();
+    this.stateFilter.createEl("option", { text: "All status", attr: { value: "" } });
+    for (const s of this.meta.states || []) {
+      const opt = this.stateFilter.createEl("option", { text: s.name || s.id, attr: { value: s.id } });
+      if (s.id === currentState) opt.selected = true;
+    }
+
+    this.assigneeFilter.empty();
+    this.assigneeFilter.createEl("option", { text: "All assignees", attr: { value: "" } });
+    this.assigneeFilter.createEl("option", { text: "Unassigned", attr: { value: "__unassigned" } });
+    for (const u of this.meta.users || []) {
+      const opt = this.assigneeFilter.createEl("option", { text: `${u.avatar || "👤"} ${u.name || u.id}`, attr: { value: u.id } });
+      if (u.id === currentAssignee) opt.selected = true;
+    }
+  }
+
+  visibleTickets() {
+    const q = (this.searchEl?.value || "").trim().toLowerCase();
+    const state = this.stateFilter?.value || "";
+    const assignee = this.assigneeFilter?.value || "";
+    return [...this.tickets]
+      .filter(t => {
+        const hay = `${t.identifier || ""} ${t.title || ""} ${(t.labels || []).join(" ")} ${t.description || ""}`.toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        if (state && t.state !== state) return false;
+        if (assignee === "__unassigned" && t.assignee) return false;
+        if (assignee && assignee !== "__unassigned" && t.assignee !== assignee) return false;
+        return true;
+      })
+      .sort((a, b) => (this.priorityRank(a.priority) - this.priorityRank(b.priority)) || (b.updated_at || "").localeCompare(a.updated_at || ""));
+  }
+
+  priorityRank(p) {
+    if (p === 0 || p == null) return 999;
+    return Number(p) || 999;
+  }
+
+  render() {
+    if (!this.bodyEl) return;
+    const list = this.visibleTickets();
+    this.countEl?.setText(`${list.length}/${this.tickets.length}`);
+    this.bodyEl.empty();
+    this.bodyEl.toggleClass("pi-tickets-list", this.activeView === "list");
+    this.bodyEl.toggleClass("pi-tickets-board", this.activeView === "board");
+
+    if (list.length === 0) {
+      const empty = this.bodyEl.createDiv({ cls: "pi-cockpit-empty" });
+      phosphorIcon(empty.createDiv({ cls: "pi-cockpit-empty-icon" }), "file-text", 28);
+      empty.createDiv({ text: this.tickets.length ? "No matching tickets" : "No tickets yet" });
+      empty.createDiv({ cls: "pi-cockpit-subtitle", text: "Create one here or sync GitHub issues into the vault." });
+      return;
+    }
+
+    if (this.activeView === "board") this.renderBoard(list);
+    else this.renderList(list);
+  }
+
+  renderList(list) {
+    const grouped = new Map();
+    for (const t of list) {
+      const key = t.state || "_";
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(t);
+    }
+    const states = this.meta.states?.length ? this.meta.states : [{ id: "_", name: "Tickets" }];
+    const seen = new Set();
+    for (const st of states) {
+      const items = grouped.get(st.id) || [];
+      if (!items.length) continue;
+      seen.add(st.id);
+      this.bodyEl.createDiv({ cls: "pi-tickets-group-header", text: `${st.name || st.id} · ${items.length}` });
+      for (const t of items) this.renderTicketRow(t);
+    }
+    for (const [key, items] of grouped) {
+      if (seen.has(key)) continue;
+      this.bodyEl.createDiv({ cls: "pi-tickets-group-header", text: `${key === "_" ? "No status" : key} · ${items.length}` });
+      for (const t of items) this.renderTicketRow(t);
+    }
+  }
+
+  renderBoard(list) {
+    const states = this.meta.states?.length ? this.meta.states : [{ id: "todo", name: "Todo" }];
+    for (const st of states) {
+      const items = list.filter(t => t.state === st.id);
+      const col = this.bodyEl.createDiv({ cls: "pi-tickets-column" });
+      const head = col.createDiv({ cls: "pi-tickets-column-head" });
+      head.createSpan({ text: st.name || st.id });
+      head.createSpan({ text: String(items.length) });
+      for (const t of items) this.renderTicketCard(col, t);
+    }
+  }
+
+  renderTicketRow(t) {
+    const row = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
+    phosphorIcon(row.createSpan({ cls: "pi-cockpit-item-icon" }), this.iconForPriority(t.priority), 16);
+    const main = row.createDiv({ cls: "pi-cockpit-item-main" });
+    main.createDiv({ cls: "pi-cockpit-item-title", text: `${t.identifier || "—"} · ${t.title || "Untitled"}` });
+    const bits = [];
+    bits.push(this.stateName(t.state));
+    bits.push(this.priorityName(t.priority));
+    if (t.assignee) bits.push(this.userName(t.assignee));
+    if (t.updated_at) bits.push(`updated ${timeAgo(t.updated_at)} ago`);
+    main.createDiv({ cls: "pi-cockpit-item-sub", text: bits.filter(Boolean).join(" · ") });
+    const meta = row.createDiv({ cls: "pi-cockpit-item-meta" });
+    for (const label of (t.labels || []).slice(0, 3)) meta.createSpan({ cls: "pi-cockpit-chip", text: label });
+    row.addEventListener("click", () => this.openTicketDetail(t));
+  }
+
+  renderTicketCard(parent, t) {
+    const card = parent.createDiv({ cls: "pi-tickets-card" });
+    card.createDiv({ cls: "pi-tickets-card-title", text: `${t.identifier || "—"} · ${t.title || "Untitled"}` });
+    const meta = card.createDiv({ cls: "pi-tickets-card-meta" });
+    meta.createSpan({ cls: "pi-cockpit-chip", text: this.priorityName(t.priority) });
+    if (t.assignee) meta.createSpan({ cls: "pi-cockpit-chip", text: this.userName(t.assignee) });
+    for (const label of (t.labels || []).slice(0, 2)) meta.createSpan({ cls: "pi-cockpit-chip", text: label });
+    card.addEventListener("click", () => this.openTicketDetail(t));
+  }
+
+  iconForPriority(p) {
+    const n = Number(p || 0);
+    if (n === 1) return "warning-circle";
+    if (n === 2) return "circle";
+    return "file-text";
+  }
+
+  stateName(id) {
+    return this.meta.states?.find(s => s.id === id)?.name || id || "No status";
+  }
+
+  userName(id) {
+    const u = this.meta.users?.find(u => u.id === id);
+    return u ? `${u.avatar || "👤"} ${u.name || id}` : id;
+  }
+
+  priorityName(p) {
+    return this.priorityLabels?.[p ?? 0] || "None";
+  }
+
+  cleanDescription(text, title) {
+    let out = text || "";
+    if (title) out = out.replace(new RegExp(`^#\\s+${title.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\s*\\n?`, "i"), "");
+    return out.trim();
+  }
+
+  openTicketDetail(t) {
+    this.openSheet(`${t.identifier || "Ticket"} · ${t.title || "Untitled"}`, (body, foot) => {
+      const meta = body.createDiv({ cls: "pi-cron-meta" });
+      const addRow = (k, v) => { meta.createDiv({ cls: "pi-cron-meta-key", text: k }); meta.createDiv({ cls: "pi-cron-meta-val", text: v || "—" }); };
+      addRow("Status", this.stateName(t.state));
+      addRow("Priority", this.priorityName(t.priority));
+      addRow("Assignee", t.assignee ? this.userName(t.assignee) : "Unassigned");
+      addRow("Labels", (t.labels || []).join(", "));
+      addRow("File", t._file || "");
+
+      const descSection = body.createDiv({ cls: "pi-cron-log-section" });
+      descSection.createDiv({ cls: "pi-cron-log-label", text: "Description" });
+      descSection.createDiv({ cls: "pi-ticket-desc", text: this.cleanDescription(t.description, t.title) || "No description." });
+
+      const commentsSection = body.createDiv({ cls: "pi-cron-log-section" });
+      commentsSection.createDiv({ cls: "pi-cron-log-label", text: "Comments" });
+      const comments = commentsSection.createDiv({ cls: "pi-ticket-comment-list" });
+      comments.createDiv({ cls: "pi-ticket-comment", text: "Loading comments…" });
+
+      const commentField = body.createDiv({ cls: "pi-cron-field" });
+      commentField.createEl("label", { text: "Add comment" });
+      const commentInput = commentField.createEl("textarea");
+      commentInput.placeholder = "Write a comment…";
+      commentInput.style.minHeight = "80px";
+      const commentBtn = body.createEl("button", { cls: "pi-cron-primary", text: "Add comment" });
+      commentBtn.style.alignSelf = "flex-start";
+      commentBtn.addEventListener("click", () => {
+        const bodyText = commentInput.value.trim();
+        if (!bodyText) return;
+        this.hub.send({ type: "ticket-comment-add", identifier: t.identifier, body: bodyText, author: "john" });
+        commentInput.value = "";
+      });
+
+      const renderComments = (items) => {
+        comments.empty();
+        if (!items.length) {
+          comments.createDiv({ cls: "pi-ticket-comment", text: "No comments yet." });
+          return;
+        }
+        for (const c of items) {
+          const row = comments.createDiv({ cls: "pi-ticket-comment" });
+          row.createDiv({ cls: "pi-ticket-comment-meta", text: `${c.author || "unknown"} · ${c.created_at ? timeAgo(c.created_at) + " ago" : ""}` });
+          row.createDiv({ text: c.body || "" });
+        }
+      };
+
+      const offDetail = this.hub.on("ticket-detail", (msg) => {
+        if (msg.identifier !== t.identifier) return;
+        renderComments(msg.comments || []);
+      });
+      const offComments = this.hub.on("ticket-comments", (msg) => {
+        if (msg.identifier !== t.identifier) return;
+        renderComments(msg.comments || []);
+      });
+      this.sheetCleanup = () => { try { offDetail(); } catch {}; try { offComments(); } catch {}; };
+      this.hub.send({ type: "ticket-get", identifier: t.identifier });
+
+      const delBtn = foot.createEl("button", { cls: "pi-cron-danger", text: "Delete" });
+      delBtn.addEventListener("click", () => {
+        if (!confirm(`Delete ${t.identifier}?`)) return;
+        this.hub.send({ type: "ticket-delete", identifier: t.identifier });
+      });
+      foot.createDiv({ cls: "pi-cron-spacer" });
+      const editBtn = foot.createEl("button", { text: "Edit" });
+      editBtn.addEventListener("click", () => this.openTicketEditor(t));
+      const stateSelect = foot.createEl("select", { cls: "pi-tickets-select" });
+      for (const st of this.meta.states || []) {
+        const opt = stateSelect.createEl("option", { text: st.name || st.id, attr: { value: st.id } });
+        if (st.id === t.state) opt.selected = true;
+      }
+      stateSelect.addEventListener("change", () => this.hub.send({ type: "ticket-transition", identifier: t.identifier, state: stateSelect.value, actor: "john" }));
+    });
+  }
+
+  openTicketEditor(t) {
+    const isNew = !t;
+    const data = t || { title: "", description: "", state: "todo", priority: 0, labels: [] };
+    this.openSheet(isNew ? "New ticket" : `Edit ${data.identifier}`, (body, foot) => {
+      const titleField = body.createDiv({ cls: "pi-cron-field" });
+      titleField.createEl("label", { text: "Title" });
+      const titleInput = titleField.createEl("input", { attr: { type: "text", value: data.title || "" } });
+
+      const descField = body.createDiv({ cls: "pi-cron-field" });
+      descField.createEl("label", { text: "Description" });
+      const descInput = descField.createEl("textarea");
+      descInput.value = this.cleanDescription(data.description, data.title);
+
+      const stateField = body.createDiv({ cls: "pi-cron-field" });
+      stateField.createEl("label", { text: "Status" });
+      const stateSelect = stateField.createEl("select");
+      for (const st of this.meta.states || []) {
+        const opt = stateSelect.createEl("option", { text: st.name || st.id, attr: { value: st.id } });
+        if ((data.state || "todo") === st.id) opt.selected = true;
+      }
+
+      const priorityField = body.createDiv({ cls: "pi-cron-field" });
+      priorityField.createEl("label", { text: "Priority" });
+      const prioritySelect = priorityField.createEl("select");
+      for (const p of [0, 1, 2, 3, 4]) {
+        const opt = prioritySelect.createEl("option", { text: `${p} · ${this.priorityName(p)}`, attr: { value: String(p) } });
+        if (Number(data.priority || 0) === p) opt.selected = true;
+      }
+
+      const assigneeField = body.createDiv({ cls: "pi-cron-field" });
+      assigneeField.createEl("label", { text: "Assignee" });
+      const assigneeSelect = assigneeField.createEl("select");
+      assigneeSelect.createEl("option", { text: "Unassigned", attr: { value: "" } });
+      for (const u of this.meta.users || []) {
+        const opt = assigneeSelect.createEl("option", { text: `${u.avatar || "👤"} ${u.name || u.id}`, attr: { value: u.id } });
+        if (data.assignee === u.id) opt.selected = true;
+      }
+
+      const labelsField = body.createDiv({ cls: "pi-cron-field" });
+      labelsField.createEl("label", { text: "Labels" });
+      const labelsInput = labelsField.createEl("input", { attr: { type: "text", value: (data.labels || []).join(", "), placeholder: "bug, infra" } });
+
+      const estimateField = body.createDiv({ cls: "pi-cron-field" });
+      estimateField.createEl("label", { text: "Estimate" });
+      const estimateInput = estimateField.createEl("input", { attr: { type: "number", min: "0", value: data.estimate ?? "" } });
+
+      const cancelBtn = foot.createEl("button", { text: "Cancel" });
+      cancelBtn.addEventListener("click", () => this.closeSheet());
+      foot.createDiv({ cls: "pi-cron-spacer" });
+      const saveBtn = foot.createEl("button", { cls: "pi-cron-primary", text: "Save" });
+      saveBtn.addEventListener("click", () => {
+        const title = titleInput.value.trim();
+        if (!title) { titleInput.focus(); return; }
+        const ticket = {
+          ...data,
+          title,
+          description: descInput.value.trim(),
+          state: stateSelect.value || "todo",
+          priority: Number(prioritySelect.value || 0),
+          assignee: assigneeSelect.value || null,
+          labels: labelsInput.value.split(",").map(s => s.trim()).filter(Boolean),
+          estimate: estimateInput.value === "" ? null : Number(estimateInput.value),
+        };
+        this.hub.send({ type: "ticket-save", ticket });
+      });
+      titleInput.focus();
+    });
+  }
+
+  openSheet(title, buildBody) {
+    this.closeSheet();
+    const sheet = this.contentEl.createDiv({ cls: "pi-cron-sheet" });
+    const head = sheet.createDiv({ cls: "pi-cron-sheet-head" });
+    head.createSpan({ cls: "pi-cron-sheet-title", text: title });
+    const close = head.createEl("button", { cls: "pi-cron-sheet-close", text: "×" });
+    close.addEventListener("click", () => this.closeSheet());
+    const body = sheet.createDiv({ cls: "pi-cron-sheet-body" });
+    const foot = sheet.createDiv({ cls: "pi-cron-sheet-foot" });
+    this.activeSheet = sheet;
+    buildBody(body, foot);
+  }
+
+  closeSheet() {
+    if (this.activeSheet) { this.activeSheet.remove(); this.activeSheet = null; }
+    if (this.sheetCleanup) { try { this.sheetCleanup(); } catch {} this.sheetCleanup = null; }
+  }
+}
+
 // ───────────────────────── Vault Chat View ─────────────────────────
 
 class ChatView extends BasePiView {
@@ -1799,6 +2315,7 @@ class ChatView extends BasePiView {
       { name: "Skills",   widget: "skills-directory", icon: "package" },
       { name: "Model",    widget: "model-switcher",   icon: "sliders" },
       { name: "Crons",    widget: "cron-dashboard",   icon: "heart-pulse" },
+      { name: "Tickets",  widget: "tickets",          icon: "list" },
     ];
     for (const l of launches) {
       const btn = launchRow.createEl("button", { cls: "pi-cockpit-launch-btn" });
@@ -2344,6 +2861,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     this.registerView(VIEW_SKILLS,   (leaf) => { const v = new SkillsView(leaf, self.hub);   v.plugin = self; return v; });
     this.registerView(VIEW_MODEL,    (leaf) => { const v = new ModelView(leaf, self.hub);    v.plugin = self; return v; });
     this.registerView(VIEW_CRON,     (leaf) => { const v = new CronView(leaf, self.hub);     v.plugin = self; return v; });
+    this.registerView(VIEW_TICKETS,  (leaf) => { const v = new TicketsView(leaf, self.hub);  v.plugin = self; return v; });
 
     this.addRibbonIcon("folder",         "PI Sessions",  () => this.openWidget("session-switcher"));
     this.addRibbonIcon("message-square", "Vault Chat",   () => this.openWidget("vault-chat"));
@@ -2353,6 +2871,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     this.addCommand({ id: "open-skills",   name: "Open Skills",        callback: () => this.openWidget("skills-directory") });
     this.addCommand({ id: "open-model",    name: "Open Model Switcher",callback: () => this.openWidget("model-switcher") });
     this.addCommand({ id: "open-cron",     name: "Open Cron Dashboard",callback: () => this.openWidget("cron-dashboard") });
+    this.addCommand({ id: "open-tickets",  name: "Open Tickets",       callback: () => this.openWidget("tickets") });
 
     // Plugin also responds to hub-relayed open-widget messages (from web widgets)
     this.unsubOpenWidget = this.hub.on("open-widget", (msg) => {
@@ -2366,7 +2885,7 @@ class PiCockpitPlugin extends obsidian.Plugin {
     if (this.unsubOpenWidget) try { this.unsubOpenWidget(); } catch {}
     this.hub.disconnect();
     // Detach any open PI Cockpit leaves so they don't dangle
-    for (const t of [VIEW_SESSIONS, VIEW_CHAT, VIEW_SKILLS, VIEW_MODEL, VIEW_CRON]) {
+    for (const t of [VIEW_SESSIONS, VIEW_CHAT, VIEW_SKILLS, VIEW_MODEL, VIEW_CRON, VIEW_TICKETS]) {
       this.app.workspace.detachLeavesOfType(t);
     }
     // Drop the injected style tag so a fresh load re-applies updated CSS
