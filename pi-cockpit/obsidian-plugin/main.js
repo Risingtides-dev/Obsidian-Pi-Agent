@@ -284,7 +284,7 @@ const STYLES = `
   font-size: var(--font-ui-smaller); color: var(--text-muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   margin-top: 2px;
-  font-family: var(--font-interface);
+  font-family: var(--font-monospace);
 }
 .pi-cockpit-item-meta {
   display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
@@ -762,7 +762,7 @@ const STYLES = `
 }
 .pi-cockpit-session-name {
   color: var(--interactive-accent); font-weight: 600;
-  font-family: var(--font-interface);
+  font-family: var(--font-monospace);
 }
 
 /* ── Shared header right-side action button (e.g. + on Sessions) ── */
@@ -1063,18 +1063,6 @@ const STYLES = `
   background: var(--background-modifier-error, rgba(255,80,80,0.1));
 }
 
-.pi-action-status {
-  display: inline-flex;
-  align-items: center;
-  margin-right: auto;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-}
-.pi-action-status:empty { display: none; }
-.pi-action-status.is-pending { color: var(--text-muted); }
-.pi-action-status.is-success { color: var(--text-success, var(--color-green)); }
-.pi-action-status.is-error { color: var(--text-error, var(--color-red)); }
-
 .pi-cron-field { display: flex; flex-direction: column; gap: 6px; }
 .pi-cron-field label {
   font-size: var(--font-ui-smaller);
@@ -1183,7 +1171,6 @@ class BasePiView extends obsidian.ItemView {
     super(leaf);
     this.hub = hub;
     this.unsubs = [];
-    this._sheetStatusTimer = null;
   }
 
   sub(type, cb) { this.unsubs.push(this.hub.on(type, cb)); }
@@ -1198,108 +1185,7 @@ class BasePiView extends obsidian.ItemView {
     return footer;
   }
 
-  setSheetStatus(text, kind = "neutral") {
-    if (!this.sheetStatusEl) return;
-    this.sheetStatusEl.removeClass("is-pending");
-    this.sheetStatusEl.removeClass("is-success");
-    this.sheetStatusEl.removeClass("is-error");
-    if (text) {
-      this.sheetStatusEl.setText(text);
-      if (kind && kind !== "neutral") this.sheetStatusEl.addClass(`is-${kind}`);
-    } else {
-      this.sheetStatusEl.setText("");
-    }
-  }
-
-  clearSheetStatus() {
-    if (this._sheetStatusTimer) {
-      clearTimeout(this._sheetStatusTimer);
-      this._sheetStatusTimer = null;
-    }
-    this.setSheetStatus("");
-  }
-
-  waitForMessage(type, predicate = () => true, timeoutMs = 5000) {
-    let cancel = () => {};
-    const promise = new Promise((resolve, reject) => {
-      const off = this.hub.on(type, (msg) => {
-        try {
-          if (!predicate(msg)) return;
-          cleanup();
-          resolve(msg);
-        } catch (err) {
-          cleanup();
-          reject(err);
-        }
-      });
-      let timer = null;
-      const cleanup = () => {
-        if (timer) clearTimeout(timer);
-        timer = null;
-        try { off(); } catch {}
-      };
-      cancel = cleanup;
-      if (timeoutMs > 0) {
-        timer = window.setTimeout(() => {
-          cleanup();
-          reject(new Error(`Timed out waiting for ${type}`));
-        }, timeoutMs);
-      }
-    });
-    return { promise, cancel };
-  }
-
-  async runUiAction({
-    label,
-    request,
-    successType,
-    successPredicate = () => true,
-    button = null,
-    pendingText,
-    successText,
-    errorText,
-    timeoutMs = 5000,
-    clearAfter = 1200,
-    onSuccess = null,
-    onFailure = null,
-  }) {
-    const previousDisabled = button ? button.disabled : null;
-    if (button) button.disabled = true;
-    this.setSheetStatus(pendingText || `${label}…`, "pending");
-    const waiter = successType ? this.waitForMessage(successType, successPredicate, timeoutMs) : { promise: Promise.resolve(null), cancel: () => {} };
-    try {
-      await request?.();
-      const result = await waiter.promise;
-      this.setSheetStatus(successText || `${label} done`, "success");
-      if (onSuccess) await onSuccess(result);
-      if (clearAfter > 0) {
-        if (this._sheetStatusTimer) clearTimeout(this._sheetStatusTimer);
-        this._sheetStatusTimer = window.setTimeout(() => {
-          this.clearSheetStatus();
-        }, clearAfter);
-      }
-      return result;
-    } catch (err) {
-      waiter.cancel();
-      this.setSheetStatus(errorText || `${label} failed`, "error");
-      if (onFailure) await onFailure(err);
-      if (clearAfter > 0) {
-        if (this._sheetStatusTimer) clearTimeout(this._sheetStatusTimer);
-        this._sheetStatusTimer = window.setTimeout(() => {
-          this.clearSheetStatus();
-        }, clearAfter);
-      }
-      throw err;
-    } finally {
-      if (button) button.disabled = previousDisabled;
-    }
-  }
-
   async onClose() {
-    if (this._sheetStatusTimer) {
-      clearTimeout(this._sheetStatusTimer);
-      this._sheetStatusTimer = null;
-    }
     for (const u of this.unsubs) try { u(); } catch {}
     this.unsubs = [];
   }
@@ -2127,18 +2013,12 @@ class CronView extends BasePiView {
 
     const body = sheet.createDiv({ cls: "pi-cron-sheet-body" });
     const foot = sheet.createDiv({ cls: "pi-cron-sheet-foot" });
-    this.sheetStatusEl = foot.createSpan({ cls: "pi-action-status", text: "" });
 
     this.activeSheet = sheet;
     buildBody(body, foot);
   }
 
   closeSheet() {
-    if (this._sheetStatusTimer) {
-      clearTimeout(this._sheetStatusTimer);
-      this._sheetStatusTimer = null;
-    }
-    this.sheetStatusEl = null;
     if (this.activeSheet) { this.activeSheet.remove(); this.activeSheet = null; }
     if (this.sheetCleanup) { try { this.sheetCleanup(); } catch {} this.sheetCleanup = null; }
   }
@@ -2201,9 +2081,11 @@ class TicketsView extends BasePiView {
     });
     this.sub("ticket-saved", (d) => {
       new obsidian.Notice(d.ticket?.identifier ? `Saved ${d.ticket.identifier}` : "Ticket saved");
+      this.closeSheet();
     });
     this.sub("ticket-deleted", (d) => {
       new obsidian.Notice(d.identifier ? `Deleted ${d.identifier}` : "Ticket deleted");
+      this.closeSheet();
     });
     this.sub("error", (d) => {
       const msg = d.message || "PI Cockpit error";
@@ -2398,22 +2280,11 @@ class TicketsView extends BasePiView {
       commentInput.style.minHeight = "80px";
       const commentBtn = body.createEl("button", { cls: "pi-cron-primary", text: "Add comment" });
       commentBtn.style.alignSelf = "flex-start";
-      commentBtn.addEventListener("click", async () => {
+      commentBtn.addEventListener("click", () => {
         const bodyText = commentInput.value.trim();
         if (!bodyText) return;
-        try {
-          await this.runUiAction({
-            label: "Post comment",
-            button: commentBtn,
-            pendingText: "Posting comment…",
-            successText: "Comment posted",
-            errorText: "Comment failed",
-            successType: "ticket-comments",
-            successPredicate: (msg) => msg.identifier === t.identifier,
-            request: () => this.hub.send({ type: "ticket-comment-add", identifier: t.identifier, body: bodyText, author: "john" }),
-          });
-          commentInput.value = "";
-        } catch {}
+        this.hub.send({ type: "ticket-comment-add", identifier: t.identifier, body: bodyText, author: "john" });
+        commentInput.value = "";
       });
 
       const renderComments = (items) => {
@@ -2441,21 +2312,9 @@ class TicketsView extends BasePiView {
       this.hub.send({ type: "ticket-get", identifier: t.identifier });
 
       const delBtn = foot.createEl("button", { cls: "pi-cron-danger", text: "Delete" });
-      delBtn.addEventListener("click", async () => {
+      delBtn.addEventListener("click", () => {
         if (!confirm(`Delete ${t.identifier}?`)) return;
-        try {
-          await this.runUiAction({
-            label: `Delete ${t.identifier}`,
-            button: delBtn,
-            pendingText: `Deleting ${t.identifier}…`,
-            successText: `${t.identifier} deleted`,
-            errorText: `Delete failed`,
-            successType: "ticket-deleted",
-            successPredicate: (msg) => msg.identifier === t.identifier,
-            request: () => this.hub.send({ type: "ticket-delete", identifier: t.identifier }),
-            onSuccess: () => this.closeSheet(),
-          });
-        } catch {}
+        this.hub.send({ type: "ticket-delete", identifier: t.identifier });
       });
       foot.createDiv({ cls: "pi-cron-spacer" });
       const editBtn = foot.createEl("button", { text: "Edit" });
@@ -2465,20 +2324,7 @@ class TicketsView extends BasePiView {
         const opt = stateSelect.createEl("option", { text: st.name || st.id, attr: { value: st.id } });
         if (st.id === t.state) opt.selected = true;
       }
-      stateSelect.addEventListener("change", async () => {
-        try {
-          await this.runUiAction({
-            label: `Move ${t.identifier}`,
-            button: stateSelect,
-            pendingText: `Moving ${t.identifier}…`,
-            successText: `Status updated`,
-            errorText: `Status update failed`,
-            successType: "ticket-saved",
-            successPredicate: (msg) => msg.ticket?.identifier === t.identifier,
-            request: () => this.hub.send({ type: "ticket-transition", identifier: t.identifier, state: stateSelect.value, actor: "john" }),
-          });
-        } catch {}
-      });
+      stateSelect.addEventListener("change", () => this.hub.send({ type: "ticket-transition", identifier: t.identifier, state: stateSelect.value, actor: "john" }));
     });
   }
 
@@ -2532,7 +2378,7 @@ class TicketsView extends BasePiView {
       cancelBtn.addEventListener("click", () => this.closeSheet());
       foot.createDiv({ cls: "pi-cron-spacer" });
       const saveBtn = foot.createEl("button", { cls: "pi-cron-primary", text: "Save" });
-      saveBtn.addEventListener("click", async () => {
+      saveBtn.addEventListener("click", () => {
         const title = titleInput.value.trim();
         if (!title) { titleInput.focus(); return; }
         const ticket = {
@@ -2545,19 +2391,7 @@ class TicketsView extends BasePiView {
           labels: labelsInput.value.split(",").map(s => s.trim()).filter(Boolean),
           estimate: estimateInput.value === "" ? null : Number(estimateInput.value),
         };
-        try {
-          await this.runUiAction({
-            label: isNew ? "Create ticket" : `Save ${data.identifier}`,
-            button: saveBtn,
-            pendingText: isNew ? "Creating ticket…" : `Saving ${data.identifier}…`,
-            successText: isNew ? "Ticket created" : `${data.identifier} saved`,
-            errorText: isNew ? "Create failed" : "Save failed",
-            successType: "ticket-saved",
-            successPredicate: (msg) => msg.ticket?.identifier === (data.identifier || msg.ticket?.identifier),
-            request: () => this.hub.send({ type: "ticket-save", ticket }),
-            onSuccess: () => this.closeSheet(),
-          });
-        } catch {}
+        this.hub.send({ type: "ticket-save", ticket });
       });
       titleInput.focus();
     });
@@ -2572,17 +2406,11 @@ class TicketsView extends BasePiView {
     close.addEventListener("click", () => this.closeSheet());
     const body = sheet.createDiv({ cls: "pi-cron-sheet-body" });
     const foot = sheet.createDiv({ cls: "pi-cron-sheet-foot" });
-    this.sheetStatusEl = foot.createSpan({ cls: "pi-action-status", text: "" });
     this.activeSheet = sheet;
     buildBody(body, foot);
   }
 
   closeSheet() {
-    if (this._sheetStatusTimer) {
-      clearTimeout(this._sheetStatusTimer);
-      this._sheetStatusTimer = null;
-    }
-    this.sheetStatusEl = null;
     if (this.activeSheet) { this.activeSheet.remove(); this.activeSheet = null; }
     if (this.sheetCleanup) { try { this.sheetCleanup(); } catch {} this.sheetCleanup = null; }
   }
