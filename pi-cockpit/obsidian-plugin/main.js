@@ -281,12 +281,8 @@ const STYLES = `
 }
 .pi-cockpit-item.active .pi-cockpit-item-title { color: var(--interactive-accent); }
 .pi-cockpit-item-sub {
-  font-size: var(--font-ui-smaller);
-  line-height: 1.45;
-  color: var(--text-muted);
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--font-ui-smaller); color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   margin-top: 2px;
   font-family: var(--font-interface);
 }
