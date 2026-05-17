@@ -8,7 +8,7 @@
     "npm:pi-subagents",
     "npm:pi-messenger",
     "git:github.com/badlogic/pi-telegram",
-    "../../dev/Thoth/pi-cockpit/pi-tma"
+    "../../dev/{{AGENT_NAME}}/pi-cockpit/pi-tma"
   ],
   "theme": "dark"
 }

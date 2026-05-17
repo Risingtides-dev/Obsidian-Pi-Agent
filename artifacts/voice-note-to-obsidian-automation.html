@@ -113,7 +113,7 @@
         <a href="#risks">06 / Risks & decisions</a>
       </nav>
       <div class="rail-note">
-        Goal: turn Telegram voice notes or dropped audio files into searchable, richly summarized Markdown notes inside the Thoth Obsidian vault.
+        Goal: turn Telegram voice notes or dropped audio files into searchable, richly summarized Markdown notes inside the {{AGENT_NAME}} Obsidian vault.
       </div>
     </aside>
 
@@ -267,7 +267,7 @@ tags: [telegram, voice-note, ai-summary]
               <tr><td>Idempotency</td><td>Key jobs by Telegram chat/message/file ID.</td><td>Stops duplicate notes from retry storms.</td></tr>
               <tr><td>Privacy</td><td>Keep raw audio local where possible; tag sensitive notes.</td><td>Voice memos often contain private context.</td></tr>
               <tr><td>Failure modes</td><td>Save partial transcript before summarization; retry LLM separately.</td><td>Transcription is the expensive step worth preserving.</td></tr>
-              <tr><td>Routing</td><td>Use hashtags or bot commands like <code>/project Thoth</code>.</td><td>Allows project-specific vault destinations.</td></tr>
+              <tr><td>Routing</td><td>Use hashtags or bot commands like <code>/project {{AGENT_NAME}}</code>.</td><td>Allows project-specific vault destinations.</td></tr>
               <tr><td>Observability</td><td>Append status to an event log and send Telegram progress messages.</td><td>Easy to debug from mobile.</td></tr>
             </tbody>
           </table>
@@ -323,7 +323,7 @@ Return this structure:
         <div class="risk ok"><span>Decision</span><div><b>Write raw transcript and summary as separate artifacts.</b><br>This keeps the final note readable while preserving source material for search, audit, and re-summarization.</div></div>
       </section>
 
-      <div class="footer">Single-file artifact generated for Thoth. Open locally or send through Telegram as an HTML attachment.</div>
+      <div class="footer">Single-file artifact generated for {{AGENT_NAME}}. Open locally or send through Telegram as an HTML attachment.</div>
     </main>
   </div>
 

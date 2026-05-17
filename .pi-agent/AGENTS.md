@@ -1,20 +1,20 @@
 # Global Agent Context
 
 ## System Status
-- Host: risings-mac-mini-1 (Tailscale: 100.108.56.88)
+- Host: {{HOST_NAME}} (Tailscale: {{TAILSCALE_IP}})
 - OS: macOS
-- User: risingtidesdev
-- Home: /Users/risingtidesdev
+- User: {{OS_USERNAME}}
+- Home: {{HOME_PATH}}
 - Default shell: zsh
 
 ## Available CLI Tools
 - `gh` — GitHub CLI (authenticated)
 - `tailscale` — VPN (active)
-- `cloudflared` — Tunnels (cortextos, cyrus, eric-claude-bridge)
+- `cloudflared` — Tunnels (configure per deployment)
 - `pi` — Pi coding agent
 - `claude` — Claude Code
 - `npx` — Node package runner
-- `node` — Node.js (v22.17.0)
+- `node` — Node.js (v22+)
 - `pnpm`, `npm`, `bun` — Package managers
 
 ## Active MCP Servers (from ~/.claude.json)
@@ -22,9 +22,7 @@
 - Obsidian (`@mauricio.wolff/mcp-obsidian`)
 - Neovim (`mcp-neovim-server`)
 - Excalidraw (`excalidraw-mcp`)
-- Pencil (`pencildev` MCP server)
 
 ## Project Root
-- Working directory: /Users/risingtidesdev/dev/Thoth
-- All projects: /Users/risingtidesdev/dev/
-- Key projects: claude-monorepo, content-posting-lab, bootstrapper, AI-memo, auto-hackathon
+- Working directory: {{VAULT_PATH}}
+- All projects: {{HOME_PATH}}/dev/

@@ -17,7 +17,7 @@ import os from "node:os";
 
 /** Resolve the vault path at call time (not import time). */
 export function getVaultPath() {
-  return process.env.VAULT_PATH || path.join(os.homedir(), "dev", "Thoth");
+  return process.env.VAULT_PATH || path.join(os.homedir(), "dev", "{{AGENT_NAME}}");
 }
 
 export function getHeartbeatPath() {
@@ -54,7 +54,7 @@ export function getLaunchdStatus(label) {
 
 /**
  * Unload then load (or optionally just unload) a launchd plist.
- * @param {string} label - launchd label (e.g. "com.thoth.telegram-bot")
+ * @param {string} label - launchd label (e.g. "{{LAUNCHD_PREFIX}}.telegram-bot")
  * @param {boolean} [enabled=true] - if false, only unloads
  * @returns {{ success: boolean, message: string }}
  */

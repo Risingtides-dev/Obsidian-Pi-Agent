@@ -2,7 +2,7 @@
  * TMA Bridge — dead simple static file server for Telegram Mini Apps.
  *
  * Agent writes files to 6-Agent/tma-mini/ in the vault.
- * They're served live at https://thoth.agentsworld.org/<path>
+ * They're served live at https://{{AGENT_NAME_LOWER}}.{{DOMAIN}}/<path>
  *
  * .html → served directly
  * .md   → auto-rendered to HTML with full styling
@@ -96,7 +96,7 @@ function renderMd(text) {
 </head>
 <body>
   <div style="position:sticky;top:0;z-index:99;display:flex;align-items:center;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--border, rgba(128,128,128,0.2));font-family:var(--font-sans);font-size:13px;">
-    <a href="/" style="color:var(--link);text-decoration:none;font-weight:500;">← Thoth</a>
+    <a href="/" style="color:var(--link);text-decoration:none;font-weight:500;">← {{AGENT_NAME}}</a>
   </div>
   <div class="container">${html}</div>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -291,7 +291,7 @@ function serveFile(filePath, res, wrapWithBack = true) {
 function injectBackBar(html) {
   const backBar = `
 <style>
-  .thoth-back-bar {
+  .vaultkeeper-back-bar {
     position: sticky; top: 0; z-index: 99;
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 16px;
@@ -299,35 +299,35 @@ function injectBackBar(html) {
     font-family: Inter, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-size: 13px;
   }
-  .thoth-back-bar a {
+  .vaultkeeper-back-bar a {
     color: #0a0a0a; text-decoration: none; font-weight: 500;
     display: inline-flex; align-items: center; gap: 4px;
   }
-  .thoth-back-bar a:hover { color: #cc2030; }
-  .thoth-back-bar .thoth-save-btn {
+  .vaultkeeper-back-bar a:hover { color: #cc2030; }
+  .vaultkeeper-back-bar .vaultkeeper-save-btn {
     background: #0a0a0a; color: #fafaf7; border: none;
     padding: 4px 12px; font-size: 12px; font-family: Inter, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-weight: 500; cursor: pointer; transition: background 0.15s;
   }
-  .thoth-back-bar .thoth-save-btn:hover { background: #cc2030; }
+  .vaultkeeper-back-bar .vaultkeeper-save-btn:hover { background: #cc2030; }
   @media (prefers-color-scheme: dark) {
-    .thoth-back-bar { background: #0d1117; border-bottom-color: #30363d; }
-    .thoth-back-bar a { color: #e6edf3; }
-    .thoth-back-bar a:hover { color: #f85149; }
-    .thoth-back-bar .thoth-save-btn { background: #e6edf3; color: #0d1117; }
-    .thoth-back-bar .thoth-save-btn:hover { background: #f85149; color: #fff; }
+    .vaultkeeper-back-bar { background: #0d1117; border-bottom-color: #30363d; }
+    .vaultkeeper-back-bar a { color: #e6edf3; }
+    .vaultkeeper-back-bar a:hover { color: #f85149; }
+    .vaultkeeper-back-bar .vaultkeeper-save-btn { background: #e6edf3; color: #0d1117; }
+    .vaultkeeper-back-bar .vaultkeeper-save-btn:hover { background: #f85149; color: #fff; }
   }
 </style>
-<div class="thoth-back-bar">
-  <a href="/">← Thoth</a>
-  <button class="thoth-save-btn" onclick="saveAsMarkdown()">Save as .md</button>
+<div class="vaultkeeper-back-bar">
+  <a href="/">← {{AGENT_NAME}}</a>
+  <button class="vaultkeeper-save-btn" onclick="saveAsMarkdown()">Save as .md</button>
 </div>
 <script src="https://unpkg.com/turndown@7/dist/turndown.js"></script>
 <script>
 let __turndownReady = false;
 function saveAsMarkdown() {
   const clone = document.body.cloneNode(true);
-  clone.querySelectorAll('.thoth-back-bar, script, style, noscript, link[rel=stylesheet]').forEach(el => el.remove());
+  clone.querySelectorAll('.vaultkeeper-back-bar, script, style, noscript, link[rel=stylesheet]').forEach(el => el.remove());
 
   const title = document.title || 'artifact';
   const filename = title.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artifact';

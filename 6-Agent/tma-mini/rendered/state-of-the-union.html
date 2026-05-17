@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#fafaf9" />
-  <title>Thoth — Full State of the Union</title>
+  <title>{{AGENT_NAME}} — Full State of the Union</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
@@ -565,12 +565,12 @@
 </head>
 <body>
   <div class="page">
-    <header class="hero" aria-label="Thoth full state of the union">
+    <header class="hero" aria-label="{{AGENT_NAME}} full state of the union">
       <div class="hero-main">
-        <div class="kicker">Thoth / Full State of the Union</div>
+        <div class="kicker">{{AGENT_NAME}} / Full State of the Union</div>
         <h1>One read should explain the whole machine.</h1>
         <p class="deck">
-          Thoth is a vault-backed agent platform. It is mostly working, but it still has no constitution: duplicate inboxes, duplicate Vault Keeper paths, no provenance on agent-written notes, and an Event Log that exists more in theory than in practice.
+          {{AGENT_NAME}} is a vault-backed agent platform. It is mostly working, but it still has no constitution: duplicate inboxes, duplicate Vault Keeper paths, no provenance on agent-written notes, and an Event Log that exists more in theory than in practice.
         </p>
         <div class="chips" aria-label="Status chips">
           <span class="chip accent">active</span>
@@ -618,7 +618,7 @@
           <div class="rail-facts">
             <div class="fact">
               <div class="fact-key">Vault root</div>
-              <div class="fact-value">`/Users/risingtidesdev/dev/Thoth`</div>
+              <div class="fact-value">`{{VAULT_PATH}}`</div>
             </div>
             <div class="fact">
               <div class="fact-key">Worktrees</div>
@@ -648,7 +648,7 @@
             </div>
             <div class="section-body">
               <p class="quote">
-                Thoth is an <em>Obsidian vault that doubles as an agent platform</em>. The vault is the filesystem, the notes are the database, and daemons plus PI Cockpit bridge it to phones, browsers, and coding sessions. The architecture is real and mostly working — but the system is still in the awkward stage where there is no schema, no provenance, two inboxes, two Vault Keeper paths, half-finished widgets, and an Event Log that nobody writes to.
+                {{AGENT_NAME}} is an <em>Obsidian vault that doubles as an agent platform</em>. The vault is the filesystem, the notes are the database, and daemons plus PI Cockpit bridge it to phones, browsers, and coding sessions. The architecture is real and mostly working — but the system is still in the awkward stage where there is no schema, no provenance, two inboxes, two Vault Keeper paths, half-finished widgets, and an Event Log that nobody writes to.
               </p>
               <div class="callout measure">
                 <p><strong>Read this as a constitution problem, not a feature problem.</strong> The highest-leverage work is not adding more surface area; it is writing the rules, reconciling the duplicates, and finishing the dashboard that lets the platform inspect itself.</p>
@@ -671,7 +671,7 @@
                       <span>File-first architecture</span>
                       <span>Everything routes through the vault</span>
                     </div>
-                    <svg class="diagram" viewBox="0 0 980 560" role="img" aria-label="Thoth system map">
+                    <svg class="diagram" viewBox="0 0 980 560" role="img" aria-label="{{AGENT_NAME}} system map">
                       <rect x="360" y="178" width="260" height="160" fill="var(--surface)" stroke="var(--accent)" stroke-width="3" />
                       <text x="490" y="230" text-anchor="middle" font-size="28" font-weight="500" fill="var(--text)">Vault / filesystem</text>
                       <text x="490" y="266" text-anchor="middle" font-size="16" fill="var(--text-2)">source of truth · notes · artifacts</text>
@@ -1004,7 +1004,7 @@
                 <div class="ref"><strong>Cron Dashboard Spec</strong><span>the in-flight daemon management surface</span></div>
                 <div class="ref"><strong>Telegram Bridge Auto-Connect Issue</strong><span>the open bug that keeps mobile sessions from reconnecting cleanly</span></div>
                 <div class="ref"><strong>heartbeat.md</strong><span>the latest operational readout from the vault keeper</span></div>
-                <div class="ref"><strong>Source note</strong><span class="mono">.pi/agent/tmp/telegram/1778762421391-2026-05-14_Thoth_Full_State_of_the_Union.md</span></div>
+                <div class="ref"><strong>Source note</strong><span class="mono">.pi/agent/tmp/telegram/1778762421391-2026-05-14_{{AGENT_NAME}}_Full_State_of_the_Union.md</span></div>
               </div>
             </div>
           </div>

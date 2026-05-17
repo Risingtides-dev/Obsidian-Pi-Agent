@@ -64,7 +64,7 @@
   <div class="max-w-7xl mx-auto px-6 pt-5 pb-2">
     <div class="flex items-end justify-between mb-2">
       <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Vol. I · No. 001</span>
-      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">Thoth Editions</span>
+      <span class="font-sans text-xs uppercase tracking-[0.18em] text-news-mute font-medium">{{AGENT_NAME}} Editions</span>
     </div>
     <h1 class="font-head text-broadsheet font-black tracking-tighter leading-[0.9] text-center">
       The Agent Surface
@@ -89,7 +89,7 @@
         From Claude Artifacts to ChatGPT Canvas to Telegram Mini Apps, the industry is converging on a single insight: when agents produce HTML, they can communicate anything.
       </p>
       <p class="font-sans text-xs uppercase tracking-[0.12em] font-medium text-news-mute mb-6">
-        By <span class="text-news-ink">Thoth Research</span> · 8 min read
+        By <span class="text-news-ink">{{AGENT_NAME}} Research</span> · 8 min read
       </p>
       <div class="cols-2 font-body text-base leading-[1.55]">
 
@@ -103,7 +103,7 @@
 
         <p>Beneath the surface, a deeper pattern is emerging. Traditional software communicates through REST APIs, databases, and message queues. Agent-native systems are increasingly communicating through the filesystem. The agent writes a file. A watcher detects the change. The surface re-renders.</p>
 
-        <p>This is the architecture that powers Thoth's artifact dashboard. The PI Cockpit hub watches a vault directory. When an agent writes an HTML or Markdown file, the hub detects it, serves it through a Cloudflare tunnel, and the Telegram Mini App renders it. No API call. No database. No deployment step. The filesystem <em>is</em> the protocol.</p>
+        <p>This is the architecture that powers {{AGENT_NAME}}'s artifact dashboard. The PI Cockpit hub watches a vault directory. When an agent writes an HTML or Markdown file, the hub detects it, serves it through a Cloudflare tunnel, and the Telegram Mini App renders it. No API call. No database. No deployment step. The filesystem <em>is</em> the protocol.</p>
 
         <figure class="my-6 px-5 py-4 border-y-2 border-news-ink no-break">
           <p class="font-head text-xl italic font-medium leading-[1.25] mb-2">"HTML is the only output format where the agent can express typographic hierarchy, interactive controls, and visual structure — not just semantics."</p>
@@ -122,7 +122,7 @@
 
         <p>One challenge with HTML-as-output is consistency. If every agent generates raw, unstyled HTML, the result is functional but ugly. The emerging solution: style guides. A style guide is a comprehensive design system — colors, typography, spacing, component patterns — that the agent follows when generating HTML.</p>
 
-        <p>Thoth bundles ten professional style guides ranging from Glassy Modern SaaS to Brutalist to Swiss Grid. The agent loads a guide, internalizes the rules, and produces HTML that looks like a human designer made it. This turns the agent from a markdown generator into a design-aware publisher.</p>
+        <p>{{AGENT_NAME}} bundles ten professional style guides ranging from Glassy Modern SaaS to Brutalist to Swiss Grid. The agent loads a guide, internalizes the rules, and produces HTML that looks like a human designer made it. This turns the agent from a markdown generator into a design-aware publisher.</p>
 
       </div>
     </article>
@@ -149,7 +149,7 @@
         <li class="py-3">
           <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Pattern</p>
           <h3 class="font-head text-base font-bold leading-tight">Filesystem as API: the agent-native architecture</h3>
-          <p class="font-sans text-xs text-news-mute mt-1">Thoth + PI Cockpit, 2026</p>
+          <p class="font-sans text-xs text-news-mute mt-1">{{AGENT_NAME}} + PI Cockpit, 2026</p>
         </li>
         <li class="py-3">
           <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-1">Surface</p>
@@ -180,7 +180,7 @@
           </div>
           <div class="flex gap-3">
             <span class="font-sans text-xs font-bold text-news-red tabular flex-shrink-0">May 26</span>
-            <p class="font-body text-sm leading-snug">Thoth ships Telegram Mini App artifact dashboard — filesystem-native, style guide-driven.</p>
+            <p class="font-body text-sm leading-snug">{{AGENT_NAME}} ships Telegram Mini App artifact dashboard — filesystem-native, style guide-driven.</p>
           </div>
         </div>
       </div>
@@ -229,12 +229,12 @@
       <p class="font-body text-sm leading-[1.55]">The implications extend beyond chat. v0, Vercel's AI application generator, uses this pattern to produce complete web applications from natural language prompts. The entire frontend is agent-generated HTML, CSS, and JavaScript — delivered to the user's browser as a live preview.</p>
     </article>
 
-    <!-- Column 3: Telegram Mini Apps + Thoth -->
+    <!-- Column 3: Telegram Mini Apps + {{AGENT_NAME}} -->
     <article>
       <p class="font-sans text-[10px] uppercase tracking-[0.15em] text-news-red font-bold mb-2">Platform Deep-Dive</p>
       <h3 class="font-head text-2xl font-bold leading-tight mb-3">Telegram Mini Apps: the underdog surface</h3>
       <p class="font-body text-sm leading-[1.55] mb-2">Telegram Mini Apps were designed for e-commerce storefronts, food ordering, and simple games. But their architecture — a full WebView inside the messaging app, accessible via a single button — makes them an ideal delivery surface for agent-generated content.</p>
-      <p class="font-body text-sm leading-[1.55] mb-2">The Thoth system combines this with a filesystem-native architecture. Agents write HTML and Markdown files to a vault directory. A Cloudflare tunnel exposes a local hub server at a public URL. The Telegram Mini App opens that URL, which serves as a persistent artifact dashboard.</p>
+      <p class="font-body text-sm leading-[1.55] mb-2">The {{AGENT_NAME}} system combines this with a filesystem-native architecture. Agents write HTML and Markdown files to a vault directory. A Cloudflare tunnel exposes a local hub server at a public URL. The Telegram Mini App opens that URL, which serves as a persistent artifact dashboard.</p>
       <p class="font-body text-sm leading-[1.55]">The result: agents produce content, it appears in Telegram, no deployment step exists. The user gets a rich, styled, interactive document inside their messaging app — not as a file attachment, but as a live web page. The gap between "AI generated this" and "I'm viewing it" is measured in milliseconds.</p>
     </article>
 
@@ -307,7 +307,7 @@
   <div class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-12 gap-6 text-sm">
     <div class="col-span-12 md:col-span-4">
       <p class="font-head text-xl font-black mb-2">The Agent Surface</p>
-      <p class="font-body text-sm text-news-mute leading-snug">A publication of Thoth Research. Published whenever an agent generates something worth reading.</p>
+      <p class="font-body text-sm text-news-mute leading-snug">A publication of {{AGENT_NAME}} Research. Published whenever an agent generates something worth reading.</p>
     </div>
     <div class="col-span-6 md:col-span-4">
       <p class="font-sans text-xs uppercase tracking-[0.15em] font-bold mb-2">References</p>
@@ -315,7 +315,7 @@
         <li>Anthropic — Claude Artifacts (June 2024)</li>
         <li>OpenAI — ChatGPT Canvas (Oct 2024)</li>
         <li>Vercel — AI SDK Generative UI</li>
-        <li>Thoth — PI Cockpit + TMA Bridge (May 2026)</li>
+        <li>{{AGENT_NAME}} — PI Cockpit + TMA Bridge (May 2026)</li>
       </ul>
     </div>
     <div class="col-span-6 md:col-span-4 md:text-right">

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1.0",
-  "name": "Thoth – Summarize to Inbox",
+  "name": "{{AGENT_NAME}} – Summarize to Inbox",
   "behavior": "create",
   "noteNameFormat": "{{date|date:\"YYYY-MM-DD\"}} {{title|safe_name|slice:0,60}}",
   "path": "3-Resources/Inbox",

@@ -1,10 +1,10 @@
 /**
- * Thoth — Agentic Harness for pi
+ * {{AGENT_NAME}} — Agentic Harness for pi
  *
  * A lean, powerful agent harness that serves as your digital twin.
- * Composes battle-tested pi packages with Thoth's unique capabilities.
+ * Composes battle-tested pi packages with {{AGENT_NAME}}'s unique capabilities.
  *
- * Thoth's custom modules:
+ * {{AGENT_NAME}}'s custom modules:
  *   - memory       Persistent key-value store with search
  *   - brave-search Web search via Brave Search API
  *
@@ -14,7 +14,7 @@
  *   - pi-messenger     → Inter-agent communication
  *
  * Vault access: Obsidian CLI at /Applications/Obsidian.app/Contents/MacOS/Obsidian
- *   Usage: obsidian <command> vault=thoth [options]
+ *   Usage: obsidian <command> vault={{AGENT_NAME_LOWER}} [options]
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -32,11 +32,11 @@ export default function (pi: ExtensionAPI) {
 
   // ── Vault Reference (via Obsidian CLI) ───────────────────────
   // The Obsidian CLI handles all vault operations. Key commands:
-  //   bash: obsidian read file="Note Name" vault=thoth
-  //   bash: obsidian search query="text" vault=thoth
-  //   bash: obsidian create name="New Note" content="..." vault=thoth
-  //   bash: obsidian append file="Note" content="..." vault=thoth
-  //   bash: obsidian tasks vault=thoth
+  //   bash: obsidian read file="Note Name" vault={{AGENT_NAME_LOWER}}
+  //   bash: obsidian search query="text" vault={{AGENT_NAME_LOWER}}
+  //   bash: obsidian create name="New Note" content="..." vault={{AGENT_NAME_LOWER}}
+  //   bash: obsidian append file="Note" content="..." vault={{AGENT_NAME_LOWER}}
+  //   bash: obsidian tasks vault={{AGENT_NAME_LOWER}}
   // The CLI is at /Applications/Obsidian.app/Contents/MacOS/Obsidian
   // Obsidian.app must be running for CLI commands to work
 
@@ -50,7 +50,7 @@ export default function (pi: ExtensionAPI) {
     
     // Persistent memory summary
     const memorySummary = buildContextSummary(memory);
-    if (memorySummary) parts.push(`## Thoth Context (from persistent memory)${memorySummary}`);
+    if (memorySummary) parts.push(`## {{AGENT_NAME}} Context (from persistent memory)${memorySummary}`);
     
     if (parts.length === 0) return;
     return {
@@ -71,8 +71,8 @@ export default function (pi: ExtensionAPI) {
     const branchMatch = cleanStatus.match(/(\S+)/);
     if (branchMatch) {
       const branch = branchMatch[1];
-      const label = `Thoth-${branch.replace(/^pi-/, "")} / ${branch}`;
-      memory.setContext("thoth.current_project", label);
+      const label = `{{AGENT_NAME}}-${branch.replace(/^pi-/, "")} / ${branch}`;
+      memory.setContext("{{AGENT_NAME_LOWER}}.current_project", label);
     }
 
     const ctxVars = memory.getAllContext();
@@ -82,20 +82,20 @@ export default function (pi: ExtensionAPI) {
     const lines: string[] = [];
     if (keyCount > 0) lines.push(`📚 ${keyCount} memories`);
     if (vaultCount > 0) lines.push(`📄 ${vaultCount} vault docs`);
-    if (ctxVars["thoth.current_project"]) lines.push(`📍 ${ctxVars["thoth.current_project"]}`);
+    if (ctxVars["{{AGENT_NAME_LOWER}}.current_project"]) lines.push(`📍 ${ctxVars["{{AGENT_NAME_LOWER}}.current_project"]}`);
 
-    if (lines.length > 0) ctx.ui.setStatus("thoth", lines.join(" · "));
+    if (lines.length > 0) ctx.ui.setStatus("{{AGENT_NAME_LOWER}}", lines.join(" · "));
   });
 
   // ── Commands ─────────────────────────────────────────────────
-  pi.registerCommand("thoth-status", {
-    description: "Show Thoth status",
+  pi.registerCommand("{{AGENT_NAME_LOWER}}-status", {
+    description: "Show {{AGENT_NAME}} status",
     handler: async (_args, ctx) => {
       const keyCount = memory.listAll().length;
       const ctxVars = memory.getAllContext();
 
       const lines = [
-        "🧠 **Thoth Status**",
+        "🧠 **{{AGENT_NAME}} Status**",
         "",
         `**Memories:** ${keyCount} stored`,
         `**Context:** ${Object.keys(ctxVars).length} variables`,
@@ -107,7 +107,7 @@ export default function (pi: ExtensionAPI) {
         "",
         "**Available Skills:** obsidian, excalidraw, gitbutler, total-recall, remotion-best-practices, paywall-upgrade-cro",
         "",
-        "**Thoth Tools:** remember, recall, forget, search_memory, list_memories, set_context, get_context, thoth_search, thoth_vault_read, thoth_vault_search",
+        "**{{AGENT_NAME}} Tools:** remember, recall, forget, search_memory, list_memories, set_context, get_context, {{AGENT_NAME_LOWER}}_search, {{AGENT_NAME_LOWER}}_vault_read, {{AGENT_NAME_LOWER}}_vault_search",
       ];
       ctx.ui.notify(lines.join("\n"), "info");
     },
@@ -120,11 +120,11 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  pi.registerCommand("thoth-search", {
+  pi.registerCommand("{{AGENT_NAME_LOWER}}-search", {
     description: "Search the web via Brave Search",
     handler: async (args, ctx) => {
       if (!args?.trim()) {
-        ctx.ui.notify("Usage: /thoth-search <query>", "warning");
+        ctx.ui.notify("Usage: /{{AGENT_NAME_LOWER}}-search <query>", "warning");
         return;
       }
       pi.sendUserMessage(`Search the web for: ${args}`);

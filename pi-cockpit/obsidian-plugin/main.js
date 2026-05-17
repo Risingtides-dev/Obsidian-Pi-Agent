@@ -1291,7 +1291,7 @@ class SessionsView extends BasePiView {
     const folderInput = folderField.createEl("input", {
       attr: { type: "text", placeholder: "/Users/.../my-project" }
     });
-    const seed = this.sessions[0]?.cwd || "/Users/risingtidesdev/dev/Thoth";
+    const seed = this.sessions[0]?.cwd || "{{VAULT_PATH}}";
     folderInput.value = seed;
 
     // Known projects (clickable list)
@@ -1852,7 +1852,7 @@ class CronView extends BasePiView {
 
       const folderField = body.createDiv({ cls: "pi-cron-field" });
       folderField.createEl("label", { text: "Folder" });
-      const folderInput = folderField.createEl("input", { attr: { type: "text", value: "/Users/risingtidesdev/dev/Thoth" } });
+      const folderInput = folderField.createEl("input", { attr: { type: "text", value: "{{VAULT_PATH}}" } });
 
       const promptField = body.createDiv({ cls: "pi-cron-field" });
       promptField.createEl("label", { text: "Prompt" });

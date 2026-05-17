@@ -39,7 +39,7 @@ User says `/vault-spec` followed by a description, or says anything like:
 | Dev log updates | `1-Projects/<current project>/` | Append to existing dev log, follow its format |
 
 **For dev log entries:**
-1. Check `current_project` from context (e.g., `Thoth-vaultkeeper`, `Thoth`)
+1. Check `current_project` from context (e.g., `{{AGENT_NAME}}-vaultkeeper`, `{{AGENT_NAME}}`)
 2. Scan `1-Projects/<Project>/` for a `*- Dev Log.md` file
 3. If found: append new entry at the top, following the file's timestamp format
 4. If not found: create `1-Projects/<Project>/<Project> - Dev Log.md` with the standard header

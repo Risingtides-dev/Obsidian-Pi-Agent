@@ -1,12 +1,15 @@
 {
-  "name": "thoth",
+  "name": "vaultkeeper",
   "version": "1.0.0",
-  "description": "Thoth is an agentic AI harness built on [pi](https://pi.dev) that serves as your digital twin. It runs on `risings-mac-mini-1` and is accessible from anywhere via Tailscale.",
+  "description": "Vaultkeeper is an agentic AI harness built on pi that serves as your digital twin. It runs on {{HOST_NAME}} and is accessible from anywhere via Tailscale.",
   "main": "index.js",
   "scripts": {
+    "start:hub": "cd pi-cockpit/hub && node server.js",
+    "start:telegram": "node scripts/telegram-bot.js",
+    "bootstrap": "node scripts/bootstrap-pi-vault.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["obsidian", "pi-agent", "digital-twin", "agentic-ai"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Source: Filesystem / Vault scanner
-// Scans the Thoth vault for active projects, daily note, and recent edits.
+// Scans the {{AGENT_NAME}} vault for active projects, daily note, and recent edits.
 
 const fs = require('fs');
 const path = require('path');

@@ -21,7 +21,7 @@ import path from "node:path";
 import os from "node:os";
 
 const HOME = os.homedir();
-const VAULT_PATH = process.env.VAULT_PATH || path.join(HOME, "dev", "Thoth");
+const VAULT_PATH = process.env.VAULT_PATH || path.join(HOME, "dev", "{{AGENT_NAME}}");
 const TICKETS_DIR = path.join(VAULT_PATH, "6-Agent", "tickets");
 const META_DIR = path.join(TICKETS_DIR, ".meta");
 const COUNTER_FILE = path.join(META_DIR, "counters.json");
@@ -70,8 +70,8 @@ function ensureScaffold() {
   }
   if (!fs.existsSync(META_FILE)) {
     fs.writeFileSync(META_FILE, JSON.stringify({
-      workspace: { id: "thoth", name: "Thoth", key: DEFAULT_TEAM_KEY },
-      teams: [{ id: DEFAULT_TEAM_KEY.toLowerCase(), key: DEFAULT_TEAM_KEY, name: "Thoth" }],
+      workspace: { id: "{{AGENT_NAME_LOWER}}", name: "{{AGENT_NAME}}", key: DEFAULT_TEAM_KEY },
+      teams: [{ id: DEFAULT_TEAM_KEY.toLowerCase(), key: DEFAULT_TEAM_KEY, name: "{{AGENT_NAME}}" }],
       states: DEFAULT_STATES,
       labels: DEFAULT_LABELS,
       users: [

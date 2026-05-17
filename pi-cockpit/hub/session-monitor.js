@@ -13,19 +13,19 @@ const IGNORE = [".DS_Store"];
 
 /**
  * Parse a session directory name back to a project path.
- * The dir name is --Users-risingtidesdev-dev-Thoth--
+ * The dir name is --{{OS_USERNAME}}-dev-{{AGENT_NAME}}--
  */
 function parseSessionName(dirName) {
   if (dirName === "obsidian-pi") {
     return {
       name: "obsidian-pi",
       projectPath: "Obsidian Vault",
-      cwd: path.join(os.homedir(), "dev", "Thoth"),
+      cwd: path.join(os.homedir(), "dev", "{{AGENT_NAME}}"),
       shortName: "Obsidian",
     };
   }
-  // --Users-risingtidesdev-dev-Thoth-- → /Users/risingtidesdev/dev/Thoth
-  // --Users-risingtidesdev-.worktrees-Thoth-pi-cockpit-- → /Users/risingtidesdev/.worktrees/Thoth-pi-cockpit
+  // --{{OS_USERNAME}}-dev-{{AGENT_NAME}}-- → {{VAULT_PATH}}
+  // --{{OS_USERNAME}}-.worktrees-{{AGENT_NAME}}-pi-cockpit-- → {{HOME_PATH}}/.worktrees/{{AGENT_NAME}}-pi-cockpit
   const clean = dirName.replace(/^--|--$/g, "");
   let projectPath;          // Human-readable label (shown in UI)
   let cwd;                  // Actual filesystem path PI agent should chdir into
@@ -34,18 +34,18 @@ function parseSessionName(dirName) {
 
   if (clean.includes("-.worktrees-") || clean.includes(".worktrees")) {
     isWorktree = true;
-    // Users-risingtidesdev-.worktrees-Thoth-pi-cockpit
+    // {{OS_USERNAME}}-.worktrees-{{AGENT_NAME}}-pi-cockpit
     // Split on the worktree boundary
     const parts = clean.split(/-\.worktrees-/);
-    const baseStr = parts[0]; // e.g. "Users-risingtidesdev"
-    const worktreeStr = parts[1] || clean.split(".worktrees-").pop(); // "Thoth-pi-cockpit"
+    const baseStr = parts[0]; // e.g. "{{OS_USERNAME}}"
+    const worktreeStr = parts[1] || clean.split(".worktrees-").pop(); // "{{AGENT_NAME}}-pi-cockpit"
     const baseClean = "/" + baseStr.replace(/^Users-/, "Users/").replace(/-/g, "/");
     // The real worktree dir contains hyphens in its leaf name and lives under .worktrees/
     cwd = path.join(baseClean, ".worktrees", worktreeStr);
     projectPath = cwd;
     shortName = worktreeStr.split("-").slice(1).join("-") || worktreeStr;
   } else {
-    // Users-risingtidesdev-dev-Thoth → /Users/risingtidesdev/dev/Thoth
+    // vault-root → {{VAULT_PATH}}
     cwd = "/" + clean.replace(/-/g, "/");
     projectPath = cwd;
     shortName = clean.split("-").pop();

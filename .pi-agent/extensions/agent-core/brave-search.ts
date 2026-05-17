@@ -1,5 +1,5 @@
 /**
- * Thoth — Brave Search Integration
+ * {{AGENT_NAME}} — Brave Search Integration
  *
  * Web search tool powered by Brave Search API.
  * Provides up-to-date web results for research, fact-checking,
@@ -32,15 +32,15 @@ interface BraveSearchResponse {
 
 export function registerBraveSearch(pi: ExtensionAPI): void {
   pi.registerTool({
-    name: "thoth_search",
+    name: "{{AGENT_NAME_LOWER}}_search",
     label: "Web Search",
     description:
       "Search the web using Brave Search API. Returns up-to-date results for current events, fact-checking, documentation lookups, and general research. Use this when you need information beyond your training data cutoff or want to verify current facts.",
     promptSnippet: "Search the web for current information, documentation, or research",
     promptGuidelines: [
-      "Use thoth_search to find current information, documentation, or verify facts beyond your training data.",
-      "Use thoth_search when the user asks about recent events, latest versions, or current documentation.",
-      "Prefer thoth_search over guessing when you're uncertain about current facts.",
+      "Use {{AGENT_NAME_LOWER}}_search to find current information, documentation, or verify facts beyond your training data.",
+      "Use {{AGENT_NAME_LOWER}}_search when the user asks about recent events, latest versions, or current documentation.",
+      "Prefer {{AGENT_NAME_LOWER}}_search over guessing when you're uncertain about current facts.",
     ],
     parameters: Type.Object({
       query: Type.String({ description: "Search query (be specific and include relevant keywords)" }),

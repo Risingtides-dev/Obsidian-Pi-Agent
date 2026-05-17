@@ -159,9 +159,9 @@ export default function (pi: ExtensionAPI) {
 		handler: async (_args, ctx) => {
 			if (!ctx.hasUI) return;
 			await loadConfigs();
-			const tunnel = await ctx.ui.input("Tunnel base URL", tmaConfig.tunnelBaseUrl ?? "https://thoth.agentsworld.org");
+			const tunnel = await ctx.ui.input("Tunnel base URL", tmaConfig.tunnelBaseUrl ?? "https://{{AGENT_NAME_LOWER}}.agentsworld.org");
 			if (!tunnel) return;
-			const artifacts = await ctx.ui.input("Artifacts directory (absolute path)", tmaConfig.artifactsDir ?? join(homedir(), "dev", "Thoth", "6-Agent", "tma-mini"));
+			const artifacts = await ctx.ui.input("Artifacts directory (absolute path)", tmaConfig.artifactsDir ?? join(homedir(), "dev", "{{AGENT_NAME}}", "6-Agent", "tma-mini"));
 			if (!artifacts) return;
 			tmaConfig = { ...tmaConfig, tunnelBaseUrl: tunnel.trim().replace(/\/+$/, ""), artifactsDir: artifacts.trim() };
 			await writeJson(TMA_CONFIG_PATH, tmaConfig);

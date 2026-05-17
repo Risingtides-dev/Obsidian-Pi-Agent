@@ -1,9 +1,9 @@
 #!/bin/bash
-# thoth-pi-watchdog — keeps Pi alive in the vault directory
+# vaultkeeper-watchdog — keeps Pi alive in the vault directory
 # Run this instead of running `pi` directly.
 # When Pi exits, it auto-restarts after 2 seconds.
 
-VAULT="/Users/risingtidesdev/dev/Thoth"
+VAULT="${VAULT_PATH:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 cd "$VAULT" || exit 1
 
@@ -11,7 +11,7 @@ restart_count=0
 
 while true; do
   echo "┌─────────────────────────────────────┐"
-  echo "│  Thoth Pi Watchdog                  │"
+  echo "│  Vaultkeeper Pi Watchdog            │"
   if [ $restart_count -gt 0 ]; then
     echo "│  Restart #$restart_count                         │"
   fi

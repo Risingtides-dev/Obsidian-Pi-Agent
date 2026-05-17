@@ -24,7 +24,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const VAULT = '/Users/risingtidesdev/dev/Thoth';
+const VAULT = '{{VAULT_PATH}}';
 const SCAN_DIRS_DEFAULT = [
   '3-Resources/Inbox',
   '1-Projects',
