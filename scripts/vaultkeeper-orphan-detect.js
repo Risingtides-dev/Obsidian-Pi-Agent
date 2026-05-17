@@ -26,10 +26,10 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const VAULT = '/Users/risingtidesdev/dev/Thoth';
+const VAULT = '{{VAULT_PATH}}';
 const HOME = require('os').homedir();
-const MEMORY_DIR = path.join(HOME, '.pi', 'agent', 'extensions', 'thoth', 'memory');
-const CONTEXT_DIR = path.join(HOME, '.pi', 'agent', 'extensions', 'thoth', 'context');
+const MEMORY_DIR = path.join(HOME, '.pi', 'agent', 'extensions', '{{AGENT_NAME_LOWER}}', 'memory');
+const CONTEXT_DIR = path.join(HOME, '.pi', 'agent', 'extensions', '{{AGENT_NAME_LOWER}}', 'context');
 const INBOX_DIR = path.join(VAULT, '3-Resources', 'Inbox');
 const LEGACY_INBOX_DIR = path.join(VAULT, '0-Inbox');
 const ARCHIVE_DIR = path.join(VAULT, '4-Archive', 'Inbox Archive');
@@ -40,12 +40,12 @@ const QUIET = process.argv.includes('--quiet');
 
 // Known active projects and worktrees
 const ACTIVE_PROJECTS = [
-  'thoth', 'vaultkeeper', 'pi-cockpit', 'pi-net', 'living-dashboard',
+  '{{AGENT_NAME_LOWER}}', 'vaultkeeper', 'pi-cockpit', 'pi-net', 'living-dashboard',
   'telegram-bot', 'scratchpad', 'canvas',
 ];
 
 const ACTIVE_WORKTREES = [
-  'Thoth', 'Thoth-pi-cockpit', 'Thoth-pi-net', 'Thoth-vaultkeeper',
+  '{{AGENT_NAME}}', '{{AGENT_NAME}}-pi-cockpit', '{{AGENT_NAME}}-pi-net', '{{AGENT_NAME}}-vaultkeeper',
 ];
 
 // ─── State ─────────────────────────────────────────────────────────────────

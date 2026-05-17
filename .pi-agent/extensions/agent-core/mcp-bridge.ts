@@ -1,5 +1,5 @@
 /**
- * Thoth — MCP Bridge
+ * {{AGENT_NAME}} — MCP Bridge
  *
  * Bridges existing Claude Code MCP servers into pi.
  * Reads ~/.claude.json, starts MCP processes via stdio,
@@ -164,7 +164,7 @@ class McpClient {
     const result = await this.sendRequest("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "thoth-pi", version: "1.0.0" },
+      clientInfo: { name: "{{AGENT_NAME_LOWER}}-pi", version: "1.0.0" },
     });
 
     // Send initialized notification (not expecting response)
@@ -424,7 +424,7 @@ export function registerMcpBridge(pi: ExtensionAPI): void {
     if (bridge) bridge.shutdown();
 
     bridge = new McpBridge(pi);
-    ctx.ui.setStatus("thoth-mcp", "🔌 Connecting MCP servers...");
+    ctx.ui.setStatus("{{AGENT_NAME_LOWER}}-mcp", "🔌 Connecting MCP servers...");
 
     try {
       const { started, failed } = await bridge.start();
@@ -432,19 +432,19 @@ export function registerMcpBridge(pi: ExtensionAPI): void {
 
       if (started > 0) {
         ctx.ui.setStatus(
-          "thoth-mcp",
+          "{{AGENT_NAME_LOWER}}-mcp",
           `🔌 ${started} MCP server(s), ${toolCount} tools` +
             (failed.length > 0 ? ` (${failed.length} failed)` : ""),
         );
       } else {
-        ctx.ui.setStatus("thoth-mcp", "⚠️ No MCP servers connected");
+        ctx.ui.setStatus("{{AGENT_NAME_LOWER}}-mcp", "⚠️ No MCP servers connected");
       }
 
       if (failed.length > 0) {
         ctx.ui.notify(`MCP failures: ${failed.join(", ")}`, "warning");
       }
     } catch (err: any) {
-      ctx.ui.setStatus("thoth-mcp", `❌ MCP bridge failed: ${err.message}`);
+      ctx.ui.setStatus("{{AGENT_NAME_LOWER}}-mcp", `❌ MCP bridge failed: ${err.message}`);
     }
   });
 

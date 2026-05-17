@@ -22,9 +22,9 @@ const { execSync, spawn } = require('child_process');
 const { timeAgo } = require('./lib/utils');
 
 // ─── Config ────────────────────────────────────────────────────────────────
-// Resolve vault path: use explicit env var, or fall back to ~/dev/Thoth
+// Resolve vault path: use explicit env var, or fall back to VAULT_PATH env var
 const VAULT = process.env.VAULT_PATH
-  || path.join(require('os').homedir(), 'dev', 'Thoth');
+  || path.join(require('os').homedir(), 'dev', '{{AGENT_NAME}}');
 const WORKTREES_DIR = path.join(require('os').homedir(), '.worktrees');
 const LOGS_DIR = path.join(VAULT, 'logs');
 const CONTEXT_DIR = path.join(VAULT, '3-Resources');
@@ -100,15 +100,15 @@ function computeIssueHash(issueList, warningList) {
 // ─── Check 1: Daemons ──────────────────────────────────────────────────────
 function checkDaemons() {
   log('\n🔍 Checking daemons...');
-  // Note: com.thoth.vaultkeeper-heartbeat intentionally omitted from self-check.
+  // Note: {{LAUNCHD_PREFIX}}.vaultkeeper-heartbeat intentionally omitted from self-check.
   // This script IS the heartbeat daemon — it cannot check its own liveness.
   // The daemon-monitor.js in PI Cockpit tracks this process independently.
   const daemons = [
-    'com.thoth.telegram-bot',
-    'com.thoth.living-dashboard',
-    'com.thoth.scratchpad-watcher',
-    'com.thoth.canvas-watcher',
-    'com.thoth.pi-cockpit',
+    '{{LAUNCHD_PREFIX}}.telegram-bot',
+    '{{LAUNCHD_PREFIX}}.living-dashboard',
+    '{{LAUNCHD_PREFIX}}.scratchpad-watcher',
+    '{{LAUNCHD_PREFIX}}.canvas-watcher',
+    '{{LAUNCHD_PREFIX}}.pi-cockpit',
   ];
 
   const daemonResults = {};
@@ -124,7 +124,7 @@ function checkDaemons() {
       const pid = parts[0] === '-' ? null : parseInt(parts[0]);
       const exitCode = parts.length > 1 ? parts[1] : '?';
 
-      const name = label.replace('com.thoth.', '');
+      const name = label.replace('{{LAUNCHD_PREFIX}}.', '');
       const logFile = path.join(LOGS_DIR, `${name}.log`);
       const errFile = path.join(LOGS_DIR, `${name}-err.log`);
 
@@ -167,7 +167,7 @@ function checkDaemons() {
       }
 
     } catch (e) {
-      const name = label.replace('com.thoth.', '');
+      const name = label.replace('{{LAUNCHD_PREFIX}}.', '');
       daemonResults[name] = { running: false, pid: null, exitCode: '?', lastLog: null, logAge: 'unknown', errors: 0 };
       log(`  ❌ ${name} (not found in launchctl)`);
       flag('critical', `Daemon ${name} not loaded in launchd`, e.message);
@@ -197,9 +197,9 @@ function checkContextDocs() {
   const docs = [
     'AGENTS.md',
     'System Prompt.md',
-    'Thoth - Digital Twin.md',
-    'Thoth - Obsidian Integration.md',
-    'Thoth Worktrees.md',
+    'Digital Twin.md',
+    'Obsidian Integration.md',
+    'Worktrees.md',
   ];
 
   const docResults = {};
@@ -523,7 +523,7 @@ function checkMemoryKeys() {
   log('\n🔍 Checking memory keys...');
 
   try {
-    const memoryDir = path.join(require('os').homedir(), '.pi', 'agent', 'extensions', 'thoth', 'memory');
+    const memoryDir = path.join(require('os').homedir(), '.pi', 'agent', 'extensions', '{{AGENT_NAME_LOWER}}', 'memory');
     if (!fileExists(memoryDir)) {
       flag('warning', 'Memory directory missing', memoryDir);
       results.memory = { ok: false };
@@ -597,11 +597,11 @@ function writeHeartbeat() {
   const c = results.contextDocs || {};
 
   const daemonRows = [
-    ['com.thoth.telegram-bot', 'telegram-bot'],
-    ['com.thoth.living-dashboard', 'living-dashboard'],
-    ['com.thoth.scratchpad-watcher', 'scratchpad-watcher'],
-    ['com.thoth.canvas-watcher', 'canvas-watcher'],
-    ['com.thoth.pi-cockpit', 'pi-cockpit'],
+    ['{{LAUNCHD_PREFIX}}.telegram-bot', 'telegram-bot'],
+    ['{{LAUNCHD_PREFIX}}.living-dashboard', 'living-dashboard'],
+    ['{{LAUNCHD_PREFIX}}.scratchpad-watcher', 'scratchpad-watcher'],
+    ['{{LAUNCHD_PREFIX}}.canvas-watcher', 'canvas-watcher'],
+    ['{{LAUNCHD_PREFIX}}.pi-cockpit', 'pi-cockpit'],
   ];
 
   function daemonRow(label, key) {
@@ -647,9 +647,9 @@ ${daemonRows.map(([l, k]) => daemonRow(l, k)).join('\n')}
 |------|--------|-----------|-------|
 | AGENTS.md | ${statusIcon(c['AGENTS.md']?.exists)} | ${statusIcon(c['AGENTS.md']?.nonEmpty)} | — |
 | System Prompt.md | ${statusIcon(c['System Prompt.md']?.exists)} | ${statusIcon(c['System Prompt.md']?.nonEmpty)} | — |
-| Thoth - Digital Twin.md | ${statusIcon(c['Thoth - Digital Twin.md']?.exists)} | ${statusIcon(c['Thoth - Digital Twin.md']?.nonEmpty)} | — |
-| Thoth - Obsidian Integration.md | ${statusIcon(c['Thoth - Obsidian Integration.md']?.exists)} | ${statusIcon(c['Thoth - Obsidian Integration.md']?.nonEmpty)} | — |
-| Thoth Worktrees.md | ${statusIcon(c['Thoth Worktrees.md']?.exists)} | ${statusIcon(c['Thoth Worktrees.md']?.nonEmpty)} | — |
+| {{AGENT_NAME}} - Digital Twin.md | ${statusIcon(c['Digital Twin.md']?.exists)} | ${statusIcon(c['Digital Twin.md']?.nonEmpty)} | — |
+| {{AGENT_NAME}} - Obsidian Integration.md | ${statusIcon(c['Obsidian Integration.md']?.exists)} | ${statusIcon(c['Obsidian Integration.md']?.nonEmpty)} | — |
+| {{AGENT_NAME}} Worktrees.md | ${statusIcon(c['Worktrees.md']?.exists)} | ${statusIcon(c['Worktrees.md']?.nonEmpty)} | — |
 
 ## Structural Health
 

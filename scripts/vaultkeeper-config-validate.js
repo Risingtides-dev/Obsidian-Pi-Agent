@@ -25,7 +25,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // ─── Config ────────────────────────────────────────────────────────────────
-const VAULT = '/Users/risingtidesdev/dev/Thoth';
+const VAULT = '{{VAULT_PATH}}';
 const HOME = require('os').homedir();
 const CONTEXT_DIR = path.join(VAULT, '3-Resources');
 const LAUNCHD_SOURCE_DIR = path.join(VAULT, 'launchd');
@@ -35,15 +35,15 @@ const FIX_MODE = process.argv.includes('--fix');
 const QUIET = process.argv.includes('--quiet');
 
 // Worktrees that have specialized AGENTS.md (should NOT be synced)
-const SPECIALIZED_WORKTREES = ['vaultkeeper', 'Thoth-vaultkeeper'];
+const SPECIALIZED_WORKTREES = ['vaultkeeper', '{{AGENT_NAME}}-vaultkeeper'];
 
 // Required context docs
 const REQUIRED_CONTEXT_DOCS = [
   'AGENTS.md',
   'System Prompt.md',
-  'Thoth - Digital Twin.md',
-  'Thoth - Obsidian Integration.md',
-  'Thoth Worktrees.md',
+  'Digital Twin.md',
+  'Obsidian Integration.md',
+  'Worktrees.md',
 ];
 
 // ─── State ─────────────────────────────────────────────────────────────────

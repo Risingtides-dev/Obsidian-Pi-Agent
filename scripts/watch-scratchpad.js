@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * watch-scratchpad.js v2 — Obsidian ↔ Thoth bridge
+ * watch-scratchpad.js v2 — Obsidian ↔ {{AGENT_NAME}} bridge
  *
  * Watches Scratchpad.md for user edits. Batches rapid changes
  * (typing in Obsidian), waits for quiet, then spawns `claude -p`
@@ -68,7 +68,7 @@ function getUserContent() {
   return lines.slice(firstSep + 1, lastSep).join('\n').trim();
 }
 
-// ── Append Thoth's response ────────────────────────────────
+// ── Append {{AGENT_NAME}}'s response ────────────────────────────────
 function appendResponse(response) {
   let content = fs.readFileSync(SCRATCHPAD, 'utf8');
   if (!content.endsWith('\n')) content += '\n';
@@ -100,7 +100,7 @@ function killClaude() {
 function callClaude(userContent) {
   return new Promise((resolve) => {
     // Build prompt: system + user content
-    const prompt = `You are Thoth, a helpful AI assistant responding in a shared Obsidian scratchpad note.
+    const prompt = `You are {{AGENT_NAME}}, a helpful AI assistant responding in a shared Obsidian scratchpad note.
 Be concise, direct, and conversational. Use markdown when helpful.
 Keep responses brief — this is a shared scratchpad.
 If asked something complex, offer to help and suggest next steps.
@@ -115,10 +115,10 @@ Respond directly in the scratchpad.`;
 
     log(`🤖 Spawning claude -p (${prompt.length} chars)`);
 
-    const proc = spawn('/Users/risingtidesdev/.local/bin/claude', ['-p', prompt], {
+    const proc = spawn('{{HOME_PATH}}/.local/bin/claude', ['-p', prompt], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, HOME: process.env.HOME },
-      cwd: path.join(require('os').homedir(), 'dev', 'Thoth'),
+      cwd: path.join(require('os').homedir(), 'dev', '{{AGENT_NAME}}'),
     });
 
     claudeProcess = proc;
@@ -220,7 +220,7 @@ async function processBatch() {
 async function main() {
   try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch {}
 
-  log('🦉 Thoth Scratchpad Watcher v2 (Claude CLI)');
+  log('🦉 {{AGENT_NAME}} Scratchpad Watcher v2 (Claude CLI)');
   log(`📄 Watching: ${SCRATCHPAD}`);
   log(`⏱️  Batch: ${BATCH_WINDOW_MS}ms | Quiet: ${QUIET_PERIOD_MS}ms`);
   log(`🤖 Backend: claude -p (Anthropic OAuth)`);

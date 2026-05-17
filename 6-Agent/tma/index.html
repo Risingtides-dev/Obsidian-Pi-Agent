@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Thoth</title>
+  <title>{{AGENT_NAME}}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
 <!-- Header -->
 <header class="border-b border-ink">
   <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 flex items-end justify-between">
-    <a href="/" class="font-medium text-lg tracking-tighter no-underline">Thoth</a>
+    <a href="/" class="font-medium text-lg tracking-tighter no-underline">{{AGENT_NAME}}</a>
     <div class="flex items-end gap-6 text-sm">
       <button onclick="loadArtifacts()" class="bg-transparent border-none text-sm text-mute p-0 cursor-pointer">Refresh</button>
       <span id="count" class="text-xs uppercase tracking-[0.08em] font-medium text-mute tabular-nums">—</span>
@@ -81,7 +81,7 @@
 <!-- Footer -->
 <footer class="border-t border-ink mt-0">
   <div class="max-w-7xl mx-auto px-6 md:px-8 py-5 flex justify-between text-xs text-mute">
-    <span>Thoth</span>
+    <span>{{AGENT_NAME}}</span>
     <span>Set in Inter</span>
   </div>
 </footer>

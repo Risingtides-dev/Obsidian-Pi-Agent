@@ -1,5 +1,5 @@
 /**
- * Shared utilities used across Thoth scripts.
+ * Shared utilities used across {{AGENT_NAME}} scripts.
  */
 
 /**

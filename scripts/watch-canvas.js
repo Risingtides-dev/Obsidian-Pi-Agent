@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * watch-canvas.js — Watches Thoth Command Center.canvas for inbox changes
- * Updates the response node with Thoth's reply.
+ * watch-canvas.js — Watches Command Center.canvas for inbox changes
+ * Updates the response node with the agent's reply.
  */
 
 const fs = require('fs');
@@ -10,7 +10,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
-const CANVAS = path.join(__dirname, '..', 'Thoth Command Center.canvas');
+const CANVAS = path.join(__dirname, '..', 'Command Center.canvas');
 const LOG_DIR = path.join(__dirname, '..', 'logs');
 const SESSION_FILE = path.join(LOG_DIR, 'canvas-session.jsonl');
 const BATCH_MS = 3000;
@@ -64,7 +64,7 @@ function hashCanvas() {
 function getInboxText() {
   const canvas = readCanvas();
   if (!canvas?.nodes) return '';
-  const inbox = canvas.nodes.find(n => n.id === 'thoth-inbox');
+  const inbox = canvas.nodes.find(n => n.id === 'agent-inbox');
   return inbox?.text?.trim() || '';
 }
 
@@ -72,12 +72,12 @@ function updateResponse(text) {
   const canvas = readCanvas();
   if (!canvas?.nodes) return false;
 
-  const node = canvas.nodes.find(n => n.id === 'thoth-response');
+  const node = canvas.nodes.find(n => n.id === 'agent-response');
   if (!node) return false;
 
   // Preserve heading, replace body
   const lines = text.split('\n');
-  node.text = `# 🦉 Thoth\n\n${lines.join('\n')}`;
+  node.text = `# {{AGENT_NAME}}\n\n${lines.join('\n')}`;
 
   fs.writeFileSync(CANVAS, JSON.stringify(canvas, null, 2));
   lastSelfWrittenHash = hashCanvas();
@@ -87,7 +87,7 @@ function updateResponse(text) {
 async function callAPI(userContent) {
   const system = {
     role: 'system',
-    content: `You are Thoth, responding in an Obsidian Canvas node. Keep responses concise. Use markdown. The user is Smaths. Be direct and helpful.`
+    content: `You are {{AGENT_NAME}}, responding in an Obsidian Canvas node. Keep responses concise. Use markdown. The user is {{USER_NAME}}. Be direct and helpful.`
   };
 
   const messages = [system, ...conversation.slice(-8), { role: 'user', content: userContent }];
@@ -160,7 +160,7 @@ async function processInbox() {
     // Reset checkbox: [x] → [ ] so user can send again
     const canvas = readCanvas();
     if (canvas) {
-      const inbox = canvas.nodes.find(n => n.id === 'thoth-inbox');
+      const inbox = canvas.nodes.find(n => n.id === 'agent-inbox');
       if (inbox) {
         inbox.text = inbox.text.replace(
           /- \[x\]\s*Send/i,
@@ -173,7 +173,7 @@ async function processInbox() {
     lastInboxText = getInboxText();
   } catch (err) {
     log(`❌ Error: ${err.message}`);
-    updateResponse(`# 🦉 Thoth\n\n*(Error: ${err.message.slice(0, 80)})*`);
+    updateResponse(`# {{AGENT_NAME}}\n\n*(Error: ${err.message.slice(0, 80)})*`);
   }
 
   processing = false;
@@ -194,7 +194,7 @@ function handleChange() {
 
 async function main() {
   try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch {}
-  log('🦉 Thoth Canvas Watcher');
+  log('🦉 {{AGENT_NAME}} Canvas Watcher');
   log(`📄 Watching: ${CANVAS}`);
   loadSession();
   lastInboxText = getInboxText();

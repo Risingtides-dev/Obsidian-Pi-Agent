@@ -5,8 +5,8 @@
  *   routine.json: { name, description, schedule, folder, model, enabled, lastRun? }
  *   SKILL.md:    YAML frontmatter + prompt body
  *
- * launchd label: com.thoth.routine.<name>
- * launchd plist: ~/Library/LaunchAgents/com.thoth.routine.<name>.plist
+ * launchd label: {{LAUNCHD_PREFIX}}.routine.<name>
+ * launchd plist: ~/Library/LaunchAgents/{{LAUNCHD_PREFIX}}.routine.<name>.plist
  *
  * Schedule presets: "hourly" | "daily@HH:MM" | "weekdays@HH:MM" | "weekly@dow:HH:MM" | "manual"
  *   Internally converted to launchd StartCalendarInterval / StartInterval.
@@ -20,7 +20,7 @@ import { execSync } from "node:child_process";
 const HOME = os.homedir();
 const ROUTINES_DIR = path.join(HOME, ".pi", "agent", "routines");
 const LAUNCH_AGENTS = path.join(HOME, "Library", "LaunchAgents");
-const LABEL_PREFIX = "com.thoth.routine.";
+const LABEL_PREFIX = "{{LAUNCHD_PREFIX}}.routine.";
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

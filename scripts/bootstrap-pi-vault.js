@@ -106,8 +106,8 @@ function main() {
   const npmBin = findOnPath("npm");
   const vaultDir = findVaultDir(REPO_DIR, manifest.vault.requiredMarkers);
   const vaultParentDir = path.dirname(vaultDir);
-  const launchAgentPath = path.join(vaultDir, "launchd", "com.thoth.pi-cockpit.local.plist");
-  const installedLaunchAgentPath = path.join(homeDir, "Library", "LaunchAgents", "com.thoth.pi-cockpit.local.plist");
+  const launchAgentPath = path.join(vaultDir, "launchd", "{{LAUNCHD_PREFIX}}.pi-cockpit.local.plist");
+  const installedLaunchAgentPath = path.join(homeDir, "Library", "LaunchAgents", "{{LAUNCHD_PREFIX}}.pi-cockpit.local.plist");
 
   fs.mkdirSync(path.join(vaultDir, "pi-cockpit", "logs"), { recursive: true });
   fs.mkdirSync(path.dirname(launchAgentPath), { recursive: true });

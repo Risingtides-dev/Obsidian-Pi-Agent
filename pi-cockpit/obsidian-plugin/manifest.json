@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
   "description": "Companion plugin for PI Cockpit — receives layout commands from the WebSocket hub and arranges Obsidian workspace panes.",
-  "author": "Thoth",
+  "author": "{{AGENT_NAME}}",
   "isDesktopOnly": true
 }

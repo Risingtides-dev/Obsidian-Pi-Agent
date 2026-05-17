@@ -12,7 +12,7 @@
   },
   "piCockpit": {
     "port": 3099,
-    "launchAgentLabel": "com.thoth.pi-cockpit.local",
+    "launchAgentLabel": "{{LAUNCHD_PREFIX}}.pi-cockpit.local",
     "healthEndpoint": "http://localhost:3099/health",
     "pluginId": "pi-cockpit"
   },
@@ -87,13 +87,6 @@
           "-y",
           "@mauricio.wolff/mcp-obsidian@latest",
           "${VAULT_PARENT_DIR}"
-        ]
-      },
-      "pencil": {
-        "enableOnlyIfExecutableExists": true,
-        "args": [
-          "--app",
-          "cursor"
         ]
       }
     }

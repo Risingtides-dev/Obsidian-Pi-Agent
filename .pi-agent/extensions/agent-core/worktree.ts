@@ -1,10 +1,10 @@
 /**
- * Thoth — Worktree Context
+ * {{AGENT_NAME}} — Worktree Context
  *
- * On session_start in ~/dev/Thoth*, silently sets:
+ * On session_start in ~/dev/{{AGENT_NAME}}*, silently sets:
  *   - git_status (branch, worktree indicator, github)
  *   - vault_path (main repo for note reads)
- *   - session name (Thoth · branch)
+ *   - session name ({{AGENT_NAME}} · branch)
  */
 
 import { homedir } from "node:os";
@@ -12,14 +12,14 @@ import { join as joinPath } from "node:path";
 import { existsSync, mkdirSync, writeFileSync, statSync, readdirSync, readFileSync } from "node:fs";
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 
-const THOTH_ROOT = joinPath(homedir(), "dev", "Thoth");
+const THOTH_ROOT = joinPath(homedir(), "dev", "{{AGENT_NAME}}");
 const WORKTREE_DIR = joinPath(homedir(), ".worktrees");
-const CONTEXT_DIR = joinPath(homedir(), ".pi", "agent", "extensions", "thoth", "context");
+const CONTEXT_DIR = joinPath(homedir(), ".pi", "agent", "extensions", "{{AGENT_NAME_LOWER}}", "context");
 
-function isThothDir(cwd: string): boolean {
+function is{{AGENT_NAME}}Dir(cwd: string): boolean {
   const norm = (p: string) => p.toLowerCase();
   const c = norm(cwd);
-  return c === norm(THOTH_ROOT) || c.startsWith(norm(THOTH_ROOT) + "/") || c.startsWith(norm(WORKTREE_DIR) + "/thoth");
+  return c === norm(THOTH_ROOT) || c.startsWith(norm(THOTH_ROOT) + "/") || c.startsWith(norm(WORKTREE_DIR) + "/{{AGENT_NAME_LOWER}}");
 }
 
 async function git(pi: ExtensionAPI, cwd: string, args: string[]): Promise<string> {
@@ -117,7 +117,7 @@ async function buildOptions(pi: ExtensionAPI, cwd: string): Promise<WtOption[]> 
     }
 
     // New session
-    const note = wtPath === cwd ? "" : " (use thoth from terminal)";
+    const note = wtPath === cwd ? "" : " (use {{AGENT_NAME_LOWER}} from terminal)";
     opts.push({
       label: `${isCur} ${branch} · + new session${note}`,
       action: "new",
@@ -129,8 +129,8 @@ async function buildOptions(pi: ExtensionAPI, cwd: string): Promise<WtOption[]> 
 }
 
 export async function showWorktreeBrowser(pi: ExtensionAPI, ctx: ExtensionCommandContext): Promise<void> {
-  if (!isThothDir(ctx.cwd)) {
-    ctx.ui.notify("/wt is only for the Thoth vault", "warning");
+  if (!is{{AGENT_NAME}}Dir(ctx.cwd)) {
+    ctx.ui.notify("/wt is only for the {{AGENT_NAME}} vault", "warning");
     return;
   }
 
@@ -160,7 +160,7 @@ export async function showWorktreeBrowser(pi: ExtensionAPI, ctx: ExtensionComman
     } else {
       // Can't cd to another worktree from inside Pi
       ctx.ui.notify(
-        `To start a new session in ${selected.worktreePath}:\n\n  exit and run: thoth`,
+        `To start a new session in ${selected.worktreePath}:\n\n  exit and run: {{AGENT_NAME_LOWER}}`,
         "info"
       );
     }
@@ -168,15 +168,15 @@ export async function showWorktreeBrowser(pi: ExtensionAPI, ctx: ExtensionComman
 }
 
 // ── Vault Context Injection ────────────────────────────────
-// Reads core reference docs from the Thoth vault and injects them
+// Reads core reference docs from the {{AGENT_NAME}} vault and injects them
 // into every session so agents always have the full picture.
 
 const VAULT_DOCS = [
   "3-Resources/AGENTS.md",
   "3-Resources/System Prompt.md",
-  "3-Resources/Thoth - Digital Twin.md",
-  "3-Resources/Thoth - Obsidian Integration.md",
-  "3-Resources/Thoth Worktrees.md",
+  "3-Resources/{{AGENT_NAME}} - Digital Twin.md",
+  "3-Resources/{{AGENT_NAME}} - Obsidian Integration.md",
+  "3-Resources/{{AGENT_NAME}} Worktrees.md",
 ];
 
 export function countVaultDocs(): number {
@@ -204,7 +204,7 @@ export function buildVaultContext(): string {
 }
 
 export async function onSessionStart(pi: ExtensionAPI, ctx: ExtensionContext): Promise<void> {
-  if (!isThothDir(ctx.cwd)) return;
+  if (!is{{AGENT_NAME}}Dir(ctx.cwd)) return;
 
   try { await git(pi, ctx.cwd, ["rev-parse", "--show-toplevel"]); }
   catch { return; }
@@ -220,6 +220,6 @@ export async function onSessionStart(pi: ExtensionAPI, ctx: ExtensionContext): P
 
     writeCtx("git_status", `${wtIcon}${branch} ${gh}`);
     writeCtx("vault_path", mainVault);
-    pi.setSessionName(`Thoth · ${wtIcon}${branch}`);
+    pi.setSessionName(`{{AGENT_NAME}} · ${wtIcon}${branch}`);
   } catch { /* best effort */ }
 }

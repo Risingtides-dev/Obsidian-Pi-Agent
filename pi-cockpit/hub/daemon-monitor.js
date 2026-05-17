@@ -20,23 +20,23 @@ import {
 } from "./lib/launchd-utils.js";
 
 const DAEMONS = [
-  "com.thoth.telegram-bot",
-  "com.thoth.living-dashboard",
-  "com.thoth.scratchpad-watcher",
-  "com.thoth.canvas-watcher",
-  "com.thoth.pi-cockpit",
-  "com.thoth.vaultkeeper-heartbeat",
+  "{{LAUNCHD_PREFIX}}.telegram-bot",
+  "{{LAUNCHD_PREFIX}}.living-dashboard",
+  "{{LAUNCHD_PREFIX}}.scratchpad-watcher",
+  "{{LAUNCHD_PREFIX}}.canvas-watcher",
+  "{{LAUNCHD_PREFIX}}.pi-cockpit",
+  "{{LAUNCHD_PREFIX}}.vaultkeeper-heartbeat",
 ];
 
 /**
- * Get live status for all Thoth daemons.
+ * Get live status for all {{AGENT_NAME}} daemons.
  */
 export function scanDaemons() {
   const logsDir = getLogsDir();
   const results = [];
 
   for (const label of DAEMONS) {
-    const name = label.replace("com.thoth.", "");
+    const name = label.replace("{{LAUNCHD_PREFIX}}.", "");
     const status = getLaunchdStatus(label);
 
     // Log freshness
@@ -95,7 +95,7 @@ export function restartDaemon(label) {
  * Read the tail of a daemon's log file.
  */
 export function readDaemonLog(label, tailLines = 50) {
-  const name = label.replace("com.thoth.", "");
+  const name = label.replace("{{LAUNCHD_PREFIX}}.", "");
   const logPath = path.join(getLogsDir(), `${name}.log`);
   return readLogTail(logPath, tailLines);
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Thoth Telegram Bot — captures everything, summarizes, saves to Obsidian
+// Vaultkeeper Telegram Bot — captures everything, summarizes, saves to Obsidian
 
 const { Bot } = require('grammy');
 const { execSync, spawnSync } = require('child_process');
@@ -17,7 +17,7 @@ const ATTACHMENTS = path.join(VAULT, 'Attachments');
 const VOICE_AUDIO_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Audio');
 const VOICE_TRANSCRIPT_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Transcripts');
 const VOICE_SUMMARIES_DIR = path.join(VAULT, CONFIG.voiceSummariesFolder || path.join('4-Archive', 'Voice Summaries'));
-const OBSIDIAN_VAULT_NAME = CONFIG.obsidianVaultName || 'Thoth';
+const OBSIDIAN_VAULT_NAME = CONFIG.obsidianVaultName || 'Vaultkeeper';
 const FFMPEG_BIN = CONFIG.ffmpegBin || 'ffmpeg';
 
 // ── Ensure inbox exists ────────────────────────────────
@@ -91,7 +91,7 @@ tags: [${tags}]
 ${content}
 
 ---
-*Captured via Thoth Telegram Bot · ${dateStr}*
+*Captured via {{AGENT_NAME}} Telegram Bot · ${dateStr}*
 `;
 
   fs.writeFileSync(filepath, note, 'utf-8');
@@ -170,7 +170,7 @@ function isTwitter(url) {
 
 async function handleYouTube(url) {
   // Get video info + captions with yt-dlp
-  const tmpDir = '/tmp/thoth-yt';
+  const tmpDir = '/tmp/vaultkeeper-yt';
   fs.mkdirSync(tmpDir, { recursive: true });
 
   try {
@@ -321,7 +321,7 @@ function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
     const req = client.get(url, {
-      headers: { 'User-Agent': 'ThothBot/1.0' },
+      headers: { 'User-Agent': 'VaultkeeperBot/1.0' },
       timeout: 15000
     }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
@@ -530,7 +530,7 @@ ${stripLeadingH1(summary)}
 ${transcript}
 
 ---
-*Captured via Thoth Telegram Bot · ${dateStr}*
+*Captured via {{AGENT_NAME}} Telegram Bot · ${dateStr}*
 `;
 
   fs.writeFileSync(filepath, note, 'utf-8');
@@ -549,7 +549,7 @@ async function handleAudioMessage(ctx) {
   const audioPath = path.join(VOICE_AUDIO_DIR, audioFilename);
   const transcriptFilename = `${base}.txt`;
   const transcriptPath = path.join(VOICE_TRANSCRIPT_DIR, transcriptFilename);
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'thoth-voice-'));
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vaultkeeper-voice-'));
   const wavPath = path.join(workDir, `${base}.wav`);
 
   const metadata = {
@@ -705,7 +705,7 @@ const bot = new Bot(CONFIG.telegramToken);
 
 bot.command('start', async (ctx) => {
   await ctx.reply(
-    `🦉 **Thoth Inbox**\n\n` +
+    `🦉 **{{AGENT_NAME}} Inbox**\n\n` +
     `Send me anything and I'll summarize it and save it to your Obsidian vault:\n\n` +
     `• **Text** — notes, thoughts, ideas\n` +
     `• **URLs** — articles, YouTube, tweets\n` +
@@ -823,7 +823,7 @@ process.on('unhandledRejection', (reason) => {
   console.error('💥 UNHANDLED REJECTION:', reason?.message || reason);
 });
 
-console.log('🦉 Thoth Telegram Bot starting...');
+console.log('🦉 {{AGENT_NAME}} Telegram Bot starting...');
 console.log(`📁 Vault: ${VAULT}`);
 console.log(`📥 Inbox: ${INBOX}`);
 console.log(`🎙️ Voice summaries: ${VOICE_SUMMARIES_DIR}`);

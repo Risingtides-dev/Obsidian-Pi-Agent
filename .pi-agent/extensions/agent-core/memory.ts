@@ -1,9 +1,9 @@
 /**
- * Thoth — Persistent Memory System
+ * {{AGENT_NAME}} — Persistent Memory System
  *
  * Three-tier memory:
  *   1. Ephemeral (in-Map, session-scoped)
- *   2. File-based (~/.pi/agent/extensions/thoth/memory/*.json)
+ *   2. File-based (~/.pi/agent/extensions/agent-core/memory/*.json)
  *   3. Session-persisted (pi.appendEntry for tree-aware state)
  *
  * Tools:
@@ -22,8 +22,8 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Type } from "typebox";
 import { writeJsonSafe, readJsonSafe, listJsonDir } from "./utils.js";
 
-const MEMORY_DIR = "~/.pi/agent/extensions/thoth/memory";
-const CONTEXT_DIR = "~/.pi/agent/extensions/thoth/context";
+const MEMORY_DIR = "~/.pi/agent/extensions/agent-core/memory";
+const CONTEXT_DIR = "~/.pi/agent/extensions/agent-core/context";
 
 export interface MemoryEntry {
   key: string;
@@ -33,7 +33,7 @@ export interface MemoryEntry {
   updatedAt: number;
 }
 
-export interface ThothMemory {
+export interface {{AGENT_NAME}}Memory {
   /** Get a memory value */
   get(key: string): string | undefined;
   /** Set a memory value */
@@ -54,13 +54,13 @@ export interface ThothMemory {
   getAllContext(): Record<string, string>;
 }
 
-export function createMemory(): ThothMemory {
+export function createMemory(): {{AGENT_NAME}}Memory {
   const cache = new Map<string, MemoryEntry>();
   const context = new Map<string, string>();
 
   // Ensure directories exist
-  const memDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/thoth/memory");
-  const ctxDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/thoth/context");
+  const memDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/agent-core/memory");
+  const ctxDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/agent-core/context");
   if (!fs.existsSync(memDir)) fs.mkdirSync(memDir, { recursive: true });
   if (!fs.existsSync(ctxDir)) fs.mkdirSync(ctxDir, { recursive: true });
 
@@ -99,7 +99,7 @@ export function createMemory(): ThothMemory {
 
     delete(key: string): void {
       cache.delete(key);
-      const resolved = path.resolve(require("node:os").homedir(), `.pi/agent/extensions/thoth/memory/${key}.json`);
+      const resolved = path.resolve(require("node:os").homedir(), `.pi/agent/extensions/agent-core/memory/${key}.json`);
       try {
         fs.unlinkSync(resolved);
       } catch {
@@ -132,7 +132,7 @@ export function createMemory(): ThothMemory {
 
     setContext(key: string, value: string): void {
       context.set(key, value);
-      const ctxDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/thoth/context");
+      const ctxDir = path.resolve(require("node:os").homedir(), ".pi/agent/extensions/agent-core/context");
       writeJsonSafe(path.join(ctxDir, `${key}.json`), value);
     },
 
@@ -148,20 +148,20 @@ export function createMemory(): ThothMemory {
   };
 }
 
-export function registerMemoryTools(pi: ExtensionAPI, memory: ThothMemory): void {
+export function registerMemoryTools(pi: ExtensionAPI, memory: {{AGENT_NAME}}Memory): void {
   // remember — store a fact
   pi.registerTool({
     name: "remember",
     label: "Remember",
     description: "Store a fact or piece of information in persistent memory. Use this to remember user preferences, project details, decisions, and anything else worth keeping across sessions.",
-    promptSnippet: "Store information in Thoth's persistent memory",
+    promptSnippet: "Store information in {{AGENT_NAME}}'s persistent memory",
     promptGuidelines: [
       "Use remember/set_context to persist important information across sessions.",
       "Use recall/search_memory to retrieve previously stored information.",
       "Context variables (set_context/get_context) are shown in the system prompt summary.",
     ],
     parameters: Type.Object({
-      key: Type.String({ description: "The memory key (use a descriptive dot-separated path like 'user.preferences.theme' or 'project.thoth.architecture')" }),
+      key: Type.String({ description: "The memory key (use a descriptive dot-separated path like 'user.preferences.theme' or 'project.{{AGENT_NAME_LOWER}}.architecture')" }),
       value: Type.String({ description: "The value to remember" }),
       tags: Type.Optional(Type.Array(Type.String(), { description: "Optional tags for searching" })),
     }),
@@ -179,7 +179,7 @@ export function registerMemoryTools(pi: ExtensionAPI, memory: ThothMemory): void
     name: "recall",
     label: "Recall",
     description: "Retrieve a previously stored fact from persistent memory by its exact key.",
-    promptSnippet: "Retrieve information from Thoth's persistent memory",
+    promptSnippet: "Retrieve information from {{AGENT_NAME}}'s persistent memory",
     parameters: Type.Object({
       key: Type.String({ description: "The memory key to retrieve" }),
     }),
@@ -220,7 +220,7 @@ export function registerMemoryTools(pi: ExtensionAPI, memory: ThothMemory): void
     name: "search_memory",
     label: "Search Memory",
     description: "Full-text search across all stored memories. Returns matching keys ranked by relevance.",
-    promptSnippet: "Search Thoth's persistent memory by keyword",
+    promptSnippet: "Search {{AGENT_NAME}}'s persistent memory by keyword",
     parameters: Type.Object({
       query: Type.String({ description: "Search query to match against keys, values, and tags" }),
     }),
@@ -249,7 +249,7 @@ export function registerMemoryTools(pi: ExtensionAPI, memory: ThothMemory): void
     description: "Set a context variable that will be shown in the session summary. Use for 'current project', 'active task', 'mode' (work/personal/learning), etc.",
     promptSnippet: "Set a context variable for the current session state",
     parameters: Type.Object({
-      key: Type.String({ description: "Context variable name (e.g., 'thoth.current_project', 'git_status', 'active_task')" }),
+      key: Type.String({ description: "Context variable name (e.g., '{{AGENT_NAME_LOWER}}.current_project', 'git_status', 'active_task')" }),
       value: Type.String({ description: "Context variable value" }),
     }),
     async execute(_toolCallId, params) {
@@ -318,7 +318,7 @@ export function registerMemoryTools(pi: ExtensionAPI, memory: ThothMemory): void
 }
 
 /** Build a context summary string from memory for the system prompt */
-export function buildContextSummary(memory: ThothMemory): string {
+export function buildContextSummary(memory: {{AGENT_NAME}}Memory): string {
   const ctx = memory.getAllContext();
   const entries = Object.entries(ctx);
   if (entries.length === 0) return "";

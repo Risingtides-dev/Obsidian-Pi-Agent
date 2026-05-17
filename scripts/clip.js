@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// thoth clip — summarize any URL with DeepSeek V4 Flash and save to vault
+// vaultkeeper clip — summarize any URL with DeepSeek V4 Flash and save to vault
 // Usage: node scripts/clip.js <url>
 //        node scripts/clip.js <url> --folder 2-Areas
 
@@ -16,14 +16,14 @@ const DEEPSEEK_KEY = (() => {
 })();
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions';
 const MODEL = 'deepseek-v4-flash';
-const VAULT_PATH = '/Users/risingtidesdev/dev/Thoth';
+const VAULT_PATH = '{{VAULT_PATH}}';
 const DEFAULT_FOLDER = '3-Resources/Inbox';
 
 // ── Helpers ─────────────────────────────────────────────
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
-    client.get(url, { headers: { 'User-Agent': 'ThothClip/1.0' } }, (res) => {
+    client.get(url, { headers: { 'User-Agent': 'VaultkeeperClip/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return fetchUrl(res.headers.location).then(resolve).catch(reject);
       }

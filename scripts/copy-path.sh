@@ -1,6 +1,6 @@
 #!/bin/bash
 # Get Obsidian's current active file, copy absolute path to clipboard
-VAULT="/Users/risingtidesdev/dev/Thoth"
+VAULT="${VAULT_PATH:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 # Read active file from workspace state
 FILE=$(python3 -c "
@@ -13,7 +13,7 @@ print(files[0] if files else '')
 
 if [ -n "$FILE" ]; then
     echo "$VAULT/$FILE" | pbcopy
-    echo "📋 $VAULT/$FILE"
+    echo "Copied: $VAULT/$FILE"
 else
     echo "No active file found"
 fi

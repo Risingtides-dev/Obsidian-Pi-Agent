@@ -312,7 +312,7 @@
     };
 
     window.restartDaemon = (label) => {
-      const name = label.replace("com.thoth.", "");
+      const name = label.replace("{{LAUNCHD_PREFIX}}.", "");
       if (!confirm(`Restart ${name}?`)) return;
       hub.send({ type: "restart-daemon", label });
       showToast("success", `Restarting ${name}...`);

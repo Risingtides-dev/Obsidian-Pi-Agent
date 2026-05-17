@@ -1,14 +1,14 @@
 {
   "workspace": {
-    "id": "thoth",
-    "name": "Thoth",
+    "id": "{{AGENT_NAME_LOWER}}",
+    "name": "{{AGENT_NAME}}",
     "key": "THO"
   },
   "teams": [
     {
       "id": "tho",
       "key": "THO",
-      "name": "Thoth"
+      "name": "{{AGENT_NAME}}"
     }
   ],
   "states": [

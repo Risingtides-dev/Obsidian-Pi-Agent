@@ -232,11 +232,11 @@ module.exports = async function render(sourceResults) {
   const vol = 'I';
   const issue = Math.floor((Date.now() - new Date('2026-05-09').getTime()) / 86400000) + 1;
 
-  return `<!-- thoth:living-dashboard auto-generated; do not edit manually -->
+  return `<!-- vaultkeeper:living-dashboard auto-generated; do not edit manually -->
 <!-- last-render: ${now.toISOString()} -->
 <!-- sources-wired: ${wiredCount} -->
 
-<div class="thoth-dash">
+<div class="vaultkeeper-dash">
 
   <div class="mast">
     <div class="mast-title">The <em>Living</em><br/>Dashboard</div>

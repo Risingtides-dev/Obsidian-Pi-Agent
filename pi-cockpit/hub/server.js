@@ -646,7 +646,7 @@ async function handleMessage(ws, raw) {
 const server = createServer((req, res) => {
   const host = (req.headers.host || "").toLowerCase();
 
-  if (host.startsWith("thoth.agentsworld.org")) {
+  if (host.startsWith("{{AGENT_NAME_LOWER}}.{{DOMAIN}}")) {
     handleTmaRoutes(req, res);
     return;
   }
@@ -707,7 +707,7 @@ watcher.on("all", (event, filePath) => {
 });
 
 // ── Heartbeat file watcher ─────────────────────────────────
-const HEARTBEAT_PATH = "/Users/risingtidesdev/dev/Thoth/heartbeat.md";
+const HEARTBEAT_PATH = "{{VAULT_PATH}}/heartbeat.md";
 const heartbeatWatcher = chokidar.watch(HEARTBEAT_PATH, {
   persistent: true,
   ignoreInitial: true,

@@ -1,5 +1,5 @@
 /**
- * Thoth — Shared utilities
+ * {{AGENT_NAME}} — Shared utilities
  */
 
 import * as fs from "node:fs";
