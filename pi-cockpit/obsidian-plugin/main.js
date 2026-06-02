@@ -295,6 +295,14 @@ const STYLES = `
   background: var(--background-modifier-hover); color: var(--text-muted);
   font-family: var(--font-monospace);
 }
+.pi-cockpit-chip-inset {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
 .pi-cockpit-time { font-size: var(--font-ui-smaller); color: var(--text-faint); }
 
 /* Sessions: project row + nested children */
@@ -350,22 +358,44 @@ const STYLES = `
 }
 .pi-cockpit-empty-icon { font-size: 28px; margin-bottom: 12px; opacity: 0.4; }
 
-/* Tabs (skills view) */
+/* Segmented tabs / inlaid controls */
 .pi-cockpit-tabs {
-  display: flex; border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  gap: 4px;
+  margin: 8px 12px;
+  padding: 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
   flex-shrink: 0;
 }
 .pi-cockpit-tab {
-  flex: 1; padding: 8px 0; text-align: center;
-  font-size: var(--font-ui-small); font-weight: 500;
-  color: var(--text-muted); cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 80ms ease, border-color 80ms ease;
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  text-align: center;
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  transition: all 80ms ease;
 }
-.pi-cockpit-tab:hover { color: var(--text-normal); }
+.pi-cockpit-tab:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
 .pi-cockpit-tab.active {
-  color: var(--interactive-accent);
-  border-bottom-color: var(--interactive-accent);
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .pi-cockpit-search {
   margin: 8px 12px;
@@ -389,14 +419,23 @@ const STYLES = `
   color: var(--text-muted);
 }
 .pi-cockpit-thinking {
-  display: flex; gap: 6px; padding: 8px 12px;
+  display: flex;
+  gap: 4px;
+  margin: 0 12px 8px;
+  padding: 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
 }
 .pi-cockpit-thinking-option {
-  flex: 1; padding: 6px 0; text-align: center;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  text-align: center;
   font-size: var(--font-ui-small);
-  border: 1px solid var(--background-modifier-border);
+  border: 1px solid transparent;
   border-radius: 6px;
-  background: var(--background-primary);
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 80ms ease;
@@ -406,9 +445,10 @@ const STYLES = `
   color: var(--text-normal);
 }
 .pi-cockpit-thinking-option.active {
-  background: var(--interactive-accent);
-  border-color: var(--interactive-accent);
-  color: var(--text-on-accent);
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
+  color: var(--text-normal);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 /* Chat — transcript layout (no bubbles) */
@@ -419,24 +459,36 @@ const STYLES = `
   scroll-behavior: smooth;
 }
 .pi-cockpit-launch-row {
-  display: flex; gap: 6px; padding: 8px 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  gap: 4px;
+  margin: 8px 12px;
+  padding: 4px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
   flex-wrap: wrap;
 }
 .pi-cockpit-launch-btn {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 14px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1 1 calc(33.333% - 4px);
+  min-width: 92px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
+  font-size: var(--font-ui-small);
   cursor: pointer;
   transition: all 80ms ease;
 }
 .pi-cockpit-launch-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
-  border-color: var(--interactive-accent);
+  border-color: var(--background-modifier-border);
 }
 .pi-cockpit-chat-input-row {
   display: flex; gap: 6px; padding: 8px 10px;
@@ -763,22 +815,29 @@ const STYLES = `
 
 /* ── Telegram badge in Vault Chat header ── */
 .pi-cockpit-telegram-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 8px; border-radius: 999px;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 6px;
   font-size: var(--font-ui-smaller);
   border: 1px solid var(--background-modifier-border);
-  background: transparent;
-  color: var(--text-muted); cursor: pointer;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 80ms ease;
 }
 .pi-cockpit-telegram-badge:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 .pi-cockpit-telegram-badge.connected {
-  color: var(--interactive-accent);
-  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
 }
-.pi-cockpit-telegram-badge .pi-cockpit-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
+.pi-cockpit-telegram-badge .pi-cockpit-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--text-faint); }
 .pi-cockpit-telegram-badge.connected .pi-cockpit-dot { background: var(--interactive-accent); }
 
 /* ── Chat token/cost footer ── */
@@ -1467,6 +1526,21 @@ const FALLBACK_MODELS = [
   { id: "deepseek/deepseek-v4-flash", provider: "deepseek", modelId: "deepseek-v4-flash", name: "DeepSeek V4 Flash", reasoning: false },
 ];
 
+const AGENT_ROSTER = [
+  { name: "Sage", icon: "brain", model: "opus", specialty: "Strategic architecture, system design, trade-off analysis" },
+  { name: "Flux", icon: "sparkle", model: "sonnet", specialty: "Rapid implementation, debugging, production code" },
+  { name: "Knox", icon: "warning-circle", model: "opus", specialty: "Security audits, testing, code quality, risk assessment" },
+  { name: "Scout", icon: "magnifying-glass", model: "sonnet", specialty: "Technology research, options analysis, best practices" },
+  { name: "SDK", icon: "code", model: "sonnet", specialty: "SDKs, libraries, code examples, integration patterns" },
+  { name: "Pixel", icon: "package", model: "sonnet", specialty: "UI components, design systems, responsive layouts" },
+  { name: "Aura", icon: "heart-pulse", model: "sonnet", specialty: "UX flows, interaction patterns, accessibility" },
+  { name: "Ani", icon: "play", model: "sonnet", specialty: "Animation engineering, motion systems, 3D" },
+  { name: "Brick", icon: "cube", model: "sonnet", specialty: "Backend APIs, data modeling, server-side logic" },
+  { name: "Echo", icon: "terminal", model: "haiku", specialty: "Deployment, CI/CD, environments, infrastructure" },
+  { name: "Kai", icon: "git-branch", model: "haiku", specialty: "Context optimization, workflow coordination, handoffs" },
+  { name: "Taskmaster", icon: "list", model: "sonnet", specialty: "Project planning, PRD parsing, task breakdown" },
+];
+
 class ModelView extends BasePiView {
   getViewType() { return VIEW_MODEL; }
   getDisplayText() { return "Model"; }
@@ -1479,12 +1553,16 @@ class ModelView extends BasePiView {
     root.addClass("pi-cockpit-root");
 
     const header = root.createDiv({ cls: "pi-cockpit-header" });
-    header.createSpan({ cls: "pi-cockpit-title", text: "Model" });
+    this.titleEl = header.createSpan({ cls: "pi-cockpit-title", text: "Model" });
     this.currentEl = header.createSpan({ cls: "pi-cockpit-subtitle", text: "" });
 
-    this.bodyEl = root.createDiv({ cls: "pi-cockpit-body" });
+    const tabs = root.createDiv({ cls: "pi-cockpit-tabs" });
+    this.tabModels = tabs.createDiv({ cls: "pi-cockpit-tab active", text: "Models" });
+    this.tabAgents = tabs.createDiv({ cls: "pi-cockpit-tab", text: "Agents" });
+    this.tabModels.addEventListener("click", () => this.switchTab("models"));
+    this.tabAgents.addEventListener("click", () => this.switchTab("agents"));
 
-    root.createDiv({ cls: "pi-cockpit-section-header", text: "Thinking Level" });
+    this.thinkingHeaderEl = root.createDiv({ cls: "pi-cockpit-section-header", text: "Thinking Level" });
     this.thinkingEl = root.createDiv({ cls: "pi-cockpit-thinking" });
     this.thinkingOpts = {};
     for (const lvl of ["off", "low", "high", "xhigh"]) {
@@ -1496,8 +1574,10 @@ class ModelView extends BasePiView {
       this.thinkingOpts[lvl] = opt;
     }
 
+    this.bodyEl = root.createDiv({ cls: "pi-cockpit-body" });
     this.renderConnectionFooter(root);
 
+    this.activeTab = "models";
     this.models = (this.hub.state.models && this.hub.state.models.length)
       ? this.hub.state.models : FALLBACK_MODELS;
     this.currentModel = this.hub.state.currentModel || "deepseek/deepseek-v4-pro";
@@ -1519,6 +1599,11 @@ class ModelView extends BasePiView {
     if (!this.hub.connected) this.hub.connect();
   }
 
+  switchTab(tab) {
+    this.activeTab = tab;
+    this.render();
+  }
+
   setThinking(level) {
     this.hub.send({ type: "switch-model", model: this.currentModel, thinkingLevel: level });
   }
@@ -1527,13 +1612,7 @@ class ModelView extends BasePiView {
     this.hub.send({ type: "switch-model", model: id });
   }
 
-  render() {
-    // Display current model name (not the full id)
-    const curModel = this.models.find(m => m.id === this.currentModel);
-    const curName = curModel ? curModel.name : this.currentModel;
-    this.currentEl.setText(`${curName} · ${this.currentThinking}`);
-    this.bodyEl.empty();
-
+  renderModelRows() {
     for (const m of this.models) {
       const item = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
       if (m.id === this.currentModel) item.addClass("active");
@@ -1545,6 +1624,43 @@ class ModelView extends BasePiView {
       main.createDiv({ cls: "pi-cockpit-item-sub", text: m.provider + (m.reasoning ? " · reasoning" : "") });
 
       item.addEventListener("click", () => this.switchModel(m.id));
+    }
+  }
+
+  renderAgentRows() {
+    for (const agent of AGENT_ROSTER) {
+      const item = this.bodyEl.createDiv({ cls: "pi-cockpit-item" });
+      phosphorIcon(item.createSpan({ cls: "pi-cockpit-item-icon" }), agent.icon, 16);
+
+      const main = item.createDiv({ cls: "pi-cockpit-item-main" });
+      const titleLine = main.createDiv({ cls: "pi-cockpit-item-title" });
+      titleLine.createSpan({ text: agent.name });
+      titleLine.createSpan({ cls: "pi-cockpit-chip pi-cockpit-chip-inset", text: agent.model });
+      titleLine.lastChild.style.marginLeft = "6px";
+      main.createDiv({ cls: "pi-cockpit-item-sub", text: agent.specialty });
+    }
+  }
+
+  render() {
+    const curModel = this.models.find(m => m.id === this.currentModel);
+    const curName = curModel ? curModel.name : this.currentModel;
+
+    const showingModels = this.activeTab === "models";
+    this.titleEl.setText(showingModels ? "Model" : "Agents");
+    this.currentEl.setText(showingModels
+      ? `${curName} · ${this.currentThinking}`
+      : `${AGENT_ROSTER.length} available`);
+
+    this.tabModels.toggleClass("active", showingModels);
+    this.tabAgents.toggleClass("active", !showingModels);
+    this.thinkingHeaderEl.style.display = showingModels ? "" : "none";
+    this.thinkingEl.style.display = showingModels ? "flex" : "none";
+
+    this.bodyEl.empty();
+    if (showingModels) {
+      this.renderModelRows();
+    } else {
+      this.renderAgentRows();
     }
 
     for (const [lvl, el] of Object.entries(this.thinkingOpts)) {
@@ -2339,16 +2455,16 @@ class ChatView extends BasePiView {
 
     const launchRow = root.createDiv({ cls: "pi-cockpit-launch-row" });
     const launches = [
-      { name: "Sessions", widget: "session-switcher", icon: "folder" },
-      { name: "Skills",   widget: "skills-directory", icon: "package" },
-      { name: "Model",    widget: "model-switcher",   icon: "sliders" },
-      { name: "Crons",    widget: "cron-dashboard",   icon: "heart-pulse" },
-      { name: "Tickets",  widget: "tickets",          icon: "list" },
+      { name: "Session", widget: "session-switcher", icon: "folder" },
+      { name: "Skills",  widget: "skills-directory", icon: "package" },
+      { name: "Model",   widget: "model-switcher",   icon: "sliders" },
+      { name: "Crons",   widget: "cron-dashboard",   icon: "heart-pulse" },
+      { name: "Tickets", widget: "tickets",          icon: "list" },
     ];
     for (const l of launches) {
       const btn = launchRow.createEl("button", { cls: "pi-cockpit-launch-btn" });
       phosphorIcon(btn.createSpan(), l.icon, 14);
-      btn.createSpan({ text: " " + l.name });
+      btn.createSpan({ text: l.name });
       btn.addEventListener("click", () => this.plugin.openWidget(l.widget));
     }
 
