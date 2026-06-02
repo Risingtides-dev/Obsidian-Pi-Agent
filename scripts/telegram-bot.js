@@ -8,6 +8,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { transcribeAudioWithXai } = require('./lib/xai-stt');
+const { handleShortcutVoiceIngestRequest, shortcutVoiceIngestEnabled } = require('./lib/shortcut-voice-ingest');
+const { processAudioFile } = require('./process-local-voice-memo');
 
 const CONFIG = require('./telegram-config.json');
 const VAULT = CONFIG.vaultPath;
@@ -18,6 +20,7 @@ const VOICE_TRANSCRIPT_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Transcripts'
 const VOICE_SUMMARIES_DIR = path.join(VAULT, CONFIG.voiceSummariesFolder || CONFIG.inboxFolder || '0-Inbox');
 const OBSIDIAN_VAULT_NAME = CONFIG.obsidianVaultName || 'Thoth';
 const WATCH_AGENT_BIN = CONFIG.watchAgentBin || '/Users/risingtidesdev/Documents/apple shortcuts/bin/watch-agent';
+const SHORTCUT_VOICE_PATH = CONFIG.shortcutVoicePath || '/shortcut/voice-note';
 
 // ── Ensure inbox exists ────────────────────────────────
 fs.mkdirSync(INBOX, { recursive: true });
@@ -284,23 +287,46 @@ async function handleTwitter(url) {
   return `🐦 **Saved:** ${result.filename}\n\n${summary}`;
 }
 
+const REDDIT_UA = 'ThothBot/1.0 (Obsidian capture bot; +https://github.com/Risingtides-dev)';
+
+async function resolveRedditShareLink(url) {
+  // Reddit share links (reddit.com/r/<sub>/s/<slug>) are 301 redirects to the
+  // real /comments/ permalink — appending `.json` to the share slug never
+  // works. Follow redirects until we land on a permalink (or give up).
+  if (!/\/s\/[A-Za-z0-9]+/i.test(url)) return url;
+  let current = url;
+  for (let i = 0; i < 5; i++) {
+    const loc = await resolveRedirect(current, { 'User-Agent': REDDIT_UA });
+    if (!loc) break;
+    current = loc.startsWith('http') ? loc : new URL(loc, current).href;
+    if (/\/comments\//i.test(current)) break;
+  }
+  return current;
+}
+
 async function handleReddit(url) {
   // Reddit exposes a full JSON view of any thread by appending `.json` to the
   // permalink. data[0] is the post listing, data[1] is the comments tree.
-  const cleanUrl = url.split('?')[0].replace(/\/$/, '') + '.json';
+  let resolved = url;
+  try {
+    resolved = await resolveRedditShareLink(url);
+  } catch (e) {
+    console.warn(`Reddit share-link resolve failed for ${url} (${e.message}); using original`);
+  }
+  const cleanUrl = resolved.split('?')[0].split('#')[0].replace(/\/$/, '') + '.json';
   // Reddit rejects generic/datacenter user-agents (403/429) and serves an HTML
   // interstitial. Send a descriptive UA + JSON Accept. If we still don't get
   // JSON back, fall through to the generic article path (which tries Jina).
   let data;
   try {
     const jsonStr = await fetchUrl(cleanUrl, {
-      'User-Agent': 'ThothBot/1.0 (Obsidian capture bot; +https://github.com/Risingtides-dev)',
+      'User-Agent': REDDIT_UA,
       'Accept': 'application/json',
     });
     data = JSON.parse(jsonStr);
   } catch (e) {
-    console.warn(`Reddit .json fetch/parse failed for ${url} (${e.message}); falling back to generic article path`);
-    return handleArticle(url);
+    console.warn(`Reddit .json fetch/parse failed for ${cleanUrl} (${e.message}); falling back to generic article path`);
+    return handleArticle(resolved);
   }
 
   const post = data?.[0]?.data?.children?.[0]?.data || {};
@@ -416,6 +442,23 @@ async function handleURL(url) {
 }
 
 // ── Web fetch helpers ──────────────────────────────────
+// Returns the Location header for a 3xx without following it, else null.
+function resolveRedirect(url, extraHeaders = {}) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    const req = client.get(url, {
+      headers: { 'User-Agent': 'ThothBot/1.0', ...extraHeaders },
+      timeout: 15000,
+    }, (res) => {
+      const loc = (res.statusCode >= 300 && res.statusCode < 400) ? res.headers.location : null;
+      res.resume(); // drain
+      resolve(loc || null);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+  });
+}
+
 function fetchUrl(url, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
@@ -1115,10 +1158,57 @@ process.on('unhandledRejection', (reason) => {
   console.error('💥 UNHANDLED REJECTION:', reason?.message || reason);
 });
 
+function startShortcutVoiceIngestServer() {
+  if (!shortcutVoiceIngestEnabled(CONFIG)) {
+    console.log('⌚ Shortcut voice ingest: disabled (missing shortcutVoiceSecret)');
+    return null;
+  }
+
+  const host = CONFIG.shortcutVoiceHost || '127.0.0.1';
+  const port = Number(CONFIG.shortcutVoicePort || 8765);
+  const server = http.createServer((req, res) => {
+    const pathname = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`).pathname;
+    if (pathname === '/health') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end('{"ok":true,"service":"thoth-shortcut-voice"}\n');
+      return;
+    }
+    if (pathname !== SHORTCUT_VOICE_PATH) {
+      res.statusCode = 404;
+      res.setHeader('Content-Type', 'application/json');
+      res.end('{"ok":false,"error":"Not found"}\n');
+      return;
+    }
+    handleShortcutVoiceIngestRequest(req, res, {
+      config: CONFIG,
+      processAudioFile,
+      logger: console,
+    }).catch((error) => {
+      console.error(`Shortcut voice ingest handler failed: ${error.message}`);
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(`${JSON.stringify({ ok: false, error: error.message.slice(0, 500) })}\n`);
+      }
+    });
+  });
+
+  server.on('error', (error) => {
+    console.error(`Shortcut voice ingest server error: ${error.message}`);
+  });
+  server.listen(port, host, () => {
+    console.log(`⌚ Shortcut voice ingest: http://${host}:${port}${SHORTCUT_VOICE_PATH}`);
+  });
+  return server;
+}
+
 console.log('🦉 Thoth Telegram Bot starting...');
 console.log(`📁 Vault: ${VAULT}`);
 console.log(`📥 Inbox: ${INBOX}`);
 console.log(`🎙️ Voice summaries: ${VOICE_SUMMARIES_DIR}`);
+
+startShortcutVoiceIngestServer();
 
 bot.start({
   onStart: (me) => console.log(`✅ Bot @${me.username} is live`),
