@@ -288,8 +288,20 @@ async function handleReddit(url) {
   // Reddit exposes a full JSON view of any thread by appending `.json` to the
   // permalink. data[0] is the post listing, data[1] is the comments tree.
   const cleanUrl = url.split('?')[0].replace(/\/$/, '') + '.json';
-  const jsonStr = await fetchUrl(cleanUrl);
-  const data = JSON.parse(jsonStr);
+  // Reddit rejects generic/datacenter user-agents (403/429) and serves an HTML
+  // interstitial. Send a descriptive UA + JSON Accept. If we still don't get
+  // JSON back, fall through to the generic article path (which tries Jina).
+  let data;
+  try {
+    const jsonStr = await fetchUrl(cleanUrl, {
+      'User-Agent': 'ThothBot/1.0 (Obsidian capture bot; +https://github.com/Risingtides-dev)',
+      'Accept': 'application/json',
+    });
+    data = JSON.parse(jsonStr);
+  } catch (e) {
+    console.warn(`Reddit .json fetch/parse failed for ${url} (${e.message}); falling back to generic article path`);
+    return handleArticle(url);
+  }
 
   const post = data?.[0]?.data?.children?.[0]?.data || {};
   const title = post.title || 'Reddit thread';
@@ -338,12 +350,41 @@ async function handleReddit(url) {
   return `👽 **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
 }
 
+async function fetchViaJina(url) {
+  // r.jina.ai renders the page (handling JS-heavy SPAs) and returns clean
+  // Markdown. Free, no auth. The `x-respond-with: markdown` header keeps the
+  // payload to article content rather than a full DOM dump.
+  return fetchUrl('https://r.jina.ai/' + url);
+}
+
 async function handleArticle(url) {
-  // Generic article handler — fetch, extract, summarize
+  // Generic article handler. Prefer Jina Reader (handles JS-rendered SPAs and
+  // returns Markdown directly); fall back to raw fetch + tag-strip if Jina is
+  // unavailable (it 503s under load).
   try {
-    const html = await fetchUrl(url);
-    const title = extractTitle(html) || url;
-    const text = extractText(html);
+    let title = url;
+    let text = '';
+    let viaJina = false;
+
+    try {
+      const md = await fetchViaJina(url);
+      if (md && md.trim().length > 200 && !/^Error \d/i.test(md.trim())) {
+        text = md.trim();
+        const h1 = md.match(/^Title:\s*(.+)$/m)?.[1]?.trim() || md.match(/^#\s+(.+)$/m)?.[1]?.trim();
+        if (h1) title = h1;
+        viaJina = true;
+      } else {
+        console.warn(`Jina returned thin content for ${url}, falling back to raw fetch`);
+      }
+    } catch (jinaErr) {
+      console.warn(`Jina Reader failed for ${url} (${jinaErr.message}); falling back to raw fetch`);
+    }
+
+    if (!viaJina) {
+      const html = await fetchUrl(url);
+      title = extractTitle(html) || url;
+      text = extractText(html);
+    }
 
     const systemPrompt = `You extract and summarize web articles. Be concise.`;
     const userPrompt = `URL: ${url}\nTitle: ${title}\n\nContent:\n${text.slice(0, 10000)}\n\nProvide:
@@ -375,15 +416,15 @@ async function handleURL(url) {
 }
 
 // ── Web fetch helpers ──────────────────────────────────
-function fetchUrl(url) {
+function fetchUrl(url, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
     const req = client.get(url, {
-      headers: { 'User-Agent': 'ThothBot/1.0' },
+      headers: { 'User-Agent': 'ThothBot/1.0', ...extraHeaders },
       timeout: 15000
     }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchUrl(res.headers.location).then(resolve).catch(reject);
+        return fetchUrl(res.headers.location, extraHeaders).then(resolve).catch(reject);
       }
       let body = '';
       res.on('data', chunk => body += chunk);
