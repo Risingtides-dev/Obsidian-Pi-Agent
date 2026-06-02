@@ -2,13 +2,12 @@
 // Thoth Telegram Bot — captures everything, summarizes, saves to Obsidian
 
 const { Bot } = require('grammy');
-const { execSync, spawnSync } = require('child_process');
+const { execSync, execFile } = require('child_process');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
-const os = require('os');
+const { transcribeAudioWithXai } = require('./lib/xai-stt');
 
 const CONFIG = require('./telegram-config.json');
 const VAULT = CONFIG.vaultPath;
@@ -16,9 +15,9 @@ const INBOX = path.join(VAULT, CONFIG.inboxFolder);
 const ATTACHMENTS = path.join(VAULT, 'Attachments');
 const VOICE_AUDIO_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Audio');
 const VOICE_TRANSCRIPT_DIR = path.join(ATTACHMENTS, 'Voice Notes', 'Transcripts');
-const VOICE_SUMMARIES_DIR = path.join(VAULT, CONFIG.voiceSummariesFolder || path.join('4-Archive', 'Voice Summaries'));
+const VOICE_SUMMARIES_DIR = path.join(VAULT, CONFIG.voiceSummariesFolder || CONFIG.inboxFolder || '0-Inbox');
 const OBSIDIAN_VAULT_NAME = CONFIG.obsidianVaultName || 'Thoth';
-const FFMPEG_BIN = CONFIG.ffmpegBin || 'ffmpeg';
+const WATCH_AGENT_BIN = CONFIG.watchAgentBin || '/Users/risingtidesdev/Documents/apple shortcuts/bin/watch-agent';
 
 // ── Ensure inbox exists ────────────────────────────────
 fs.mkdirSync(INBOX, { recursive: true });
@@ -168,6 +167,10 @@ function isTwitter(url) {
   return /(twitter\.com|x\.com)/i.test(url);
 }
 
+function isReddit(url) {
+  return /(^|\.)reddit\.com/i.test(url);
+}
+
 async function handleYouTube(url) {
   // Get video info + captions with yt-dlp
   const tmpDir = '/tmp/thoth-yt';
@@ -281,6 +284,60 @@ async function handleTwitter(url) {
   return `🐦 **Saved:** ${result.filename}\n\n${summary}`;
 }
 
+async function handleReddit(url) {
+  // Reddit exposes a full JSON view of any thread by appending `.json` to the
+  // permalink. data[0] is the post listing, data[1] is the comments tree.
+  const cleanUrl = url.split('?')[0].replace(/\/$/, '') + '.json';
+  const jsonStr = await fetchUrl(cleanUrl);
+  const data = JSON.parse(jsonStr);
+
+  const post = data?.[0]?.data?.children?.[0]?.data || {};
+  const title = post.title || 'Reddit thread';
+  const author = post.author ? `u/${post.author}` : 'unknown';
+  const subreddit = post.subreddit_name_prefixed || (post.subreddit ? `r/${post.subreddit}` : '');
+  const selftext = (post.selftext || '').trim();
+  const postScore = typeof post.score === 'number' ? post.score : null;
+
+  // Top-level comments only, sorted by score, capped at ~30.
+  const commentChildren = data?.[1]?.data?.children || [];
+  const comments = commentChildren
+    .filter(c => c.kind === 't1' && c.data && c.data.body)
+    .map(c => ({ author: c.data.author, body: c.data.body.trim(), score: c.data.score || 0 }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30);
+
+  let md = `# ${title}\n\n`;
+  md += `**Subreddit:** ${subreddit} · **Posted by:** ${author}`;
+  if (postScore !== null) md += ` · **Score:** ${postScore}`;
+  md += `\n\n`;
+  if (selftext) md += `## Post\n${selftext}\n\n`;
+  if (comments.length) {
+    md += `## Top comments\n`;
+    for (const c of comments) {
+      md += `- **u/${c.author}** (${c.score}): ${c.body.replace(/\n+/g, ' ')}\n`;
+    }
+  } else {
+    md += `_(No top-level comments)_\n`;
+  }
+
+  const systemPrompt = `You summarize Reddit threads. Capture the original post's question/claim and the consensus + notable dissent from the comments. Be concise.`;
+  const userPrompt = `URL: ${url}\n\n${md.slice(0, 12000)}\n\nProvide:
+## Summary
+2-3 sentence summary of the post and the discussion
+
+## Key Points
+- 3-6 bullets covering the main takeaways and any strong consensus
+
+## Notable Comments
+> Surface 1-3 standout comments (omit if none)`;
+
+  const summary = await askDeepSeek(systemPrompt, userPrompt, 3000);
+  const fullContent = `**Source:** [${title}](${url})\n**Subreddit:** ${subreddit} · **Posted by:** ${author}\n\n${summary}`;
+  const result = saveToVault(title, fullContent, url, ['reddit']);
+
+  return `👽 **Saved:** ${result.filename}\n\n${summary.slice(0, 1000)}${summary.length > 1000 ? '...' : ''}`;
+}
+
 async function handleArticle(url) {
   // Generic article handler — fetch, extract, summarize
   try {
@@ -313,6 +370,7 @@ async function handleArticle(url) {
 async function handleURL(url) {
   if (isYouTube(url)) return handleYouTube(url);
   if (isTwitter(url)) return handleTwitter(url);
+  if (isReddit(url)) return handleReddit(url);
   return handleArticle(url);
 }
 
@@ -425,47 +483,6 @@ async function downloadTelegramFile(ctx, fileId, destinationPath) {
   return file;
 }
 
-function runFfmpegToWav(inputPath, outputPath) {
-  const result = spawnSync(FFMPEG_BIN, ['-y', '-i', inputPath, '-ar', '16000', '-ac', '1', outputPath], {
-    encoding: 'utf-8',
-    timeout: 120000,
-  });
-
-  if (result.status !== 0) {
-    const detail = (result.stderr || result.stdout || '').trim().slice(0, 500);
-    throw new Error(`ffmpeg failed${detail ? `: ${detail}` : ''}`);
-  }
-}
-
-function runWhisper(wavPath, workDir) {
-  const args = [
-    wavPath,
-    '--model', CONFIG.whisperModel || 'tiny',
-    '--output_format', 'txt',
-    '--output_dir', workDir,
-  ];
-
-  if (CONFIG.whisperLanguage) {
-    args.push('--language', CONFIG.whisperLanguage);
-  }
-
-  const result = spawnSync(CONFIG.whisperBin || 'whisper', args, {
-    encoding: 'utf-8',
-    timeout: CONFIG.whisperTimeoutMs || 300000,
-  });
-
-  if (result.status !== 0) {
-    const detail = (result.stderr || result.stdout || '').trim().slice(0, 700);
-    throw new Error(`Whisper failed${detail ? `: ${detail}` : ''}`);
-  }
-
-  const txtFile = path.join(workDir, `${path.basename(wavPath, path.extname(wavPath))}.txt`);
-  const transcript = fs.existsSync(txtFile) ? fs.readFileSync(txtFile, 'utf-8').trim() : '';
-  if (!transcript) throw new Error('Whisper produced an empty transcript');
-
-  return { transcript, txtFile };
-}
-
 function extractTitleFromMarkdown(markdown, fallback) {
   const h1 = markdown.match(/^#\s+(.+)$/m)?.[1]?.trim();
   if (h1) return h1.slice(0, 90);
@@ -488,7 +505,35 @@ Return clean Markdown only.`;
 
   const userPrompt = `Metadata:\n${JSON.stringify(metadata, null, 2)}\n\nTranscript:\n${transcript}\n\nReturn exactly this structure:\n# Concise title\n\n## Summary\n- 3-6 bullets capturing the memo\n\n## Key takeaways\n- Important ideas, references, or context\n\n## Action items\n- [ ] Tasks explicitly implied by the speaker\n\n## Decisions\n- Decisions or commitments; write \"None captured\" if none\n\n## Open questions\n- Ambiguities or follow-ups; write \"None captured\" if none\n\n## Cleaned notes\nA polished, readable version of the memo in the speaker's intent.`;
 
-  return askDeepSeek(systemPrompt, userPrompt, 3500);
+  const summary = await askDeepSeek(systemPrompt, userPrompt, 3500);
+  if (!String(summary || '').trim()) {
+    throw new Error('DeepSeek returned an empty summary');
+  }
+  return summary;
+}
+
+function fallbackVoiceSummary(transcript, error) {
+  const reason = String(error?.message || error || 'Unknown summarization error').slice(0, 300);
+  return `# Voice note transcript
+
+## Summary
+- Summary unavailable because DeepSeek summarization failed: ${reason}
+- The Grok/xAI transcript was still captured and preserved.
+
+## Key takeaways
+- Review the raw transcript below.
+
+## Action items
+- [ ] Review this transcript for tasks or follow-ups.
+
+## Decisions
+None captured
+
+## Open questions
+- Summarization failed; review the transcript manually.
+
+## Cleaned notes
+${transcript}`;
 }
 
 function saveVoiceSummaryToVault({ title, summary, transcript, metadata, audioRelPath, transcriptRelPath }) {
@@ -497,6 +542,7 @@ function saveVoiceSummaryToVault({ title, summary, transcript, metadata, audioRe
   const safeTitle = safeFilenamePart(title, 'Voice note').replace(/-/g, ' ').slice(0, 70).trim();
   const filename = uniqueFilename(`${dateStr} ${safeFilenamePart(safeTitle, 'Voice note')}.md`, VOICE_SUMMARIES_DIR);
   const filepath = path.join(VOICE_SUMMARIES_DIR, filename);
+  const summaryTag = metadata.summarizationError ? 'summary-failed' : 'ai-summary';
 
   const note = `---
 title: "${escapeYaml(title)}"
@@ -508,9 +554,10 @@ sender: "${escapeYaml(metadata.senderName || '')}"
 audio_file: "${escapeYaml(audioRelPath)}"
 transcript_file: "${escapeYaml(transcriptRelPath)}"
 models:
-  transcription: "${escapeYaml(CONFIG.whisperModel || 'whisper')}"
-  summarization: "${escapeYaml(CONFIG.deepseekModel || 'deepseek')}"
-tags: [telegram, voice-note, transcript, ai-summary]
+  transcription: "${escapeYaml(metadata.transcriptionEngine || CONFIG.transcriptionModel || 'xai-stt')}"
+  summarization: "${escapeYaml(metadata.summarizationEngine || CONFIG.deepseekModel || 'deepseek')}"
+summarization_error: "${escapeYaml(metadata.summarizationError || '')}"
+tags: [telegram, voice-note, transcript, ${summaryTag}]
 ---
 
 # ${title}
@@ -549,8 +596,6 @@ async function handleAudioMessage(ctx) {
   const audioPath = path.join(VOICE_AUDIO_DIR, audioFilename);
   const transcriptFilename = `${base}.txt`;
   const transcriptPath = path.join(VOICE_TRANSCRIPT_DIR, transcriptFilename);
-  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'thoth-voice-'));
-  const wavPath = path.join(workDir, `${base}.wav`);
 
   const metadata = {
     kind: payload.kind,
@@ -567,22 +612,41 @@ async function handleAudioMessage(ctx) {
     await downloadTelegramFile(ctx, payload.fileId, audioPath);
     fs.writeFileSync(path.join(VOICE_AUDIO_DIR, `${base}.json`), JSON.stringify({ ...metadata, audioFile: vaultRelativePath(audioPath) }, null, 2));
 
-    runFfmpegToWav(audioPath, wavPath);
-    const { transcript } = runWhisper(wavPath, workDir);
+    const transcription = await transcribeAudioWithXai(audioPath, CONFIG);
+    const transcript = transcription.transcript;
     fs.writeFileSync(transcriptPath, transcript, 'utf-8');
+    fs.writeFileSync(path.join(VOICE_TRANSCRIPT_DIR, `${base}.xai.json`), JSON.stringify(transcription.raw, null, 2));
 
-    const summary = await summarizeVoiceTranscript(transcript, {
+    const enrichedMetadata = {
       ...metadata,
+      transcriptionEngine: transcription.engine,
+      transcriptionDurationSeconds: transcription.durationSeconds,
+      transcriptionLanguage: transcription.language,
       audioFile: vaultRelativePath(audioPath),
       transcriptFile: vaultRelativePath(transcriptPath),
-    });
+    };
+    let summary;
+    let summarizationMetadata;
+    try {
+      summary = await summarizeVoiceTranscript(transcript, enrichedMetadata);
+      summarizationMetadata = { summarizationEngine: CONFIG.deepseekModel || 'deepseek' };
+    } catch (error) {
+      summary = fallbackVoiceSummary(transcript, error);
+      summarizationMetadata = {
+        summarizationEngine: 'transcript-only',
+        summarizationError: error.message,
+      };
+    }
 
     const title = extractTitleFromMarkdown(summary, transcript);
     const result = saveVoiceSummaryToVault({
       title,
       summary,
       transcript,
-      metadata,
+      metadata: {
+        ...enrichedMetadata,
+        ...summarizationMetadata,
+      },
       audioRelPath: vaultRelativePath(audioPath),
       transcriptRelPath: vaultRelativePath(transcriptPath),
     });
@@ -598,8 +662,6 @@ async function handleAudioMessage(ctx) {
     try { fs.unlinkSync(audioPath); } catch {}
     try { fs.unlinkSync(transcriptPath); } catch {}
     throw new Error(`Audio failed: ${e.message}`);
-  } finally {
-    try { fs.rmSync(workDir, { recursive: true, force: true }); } catch {}
   }
 }
 
@@ -700,6 +762,145 @@ function extractURLs(text) {
   return text.match(regex) || [];
 }
 
+// ── Watch Agent command center ─────────────────────────
+function encodeBase64(text) {
+  return Buffer.from(String(text || ''), 'utf8').toString('base64');
+}
+
+function extractWatchAgentJobId(message) {
+  const text = [message?.text, message?.caption].filter(Boolean).join('\n');
+  const match = text.match(/\bjob:\s*([0-9]{8}-[0-9]{6}-(?:codex|claude)-[A-Za-z0-9_-]+)/i);
+  return match ? match[1] : null;
+}
+
+function runWatchAgent(args, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    execFile(WATCH_AGENT_BIN, args, {
+      timeout: timeoutMs,
+      maxBuffer: 1024 * 1024,
+    }, (error, stdout, stderr) => {
+      if (error) {
+        const detail = (stderr || stdout || error.message || '').trim();
+        reject(new Error(detail || 'watch-agent command failed'));
+        return;
+      }
+      resolve(String(stdout || '').trim());
+    });
+  });
+}
+
+async function handleWatchAgentReply(ctx) {
+  const msg = ctx.message;
+  if (!msg?.text || !msg.reply_to_message) return false;
+
+  const jobId = extractWatchAgentJobId(msg.reply_to_message);
+  if (!jobId) return false;
+
+  const prompt = msg.text.trim();
+  if (!prompt) return false;
+
+  if (/^\/?(finalize|finalise|report)(\s|$)/i.test(prompt)) {
+    await ctx.reply(`Finalizing Watch Agent job: ${jobId}`, {
+      reply_to_message_id: msg.message_id,
+      allow_sending_without_reply: true,
+    });
+
+    try {
+      const shouldStop = /\bstop\b|\bkill\b|\bclose\b/i.test(prompt);
+      const args = [
+        'finalize',
+        jobId,
+        '--telegram-reply-to',
+        String(msg.message_id),
+      ];
+      if (shouldStop) args.push('--stop');
+      const output = await runWatchAgent(args, 120000);
+      if (output) {
+        await ctx.reply(output.slice(0, 1000), {
+          reply_to_message_id: msg.message_id,
+          allow_sending_without_reply: true,
+        });
+      }
+    } catch (error) {
+      await ctx.reply(`Watch Agent finalize failed: ${String(error.message || error).slice(0, 900)}`, {
+        reply_to_message_id: msg.message_id,
+        allow_sending_without_reply: true,
+      });
+    }
+
+    return true;
+  }
+
+  if (prompt.startsWith('/')) return false;
+
+  await ctx.reply(`Queued Watch Agent follow-up for job: ${jobId}`, {
+    reply_to_message_id: msg.message_id,
+    allow_sending_without_reply: true,
+  });
+
+  try {
+    const output = await runWatchAgent([
+      'follow-up',
+      '--job-id',
+      jobId,
+      '--prompt-b64',
+      encodeBase64(prompt),
+      '--telegram-reply-to',
+      String(msg.message_id),
+    ]);
+    if (output) {
+      await ctx.reply(output.slice(0, 1000), {
+        reply_to_message_id: msg.message_id,
+        allow_sending_without_reply: true,
+      });
+    }
+  } catch (error) {
+    await ctx.reply(`Watch Agent follow-up failed: ${String(error.message || error).slice(0, 900)}`, {
+      reply_to_message_id: msg.message_id,
+      allow_sending_without_reply: true,
+    });
+  }
+
+  return true;
+}
+
+async function handleWatchAgentFinalizeCommand(ctx) {
+  const msg = ctx.message;
+  const prompt = msg?.text?.trim() || '';
+  if (!/^\/?(finalize|finalise|report)(@\w+)?(\s|$)/i.test(prompt)) return false;
+
+  const repliedJobId = extractWatchAgentJobId(msg.reply_to_message);
+  const explicitJobId = prompt.match(/\b([0-9]{8}-[0-9]{6}-(?:codex|claude)-[A-Za-z0-9_-]+)\b/i)?.[1];
+  const jobId = repliedJobId || explicitJobId || null;
+  const shouldStop = /\bstop\b|\bkill\b|\bclose\b/i.test(prompt);
+  const args = ['finalize'];
+  if (jobId) args.push(jobId);
+  args.push('--telegram-reply-to', String(msg.message_id));
+  if (shouldStop) args.push('--stop');
+
+  await ctx.reply(`Finalizing Watch Agent ${jobId ? `job: ${jobId}` : 'latest job'}`, {
+    reply_to_message_id: msg.message_id,
+    allow_sending_without_reply: true,
+  });
+
+  try {
+    const output = await runWatchAgent(args, 120000);
+    if (output) {
+      await ctx.reply(output.slice(0, 1000), {
+        reply_to_message_id: msg.message_id,
+        allow_sending_without_reply: true,
+      });
+    }
+  } catch (error) {
+    await ctx.reply(`Watch Agent finalize failed: ${String(error.message || error).slice(0, 900)}`, {
+      reply_to_message_id: msg.message_id,
+      allow_sending_without_reply: true,
+    });
+  }
+
+  return true;
+}
+
 // ── Bot setup ──────────────────────────────────────────
 const bot = new Bot(CONFIG.telegramToken);
 
@@ -718,6 +919,34 @@ bot.command('start', async (ctx) => {
   );
 });
 
+async function registerWatchAgentAlerts(ctx) {
+  const chat = ctx.chat;
+  if (!chat?.id) {
+    await ctx.reply('Could not read this chat ID.');
+    return;
+  }
+
+  const title = chat.title || chat.username || [chat.first_name, chat.last_name].filter(Boolean).join(' ') || '';
+  try {
+    const output = await runWatchAgent([
+      'register-telegram-chat',
+      '--chat-id',
+      String(chat.id),
+      '--chat-type',
+      chat.type || '',
+      '--chat-title',
+      title,
+    ]);
+    await ctx.reply(`${output}\n\nWatch Agent reports and PR links will be sent here.`);
+  } catch (error) {
+    await ctx.reply(`Could not register Watch Agent alerts: ${String(error.message || error).slice(0, 900)}`);
+  }
+}
+
+bot.command('register_alerts', registerWatchAgentAlerts);
+bot.command('resgister_alerts', registerWatchAgentAlerts);
+bot.command('registeralerts', registerWatchAgentAlerts);
+
 // Main message handler
 bot.on('message', async (ctx) => {
   const msg = ctx.message;
@@ -727,6 +956,28 @@ bot.on('message', async (ctx) => {
 
   try {
     let response = '';
+
+    if (msg.text && /^\/(?:register_alerts|resgister_alerts|registeralerts)(?:@\w+)?\b/i.test(msg.text.trim())) {
+      await registerWatchAgentAlerts(ctx);
+      return;
+    }
+
+    if (await handleWatchAgentReply(ctx)) {
+      return;
+    }
+
+    if (await handleWatchAgentFinalizeCommand(ctx)) {
+      return;
+    }
+
+    if (msg.text && /^\/(start|register_alerts|resgister_alerts|registeralerts)(@\w+)?\b/.test(msg.text.trim())) {
+      return;
+    }
+
+    if (msg.text && msg.text.trim().startsWith('/')) {
+      await ctx.reply('Unknown command. Available: /register_alerts');
+      return;
+    }
 
     // Voice message or uploaded audio file
     if (msg.voice || msg.audio || isAudioDocument(msg)) {
